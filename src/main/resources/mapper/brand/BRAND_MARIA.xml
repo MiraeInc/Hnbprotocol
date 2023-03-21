@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="brandDAO">
+
+	<!-- 광고(AD) 리스트 -->
+	<select id="getBrandAdList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.AD_IDX, A.TITLE, A.VIDEO_URL_CODE
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_AD A ON M.GUBUN_IDX = A.AD_IDX AND M.BRAND_IDX = #{BRANDIDX} AND M.GUBUN = 'ad'
+		WHERE A.DISP_YN = 'Y'
+		<if test="DEVICEGUBUN eq 'P'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','P')
+		</if>
+		<if test="DEVICEGUBUN eq 'M'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','M')
+		</if>
+		<if test="BRANDIDX != null and BRANDIDX != '' ">
+			AND M.BRAND_IDX = #{BRANDIDX}
+		</if>
+		ORDER BY A.REG_DT DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 광고(AD) 총 건수 -->
+	<select id="getBrandAdListCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_AD A ON M.GUBUN_IDX = A.AD_IDX AND M.BRAND_IDX = #{BRANDIDX} AND M.GUBUN = 'ad'
+		WHERE A.DISP_YN = 'Y'
+		<if test="DEVICEGUBUN eq 'P'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','P')
+		</if>
+		<if test="DEVICEGUBUN eq 'M'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','M')
+		</if>
+		<if test="BRANDIDX != null and BRANDIDX != '' ">
+			AND M.BRAND_IDX = #{BRANDIDX}
+		</if>
+	</select>
+	
+	<!-- 매거진 리스트 -->
+	<select id="getBrandMagazineList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MAGAZINE_IDX, A.TITLE, A.MAGAZINE_NM, A.MAGAZINE_IMG, A.MAGAZINE_DESC
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_MAGAZINE A ON M.GUBUN_IDX = A.MAGAZINE_IDX AND M.BRAND_IDX = #{BRANDIDX} AND M.GUBUN = 'magazine'
+		WHERE A.DISP_YN = 'Y'
+		<if test="DEVICEGUBUN eq 'P'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','P')
+		</if>
+		<if test="DEVICEGUBUN eq 'M'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','M')
+		</if>
+		<if test="BRANDIDX != null and BRANDIDX != '' ">
+			AND M.BRAND_IDX = #{BRANDIDX}
+		</if>
+		ORDER BY A.REG_DT DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 매거진 총 건수 -->
+	<select id="getBrandMagazineListCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_MAGAZINE A ON M.GUBUN_IDX = A.MAGAZINE_IDX AND M.BRAND_IDX = #{BRANDIDX} AND M.GUBUN = 'magazine'
+		WHERE A.DISP_YN = 'Y'
+		<if test="DEVICEGUBUN eq 'P'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','P')
+		</if>
+		<if test="DEVICEGUBUN eq 'M'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','M')
+		</if>
+		<if test="BRANDIDX != null and BRANDIDX != '' ">
+			AND M.BRAND_IDX = #{BRANDIDX}
+		</if>
+	</select>
+	
+	<!-- 매거진 상세 -->
+	<select id="getBrandMagazineDetail" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MAGAZINE_IDX, A.TITLE, A.MAGAZINE_NM, A.MAGAZINE_IMG, A.MAGAZINE_DESC, A.DEVICE_GUBUN
+		FROM TA_MAGAZINE A
+		WHERE A.DISP_YN = 'Y'
+		AND A.MAGAZINE_IDX = #{MAGAZINEIDX}
+	</select>
+	
+	<!-- 매거진 상세 이전글-->
+	<select id="getBrandMagazinePrev" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MAGAZINE_IDX, A.TITLE, A.MAGAZINE_NM, A.MAGAZINE_IMG, A.MAGAZINE_DESC
+		FROM TA_MAGAZINE A
+		WHERE A.DISP_YN = 'Y'
+		AND A.MAGAZINE_IDX  <![CDATA[>]]> #{MAGAZINEIDX}
+		<if test="DEVICEGUBUN eq 'P'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','P')
+		</if>
+		<if test="DEVICEGUBUN eq 'M'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','M')
+		</if>
+		ORDER BY A.MAGAZINE_IDX ASC
+		LIMIT 1
+	</select>
+	
+	<!-- 매거진 상세 다음글-->
+	<select id="getBrandMagazineNext" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MAGAZINE_IDX, A.TITLE, A.MAGAZINE_NM, A.MAGAZINE_IMG, A.MAGAZINE_DESC
+		FROM TA_MAGAZINE A
+		WHERE A.DISP_YN = 'Y'
+		AND A.MAGAZINE_IDX  <![CDATA[<]]> #{MAGAZINEIDX}
+		<if test="DEVICEGUBUN eq 'P'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','P')
+		</if>
+		<if test="DEVICEGUBUN eq 'M'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','M')
+		</if>
+		ORDER BY A.MAGAZINE_IDX DESC
+		LIMIT 1
+	</select>
+	
+	<!-- 광고 브랜드 별 개수 -->
+	<select id="getAdBrandCnt" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** brandDAO.getAdBrandCnt **/
+		SELECT 
+			SUM(CASE when M.BRAND_IDX = 1 THEN 1 ELSE 0 END) AS GB_CNT,
+			SUM(CASE when M.BRAND_IDX = 3 THEN 1 ELSE 0 END) AS BF_CNT,
+			SUM(CASE when M.BRAND_IDX = 4 THEN 1 ELSE 0 END) AS LD_CNT,
+			SUM(CASE when M.BRAND_IDX = 6 THEN 1 ELSE 0 END) AS MM_CNT,
+			SUM(CASE when M.BRAND_IDX = 7 THEN 1 ELSE 0 END) AS DP_CNT,
+			SUM(CASE when M.BRAND_IDX = 8 THEN 1 ELSE 0 END) AS CL_CNT,
+			COUNT(*) AS ALL_CNT
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_AD A ON A.AD_IDX = M.GUBUN_IDX AND M.GUBUN = 'ad'
+		WHERE A.DISP_YN = 'Y'
+		<if test="DEVICEGUBUN eq 'P'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','P')
+		</if>
+		<if test="DEVICEGUBUN eq 'M'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','M')
+		</if>
+	</select>
+	
+	<!-- 매거진 브랜드 별 개수 -->
+	<select id="getMagBrandCnt" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** brandDAO.getMagBrandCnt **/
+		SELECT 
+			SUM(CASE when M.BRAND_IDX = 1 THEN 1 ELSE 0 END) AS GB_CNT,
+			SUM(CASE when M.BRAND_IDX = 3 THEN 1 ELSE 0 END) AS BF_CNT,
+			SUM(CASE when M.BRAND_IDX = 4 THEN 1 ELSE 0 END) AS LD_CNT,
+			SUM(CASE when M.BRAND_IDX = 6 THEN 1 ELSE 0 END) AS MM_CNT,
+			SUM(CASE when M.BRAND_IDX = 7 THEN 1 ELSE 0 END) AS DP_CNT,
+			SUM(CASE when M.BRAND_IDX = 8 THEN 1 ELSE 0 END) AS CL_CNT,
+			COUNT(*) AS ALL_CNT
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_MAGAZINE A ON A.MAGAZINE_IDX = M.GUBUN_IDX AND M.GUBUN = 'magazine'
+		WHERE A.DISP_YN = 'Y'
+		<if test="DEVICEGUBUN eq 'P'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','P')
+		</if>
+		<if test="DEVICEGUBUN eq 'M'.toString()">
+			AND A.DEVICE_GUBUN IN ('A','M')
+		</if>
+	</select>
+	
+</mapper>

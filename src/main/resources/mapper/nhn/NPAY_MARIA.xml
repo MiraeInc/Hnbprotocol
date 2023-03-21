@@ -1,0 +1,1311 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="npayDAO">
+	
+	
+	 <!-- 주문 저장  -->
+	 <insert id="insertNpayOrder" parameterType="hashmap">
+	 		INSERT INTO TO_NPAY_ORDER (
+	 			ORDER_ID,
+	 			ORDER_DATE,
+	 			ORDERER_ID,
+	 			ORDERER_NAME,
+	 			ORDERER_TEL1,
+	 			<if test="PAYMENT_DATE != null and PAYMENT_DATE != '' ">
+	 			PAYMENT_DATE,
+	 			</if>
+	 			PAYMENT_MEANS,
+	 			<if test="PAYMENT_DUE_DATE != null and PAYMENT_DUE_DATE != '' ">
+	 			PAYMENT_DUE_DATE,
+	 			</if>
+	 			PAYMENT_NUMBER,
+	 			ORDER_DISCOUNT_AMOUNT,
+	 			GENERAL_PAYMENT_AMOUNT,
+	 			NAVER_MILEAGE_PAYMENT_AMOUNT,
+	 			CHARGE_AMOUNT_PAYMENT_AMOUNT,
+	 			CHECKOUT_ACCUMULATION_PAYMENT_AMOUNT,
+	 			IS_DELIVERY_MEMO_PARTICULAR_INPUT,
+	 			ORDER_TYPE,
+	 			PAY_LOCATION_TYPE,
+	 			PAYMENT_CORE_TYPE,
+	 			REG_DT
+	 		)
+			VALUES (
+				#{ORDER_ID}, 
+				#{ORDER_DATE},
+				#{ORDERER_ID},
+				#{ORDERER_NAME},
+				#{ORDERER_TEL1},
+				<if test="PAYMENT_DATE != null and PAYMENT_DATE != '' ">
+				#{PAYMENT_DATE},
+				</if>
+				#{PAYMENT_MEANS},
+				<if test="PAYMENT_DUE_DATE != null and PAYMENT_DUE_DATE != '' ">
+	 			#{PAYMENT_DUE_DATE},
+	 			</if>
+				#{PAYMENT_NUMBER},
+				#{ORDER_DISCOUNT_AMOUNT},
+				#{GENERAL_PAYMENT_AMOUNT},
+				#{NAVER_MILEAGE_PAYMENT_AMOUNT},
+				#{CHARGE_AMOUNT_PAYMENT_AMOUNT},
+				#{CHECKOUT_ACCUMULATION_PAYMENT_AMOUNT},
+				#{IS_DELIVERY_MEMO_PARTICULAR_INPUT},
+				#{ORDER_TYPE},
+				#{PAY_LOCATION_TYPE},
+				#{PAYMENT_CORE_TYPE},
+				NOW()
+			)
+	 </insert>
+	 
+	<!-- 주문 수정 -->
+	 <update id="updateNpayOrder" parameterType="hashmap">
+    	UPDATE TO_NPAY_ORDER
+    	SET
+    			UPT_DT = NOW()
+    			<if test="PAYMENT_DATE != null and PAYMENT_DATE != '' ">
+    			,PAYMENT_DATE = #{PAYMENT_DATE}
+    			</if>
+	 			,PAYMENT_MEANS = #{PAYMENT_MEANS}
+	 			<if test="PAYMENT_DUE_DATE != null and PAYMENT_DUE_DATE != '' ">
+	 			,PAYMENT_DUE_DATE= #{PAYMENT_DUE_DATE}
+	 			</if>
+	 			,PAYMENT_NUMBER= #{PAYMENT_NUMBER}
+	 			,ORDER_DISCOUNT_AMOUNT= #{ORDER_DISCOUNT_AMOUNT}
+	 			,GENERAL_PAYMENT_AMOUNT= #{GENERAL_PAYMENT_AMOUNT}
+	 			,NAVER_MILEAGE_PAYMENT_AMOUNT= #{NAVER_MILEAGE_PAYMENT_AMOUNT}
+	 			,CHARGE_AMOUNT_PAYMENT_AMOUNT= #{CHARGE_AMOUNT_PAYMENT_AMOUNT}
+	 			,CHECKOUT_ACCUMULATION_PAYMENT_AMOUNT= #{CHECKOUT_ACCUMULATION_PAYMENT_AMOUNT}
+	 			,IS_DELIVERY_MEMO_PARTICULAR_INPUT= #{IS_DELIVERY_MEMO_PARTICULAR_INPUT}
+	 			,ORDER_TYPE= #{ORDER_TYPE}
+	 			,PAY_LOCATION_TYPE= #{PAY_LOCATION_TYPE}
+	 			,PAYMENT_CORE_TYPE= #{PAYMENT_CORE_TYPE}
+		WHERE ORDER_ID = #{ORDER_ID} 
+	 </update>
+	 
+	<!-- 주문 체크 -->
+	<select id="cntNpayOrder" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) 
+	  	FROM TO_NPAY_ORDER
+		WHERE ORDER_ID = #{ORDER_ID} 
+	</select>
+	
+ 		<!-- 주문상품 저장  -->
+	 <insert id="insertNpayProductOrder" parameterType="hashmap">
+	 		
+		INSERT
+		INTO   TO_NPAY_PRODUCT_ORDER
+       (
+              PRODUCT_ORDER_ID,
+              ORDER_ID,
+              PRODUCT_INFO_API_VERSION,
+              PRODUCT_ORDER_STATUS,
+              <if test="CLAIM_TYPE != null and CLAIM_TYPE != '' ">
+              CLAIM_TYPE,
+              </if>
+              <if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">
+              CLAIM_STATUS,
+              </if>
+              PRODUCT_ID,
+              PRODUCT_NAME,
+              <if test="PRODUCT_CLASS != null and PRODUCT_CLASS != '' ">
+              PRODUCT_CLASS,
+              </if>
+              <if test="PRODUCT_OPTION != null and PRODUCT_OPTION != '' ">
+              PRODUCT_OPTION,
+              </if>
+              <if test="OPTION_MANAGE_CODE != null and OPTION_MANAGE_CODE != '' ">
+              OPTION_MANAGE_CODE,
+              </if>
+              QUANTITY,
+              UNIT_PRICE,
+              OPTION_PRICE,
+              <if test="OPTION_CODE != null and OPTION_CODE != '' ">
+              OPTION_CODE,
+              </if>
+              TOTAL_PRODUCT_AMOUNT,
+              PRODUCT_DISCOUNT_AMOUNT,
+              FIRST_SELLER_BURDEN_DISCOUNT_AMOUNT,
+              TOTAL_PAYMENT_AMOUNT,
+              SELLING_CODE,
+              SELLER_PRODUCT_CODE,
+              MALL_MANAGE_CODE,
+              <if test="ORDER_EXTRA_DATA != null and ORDER_EXTRA_DATA != '' ">
+              ORDER_EXTRA_DATA,
+              </if>
+              MALL_ID,
+              EXPECTED_DELIVERY_METHOD,
+              PACKAGE_NUMBER,
+              SHIPPING_FEE_TYPE,
+              DELIVERY_POLICY_TYPE,
+              DELIVERY_FEE_AMOUNT,
+              SECTION_DELIVERY_FEE,
+              DELIVERY_DISCOUNT_AMOUNT,
+              SHIPPING_MEMO,
+              <if test="SHIPPING_DUE_DATE != null and SHIPPING_DUE_DATE != '' ">
+              SHIPPING_DUE_DATE,
+              </if>
+              <if test="PLACE_ORDER_DATE != null and PLACE_ORDER_DATE != '' ">
+              PLACE_ORDER_DATE,
+              </if>
+              <if test="PLACE_ORDER_RELEASE_DATE != null and PLACE_ORDER_RELEASE_DATE != '' ">
+              PLACE_ORDER_RELEASE_DATE,
+              </if>
+              <if test="DECISION_DATE != null and DECISION_DATE != '' ">
+              DECISION_DATE,
+              </if>
+              <if test="FREE_GIFT != null and FREE_GIFT != '' ">
+              FREE_GIFT,
+              </if>
+              <if test="MALL_MEMBER_ID != null and MALL_MEMBER_ID != '' ">
+              MALL_MEMBER_ID,
+              </if>
+              PLACE_ORDER_STATUS,
+              DELAYED_DISPATCH_REASON,
+              DELAYED_DISPATCH_DETAILED_REASON,
+              SELLER_BURDEN_DISCOUNT_AMOUNT,
+              PAYMENT_COMMISSION,
+              EXPECTED_SETTLEMENT_AMOUNT,
+              REG_DT
+       )
+       VALUES
+       (
+              #{PRODUCT_ORDER_ID},
+              #{ORDER_ID},
+              #{PRODUCT_INFO_API_VERSION},
+              #{PRODUCT_ORDER_STATUS},
+              <if test="CLAIM_TYPE != null and CLAIM_TYPE != '' ">
+              #{CLAIM_TYPE},
+              </if>
+              <if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">
+              #{CLAIM_STATUS},
+              </if>
+              #{PRODUCT_ID},
+              #{PRODUCT_NAME},
+              <if test="PRODUCT_CLASS != null and PRODUCT_CLASS != '' ">
+              #{PRODUCT_CLASS},
+              </if>
+              <if test="PRODUCT_OPTION != null and PRODUCT_OPTION != '' ">
+              #{PRODUCT_OPTION},
+              </if>
+              <if test="OPTION_MANAGE_CODE != null and OPTION_MANAGE_CODE != '' ">
+              #{OPTION_MANAGE_CODE},
+              </if>
+              #{QUANTITY},
+              #{UNIT_PRICE},
+              #{OPTION_PRICE},
+              <if test="OPTION_CODE != null and OPTION_CODE != '' ">
+              #{OPTION_CODE},
+              </if>
+              #{TOTAL_PRODUCT_AMOUNT},
+              #{PRODUCT_DISCOUNT_AMOUNT},
+              #{FIRST_SELLER_BURDEN_DISCOUNT_AMOUNT},
+              #{TOTAL_PAYMENT_AMOUNT},
+              #{SELLING_CODE},
+              #{SELLER_PRODUCT_CODE},
+              #{MALL_MANAGE_CODE},
+              <if test="ORDER_EXTRA_DATA != null and ORDER_EXTRA_DATA != '' ">
+              #{ORDER_EXTRA_DATA},
+              </if>
+              #{MALL_ID},
+              #{EXPECTED_DELIVERY_METHOD},
+              #{PACKAGE_NUMBER},
+              #{SHIPPING_FEE_TYPE},
+              #{DELIVERY_POLICY_TYPE},
+              #{DELIVERY_FEE_AMOUNT},
+              #{SECTION_DELIVERY_FEE},
+              #{DELIVERY_DISCOUNT_AMOUNT},
+              #{SHIPPING_MEMO},
+              <if test="SHIPPING_DUE_DATE != null and SHIPPING_DUE_DATE != '' ">
+              #{SHIPPING_DUE_DATE},
+              </if>
+              <if test="PLACE_ORDER_DATE != null and PLACE_ORDER_DATE != '' ">
+              #{PLACE_ORDER_DATE},
+              </if>
+              <if test="PLACE_ORDER_RELEASE_DATE != null and PLACE_ORDER_RELEASE_DATE != '' ">
+              #{PLACE_ORDER_RELEASE_DATE},
+              </if>
+              <if test="DECISION_DATE != null and DECISION_DATE != '' ">
+              #{DECISION_DATE},
+              </if>
+              <if test="FREE_GIFT != null and FREE_GIFT != '' ">
+              #{FREE_GIFT},
+              </if>
+              <if test="MALL_MEMBER_ID != null and MALL_MEMBER_ID != '' ">
+              #{MALL_MEMBER_ID},
+              </if>
+              #{PLACE_ORDER_STATUS},
+              #{DELAYED_DISPATCH_REASON},
+              #{DELAYED_DISPATCH_DETAILED_REASON},
+              #{SELLER_BURDEN_DISCOUNT_AMOUNT},
+              #{PAYMENT_COMMISSION},
+              #{EXPECTED_SETTLEMENT_AMOUNT},
+              NOW()
+       )
+	 </insert>
+	  
+		<!-- 주문상품 저장  -->
+	 <update id="updateNpayProductOrder" parameterType="hashmap">
+    	UPDATE TO_NPAY_PRODUCT_ORDER
+    	SET
+    		 <if test="PRODUCT_ORDER_STATUS != null and PRODUCT_ORDER_STATUS != '' ">
+              PRODUCT_ORDER_STATUS = #{PRODUCT_ORDER_STATUS},
+              </if>
+    		  <if test="CLAIM_TYPE != null and CLAIM_TYPE != '' ">
+              CLAIM_TYPE = #{CLAIM_TYPE} ,
+              </if>
+              <if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">
+              CLAIM_STATUS = #{CLAIM_STATUS} ,
+              </if>
+              PRODUCT_ID = #{PRODUCT_ID} ,
+              PRODUCT_NAME = #{PRODUCT_NAME} ,
+              <if test="PRODUCT_CLASS != null and PRODUCT_CLASS != '' ">
+              PRODUCT_CLASS = #{PRODUCT_CLASS} ,
+              </if>
+              <if test="PRODUCT_OPTION != null and PRODUCT_OPTION != '' ">
+              PRODUCT_OPTION = #{PRODUCT_OPTION} ,
+              </if>
+              <if test="OPTION_MANAGE_CODE != null and OPTION_MANAGE_CODE != '' ">
+              OPTION_MANAGE_CODE = #{OPTION_MANAGE_CODE} ,
+              </if>
+              QUANTITY = #{QUANTITY}, 
+              UNIT_PRICE = #{UNIT_PRICE} ,
+              OPTION_PRICE = #{OPTION_PRICE} ,
+              <if test="OPTION_CODE != null and OPTION_CODE != '' ">
+              OPTION_CODE = #{OPTION_CODE} ,
+              </if>
+              TOTAL_PRODUCT_AMOUNT = #{TOTAL_PRODUCT_AMOUNT} ,
+              PRODUCT_DISCOUNT_AMOUNT = #{PRODUCT_DISCOUNT_AMOUNT} ,
+              FIRST_SELLER_BURDEN_DISCOUNT_AMOUNT = #{FIRST_SELLER_BURDEN_DISCOUNT_AMOUNT} ,
+              TOTAL_PAYMENT_AMOUNT = #{TOTAL_PAYMENT_AMOUNT} ,
+              SELLING_CODE = #{SELLING_CODE} ,
+              SELLER_PRODUCT_CODE = #{SELLER_PRODUCT_CODE} ,
+              MALL_MANAGE_CODE = #{MALL_MANAGE_CODE} ,
+              <if test="ORDER_EXTRA_DATA != null and ORDER_EXTRA_DATA != '' ">
+              ORDER_EXTRA_DATA = #{ORDER_EXTRA_DATA} ,
+              </if>
+              MALL_ID = #{MALL_ID} ,
+              EXPECTED_DELIVERY_METHOD = #{EXPECTED_DELIVERY_METHOD} ,
+              PACKAGE_NUMBER = #{PACKAGE_NUMBER} ,
+              SHIPPING_FEE_TYPE = #{SHIPPING_FEE_TYPE} ,
+              DELIVERY_POLICY_TYPE = #{DELIVERY_POLICY_TYPE} ,
+              DELIVERY_FEE_AMOUNT = #{DELIVERY_FEE_AMOUNT} ,
+              SECTION_DELIVERY_FEE = #{SECTION_DELIVERY_FEE} ,
+              DELIVERY_DISCOUNT_AMOUNT = #{DELIVERY_DISCOUNT_AMOUNT} ,
+              SHIPPING_MEMO = #{SHIPPING_MEMO} ,
+              <if test="SHIPPING_DUE_DATE != null and SHIPPING_DUE_DATE != '' ">
+              SHIPPING_DUE_DATE = #{SHIPPING_DUE_DATE} ,
+              </if>
+              <if test="PLACE_ORDER_DATE != null and PLACE_ORDER_DATE != '' ">
+              PLACE_ORDER_DATE = #{PLACE_ORDER_DATE} ,
+              </if>
+              <if test="PLACE_ORDER_RELEASE_DATE != null and PLACE_ORDER_RELEASE_DATE != '' ">
+              PLACE_ORDER_RELEASE_DATE = #{PLACE_ORDER_RELEASE_DATE} ,
+              </if>
+              <if test="DECISION_DATE != null and DECISION_DATE != '' ">
+              DECISION_DATE = #{DECISION_DATE} ,
+              </if>
+              <if test="FREE_GIFT != null and FREE_GIFT != '' ">
+              FREE_GIFT = #{FREE_GIFT} ,
+              </if>
+              <if test="MALL_MEMBER_ID != null and MALL_MEMBER_ID != '' ">
+              MALL_MEMBER_ID = #{MALL_MEMBER_ID} ,
+              </if>
+              PLACE_ORDER_STATUS = #{PLACE_ORDER_STATUS} ,
+              DELAYED_DISPATCH_REASON = #{DELAYED_DISPATCH_REASON} ,
+              DELAYED_DISPATCH_DETAILED_REASON = #{DELAYED_DISPATCH_DETAILED_REASON} ,
+              SELLER_BURDEN_DISCOUNT_AMOUNT = #{SELLER_BURDEN_DISCOUNT_AMOUNT} ,
+              PAYMENT_COMMISSION = #{PAYMENT_COMMISSION} ,
+              EXPECTED_SETTLEMENT_AMOUNT = #{EXPECTED_SETTLEMENT_AMOUNT} ,
+              UPT_DT = NOW()
+		WHERE ORDER_ID = #{ORDER_ID} 
+		AND PRODUCT_ORDER_ID = #{PRODUCT_ORDER_ID}		
+	 </update>
+	 
+	<!-- 주문상품 체크 -->
+	<select id="cntNpayOrderProduct" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) 
+	  	FROM TO_NPAY_PRODUCT_ORDER
+		WHERE ORDER_ID = #{ORDER_ID} 
+		AND PRODUCT_ORDER_ID = #{PRODUCT_ORDER_ID}
+	</select>
+	 
+ 	 <!-- 주문 주소 저장  -->
+	 <insert id="insertNpayAddress" parameterType="hashmap">
+	 		
+		INSERT
+		INTO   TO_NPAY_ORDER_ADDRESS
+       (
+       		ORDER_ID
+			,ADDRESS_TYPE
+			,ZIP_CODE
+			,BASE_ADDRESS
+			,DETAILED_ADDRESS
+			,CITY
+			,STATE
+			,COUNTRY
+			,TEL1
+			,TEL2
+			,NAME
+			,REG_DT
+       )
+       VALUES
+       (
+	         #{ORDER_ID}
+			,#{ADDRESS_TYPE}
+			,#{ZIP_CODE}
+			,FN_ENCRYPT(#{BASE_ADDRESS})
+			,FN_ENCRYPT(#{DETAILED_ADDRESS})
+			,#{CITY}
+			,#{STATE}
+			,#{COUNTRY}
+			,FN_ENCRYPT(#{TEL1})
+			,FN_ENCRYPT(#{TEL2})
+			,#{NAME}
+		    , NOW()       
+       )
+     </insert>
+     
+     <!-- 주문 주소 체크 -->
+	<select id="cntNpayAddress" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) 
+	  	FROM TO_NPAY_ORDER_ADDRESS
+		WHERE ORDER_ID = #{ORDER_ID} 
+	</select>
+	 
+ 	 <!-- 상품 배송정보 저장  -->
+	 <insert id="insertNpayProductDelivery" parameterType="hashmap"> 		
+		INSERT
+		INTO   TO_NPAY_ORDER_PRODUCT_DELIVERY
+       (
+       		PRODUCT_ORDER_ID
+			,ORDER_ID
+			 <if test="DELIVERY_STATUS != null and DELIVERY_STATUS != '' ">
+			,DELIVERY_STATUS
+			</if>
+			 <if test="DELIVERY_METHOD != null and DELIVERY_METHOD != '' ">
+			,DELIVERY_METHOD
+			</if>
+			 <if test="DELIVERY_COMPANY != null and DELIVERY_COMPANY != '' ">
+			,DELIVERY_COMPANY
+			</if>
+			 <if test="TRACKING_NUMBER != null and TRACKING_NUMBER != '' ">
+			,TRACKING_NUMBER
+			</if>
+			 <if test="SEND_DATE != null and SEND_DATE != '' ">
+			,SEND_DATE
+			</if>
+			 <if test="PICKUP_DATE != null and PICKUP_DATE != '' ">
+			,PICKUP_DATE
+			</if>
+			 <if test="DELIVERED_DATE != null and DELIVERED_DATE != '' ">
+			,DELIVERED_DATE
+			</if>
+			 <if test="IS_WRONG_TRACKING_NUMBER != null and IS_WRONG_TRACKING_NUMBER != '' ">
+			,IS_WRONG_TRACKING_NUMBER
+			</if>
+			 <if test="WRONG_TRACKING_NUMBER_REGISTERED_DATE != null and WRONG_TRACKING_NUMBER_REGISTERED_DATE != '' ">
+			,WRONG_TRACKING_NUMBER_REGISTERED_DATE
+			</if>
+			 <if test="WRONG_TRACKING_NUMBER_TYPE != null and WRONG_TRACKING_NUMBER_TYPE != '' ">
+			,WRONG_TRACKING_NUMBER_TYPE
+			</if>
+			,REG_DT
+
+       )
+       VALUES
+       (
+	         #{PRODUCT_ORDER_ID}
+			,#{ORDER_ID}
+			 <if test="DELIVERY_STATUS != null and DELIVERY_STATUS != '' ">
+			,#{DELIVERY_STATUS}
+			</if>
+			 <if test="DELIVERY_METHOD != null and DELIVERY_METHOD != '' ">
+			,#{DELIVERY_METHOD}
+			</if>
+			 <if test="DELIVERY_COMPANY != null and DELIVERY_COMPANY != '' ">
+			,#{DELIVERY_COMPANY}
+			</if>
+			 <if test="TRACKING_NUMBER != null and TRACKING_NUMBER != '' ">
+			,#{TRACKING_NUMBER}
+			</if>
+			 <if test="SEND_DATE != null and SEND_DATE != '' ">
+			,#{SEND_DATE}
+			</if>
+			 <if test="PICKUP_DATE != null and PICKUP_DATE != '' ">
+			,#{PICKUP_DATE}
+			</if>
+			 <if test="DELIVERED_DATE != null and DELIVERED_DATE != '' ">
+			,#{DELIVERED_DATE}
+			</if>
+			 <if test="IS_WRONG_TRACKING_NUMBER != null and IS_WRONG_TRACKING_NUMBER != '' ">
+			,#{IS_WRONG_TRACKING_NUMBER}
+			</if>
+			 <if test="WRONG_TRACKING_NUMBER_REGISTERED_DATE != null and WRONG_TRACKING_NUMBER_REGISTERED_DATE != '' ">
+			,#{WRONG_TRACKING_NUMBER_REGISTERED_DATE}
+			</if>
+			 <if test="WRONG_TRACKING_NUMBER_TYPE != null and WRONG_TRACKING_NUMBER_TYPE != '' ">
+			,#{WRONG_TRACKING_NUMBER_TYPE}
+			</if>
+			,NOW()
+       )
+     </insert>
+     
+     <!-- 상품 배송정보 저장  -->
+    <update id="updateNpayProductDelivery" parameterType="hashmap">
+    	UPDATE TO_NPAY_ORDER_PRODUCT_DELIVERY
+      	SET	
+      	    UPT_DT = NOW() 
+      	     <if test="DELIVERY_STATUS != null and DELIVERY_STATUS != '' ">
+			,DELIVERY_STATUS = #{DELIVERY_STATUS}
+			</if>
+			 <if test="DELIVERY_METHOD != null and DELIVERY_METHOD != '' ">
+			,DELIVERY_METHOD = #{DELIVERY_METHOD}
+			</if>
+			 <if test="DELIVERY_COMPANY != null and DELIVERY_COMPANY != '' ">
+			,DELIVERY_COMPANY = #{DELIVERY_COMPANY}
+			</if>
+			 <if test="TRACKING_NUMBER != null and TRACKING_NUMBER != '' ">
+			,TRACKING_NUMBER = #{TRACKING_NUMBER}
+			</if>
+			 <if test="SEND_DATE != null and SEND_DATE != '' ">
+			,SEND_DATE = #{SEND_DATE}
+			</if>
+			 <if test="PICKUP_DATE != null and PICKUP_DATE != '' ">
+			,PICKUP_DATE = #{PICKUP_DATE}
+			</if>
+			 <if test="DELIVERED_DATE != null and DELIVERED_DATE != '' ">
+			,DELIVERED_DATE = #{DELIVERED_DATE}
+			</if>
+			 <if test="IS_WRONG_TRACKING_NUMBER != null and IS_WRONG_TRACKING_NUMBER != '' ">
+			,IS_WRONG_TRACKING_NUMBER = #{IS_WRONG_TRACKING_NUMBER}
+			</if>
+			 <if test="WRONG_TRACKING_NUMBER_REGISTERED_DATE != null and WRONG_TRACKING_NUMBER_REGISTERED_DATE != '' ">
+			,WRONG_TRACKING_NUMBER_REGISTERED_DATE = #{WRONG_TRACKING_NUMBER_REGISTERED_DATE}
+			</if>
+			 <if test="WRONG_TRACKING_NUMBER_TYPE != null and WRONG_TRACKING_NUMBER_TYPE != '' ">
+			,WRONG_TRACKING_NUMBER_TYPE = #{WRONG_TRACKING_NUMBER_TYPE}
+			</if>
+		WHERE ORDER_ID = #{ORDER_ID} 
+		AND PRODUCT_ORDER_ID = #{PRODUCT_ORDER_ID}
+    </update>
+    
+     <!-- 상품 배송 체크 -->
+	<select id="cntNpayProductDelivery" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) 
+	  	FROM TO_NPAY_ORDER_PRODUCT_DELIVERY
+		WHERE ORDER_ID = #{ORDER_ID} 
+		AND PRODUCT_ORDER_ID = #{PRODUCT_ORDER_ID}
+	</select>
+	
+	 <!-- 상품 취소정보 저장  -->
+	 <insert id="insertNpayCancelInfo" parameterType="hashmap">
+		INSERT
+		INTO   TO_NPAY_CANCEL_INFO
+       (
+       		PRODUCT_ORDER_ID
+			,ORDER_ID
+			 <if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">			
+			,CLAIM_STATUS
+			</if>
+			<if test="CLAIM_REQUEST_DATE != null and CLAIM_REQUEST_DATE != '' ">
+			,CLAIM_REQUEST_DATE
+			</if>
+			<if test="REQUEST_CHANNEL != null and REQUEST_CHANNEL != '' ">
+			,REQUEST_CHANNEL
+			</if>
+			<if test="CANCEL_REASON != null and CANCEL_REASON != '' ">
+			,CANCEL_REASON
+			</if>
+			<if test="CANCEL_DETAILED_REASON != null and CANCEL_DETAILED_REASON != '' ">
+			,CANCEL_DETAILED_REASON
+			</if>
+			<if test="CANCEL_COMPLETED_DATE != null and CANCEL_COMPLETED_DATE != '' ">
+			,CANCEL_COMPLETED_DATE
+			</if>
+			<if test="CANCEL_APPROVAL_DATE != null and CANCEL_APPROVAL_DATE != '' ">
+			,CANCEL_APPROVAL_DATE
+			</if>
+			<if test="HOLDBACK_STATUS != null and HOLDBACK_STATUS != '' ">
+			,HOLDBACK_STATUS
+			</if>
+			<if test="HOLDBACK_REASON != null and HOLDBACK_REASON != '' ">
+			,HOLDBACK_REASON
+			</if>
+			<if test="HOLDBACK_DETAILED_REASON != null and HOLDBACK_DETAILED_REASON != '' ">
+			,HOLDBACK_DETAILED_REASON
+			</if>
+			<if test="ETC_FEE_DEMAND_AMOUNT != null and ETC_FEE_DEMAND_AMOUNT != '' ">
+			,ETC_FEE_DEMAND_AMOUNT
+			</if>
+			<if test="ETC_FEE_PAY_METHOD != null and ETC_FEE_PAY_METHOD != '' ">
+			,ETC_FEE_PAY_METHOD
+			</if>
+			<if test="ETC_FEE_PAY_MEANS != null and ETC_FEE_PAY_MEANS != '' ">
+			,ETC_FEE_PAY_MEANS
+			</if>
+			<if test="REFUND_EXPECTED_DATE != null and REFUND_EXPECTED_DATE != '' ">
+			,REFUND_EXPECTED_DATE
+			</if>
+			<if test="REFUND_STANDBY_STATUS != null and REFUND_STANDBY_STATUS != '' ">
+			,REFUND_STANDBY_STATUS
+			</if>
+			<if test="REFUND_STANDBY_REASON != null and REFUND_STANDBY_REASON != '' ">
+			,REFUND_STANDBY_REASON
+			</if>
+			<if test="REFUND_REQUEST_DATE != null and REFUND_REQUEST_DATE != '' ">
+			,REFUND_REQUEST_DATE
+			</if>
+			,REG_DT
+       )
+       VALUES
+       (
+	         #{PRODUCT_ORDER_ID}
+			,#{ORDER_ID}
+			<if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">			
+			,#{CLAIM_STATUS}
+			</if>
+			<if test="CLAIM_REQUEST_DATE != null and CLAIM_REQUEST_DATE != '' ">
+			,#{CLAIM_REQUEST_DATE}
+			</if>
+			<if test="REQUEST_CHANNEL != null and REQUEST_CHANNEL != '' ">
+			,#{REQUEST_CHANNEL}
+			</if>
+			<if test="CANCEL_REASON != null and CANCEL_REASON != '' ">
+			,#{CANCEL_REASON}
+			</if>
+			<if test="CANCEL_DETAILED_REASON != null and CANCEL_DETAILED_REASON != '' ">
+			,#{CANCEL_DETAILED_REASON}
+			</if>
+			<if test="CANCEL_COMPLETED_DATE != null and CANCEL_COMPLETED_DATE != '' ">
+			,#{CANCEL_COMPLETED_DATE}
+			</if>
+			<if test="CANCEL_APPROVAL_DATE != null and CANCEL_APPROVAL_DATE != '' ">
+			,#{CANCEL_APPROVAL_DATE}
+			</if>
+			<if test="HOLDBACK_STATUS != null and HOLDBACK_STATUS != '' ">
+			,#{HOLDBACK_STATUS}
+			</if>
+			<if test="HOLDBACK_REASON != null and HOLDBACK_REASON != '' ">
+			,#{HOLDBACK_REASON}
+			</if>
+			<if test="HOLDBACK_DETAILED_REASON != null and HOLDBACK_DETAILED_REASON != '' ">
+			,#{HOLDBACK_DETAILED_REASON}
+			</if>
+			<if test="ETC_FEE_DEMAND_AMOUNT != null and ETC_FEE_DEMAND_AMOUNT != '' ">
+			,#{ETC_FEE_DEMAND_AMOUNT}
+			</if>
+			<if test="ETC_FEE_PAY_METHOD != null and ETC_FEE_PAY_METHOD != '' ">
+			,#{ETC_FEE_PAY_METHOD}
+			</if>
+			<if test="ETC_FEE_PAY_MEANS != null and ETC_FEE_PAY_MEANS != '' ">
+			,#{ETC_FEE_PAY_MEANS}
+			</if>
+			<if test="REFUND_EXPECTED_DATE != null and REFUND_EXPECTED_DATE != '' ">
+			,#{REFUND_EXPECTED_DATE}
+			</if>
+			<if test="REFUND_STANDBY_STATUS != null and REFUND_STANDBY_STATUS != '' ">
+			,#{REFUND_STANDBY_STATUS}
+			</if>
+			<if test="REFUND_STANDBY_REASON != null and REFUND_STANDBY_REASON != '' ">
+			,#{REFUND_STANDBY_REASON}
+			</if>
+			<if test="REFUND_REQUEST_DATE != null and REFUND_REQUEST_DATE != '' ">
+			,#{REFUND_REQUEST_DATE}
+			</if>
+			,NOW()
+       )
+     </insert>
+     
+     
+     <!-- 상품 취소정보 저장  -->
+    <update id="updateNpayCancelInfo" parameterType="hashmap">
+    	UPDATE TO_NPAY_CANCEL_INFO
+      	SET	
+      	    UPT_DT = NOW() 
+      	     <if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">			
+			,CLAIM_STATUS = #{CLAIM_STATUS}
+			</if>
+			<if test="CLAIM_REQUEST_DATE != null and CLAIM_REQUEST_DATE != '' ">
+			,CLAIM_REQUEST_DATE = #{CLAIM_REQUEST_DATE}
+			</if>
+			<if test="REQUEST_CHANNEL != null and REQUEST_CHANNEL != '' ">
+			,REQUEST_CHANNEL = #{REQUEST_CHANNEL}
+			</if>
+			<if test="CANCEL_REASON != null and CANCEL_REASON != '' ">
+			,CANCEL_REASON = #{CANCEL_REASON}
+			</if>
+			<if test="CANCEL_DETAILED_REASON != null and CANCEL_DETAILED_REASON != '' ">
+			,CANCEL_DETAILED_REASON = #{CANCEL_DETAILED_REASON}
+			</if>
+			<if test="CANCEL_COMPLETED_DATE != null and CANCEL_COMPLETED_DATE != '' ">
+			,CANCEL_COMPLETED_DATE = #{CANCEL_COMPLETED_DATE}
+			</if>
+			<if test="CANCEL_APPROVAL_DATE != null and CANCEL_APPROVAL_DATE != '' ">
+			,CANCEL_APPROVAL_DATE = #{CANCEL_APPROVAL_DATE}
+			</if>
+			<if test="HOLDBACK_STATUS != null and HOLDBACK_STATUS != '' ">
+			,HOLDBACK_STATUS = #{HOLDBACK_STATUS}
+			</if>
+			<if test="HOLDBACK_REASON != null and HOLDBACK_REASON != '' ">
+			,HOLDBACK_REASON = #{HOLDBACK_REASON}
+			</if>
+			<if test="HOLDBACK_DETAILED_REASON != null and HOLDBACK_DETAILED_REASON != '' ">
+			,HOLDBACK_DETAILED_REASON = #{HOLDBACK_DETAILED_REASON}
+			</if>
+			<if test="ETC_FEE_DEMAND_AMOUNT != null and ETC_FEE_DEMAND_AMOUNT != '' ">
+			,ETC_FEE_DEMAND_AMOUNT = #{ETC_FEE_DEMAND_AMOUNT}
+			</if>
+			<if test="ETC_FEE_PAY_METHOD != null and ETC_FEE_PAY_METHOD != '' ">
+			,ETC_FEE_PAY_METHOD = #{ETC_FEE_PAY_METHOD}
+			</if>
+			<if test="ETC_FEE_PAY_MEANS != null and ETC_FEE_PAY_MEANS != '' ">
+			,ETC_FEE_PAY_MEANS = #{ETC_FEE_PAY_MEANS}
+			</if>
+			<if test="REFUND_EXPECTED_DATE != null and REFUND_EXPECTED_DATE != '' ">
+			,REFUND_EXPECTED_DATE = #{REFUND_EXPECTED_DATE}
+			</if>
+			<if test="REFUND_STANDBY_STATUS != null and REFUND_STANDBY_STATUS != '' ">
+			,REFUND_STANDBY_STATUS = #{REFUND_STANDBY_STATUS}
+			</if>
+			<if test="REFUND_STANDBY_REASON != null and REFUND_STANDBY_REASON != '' ">
+			,REFUND_STANDBY_REASON = #{REFUND_STANDBY_REASON}
+			</if>
+			<if test="REFUND_REQUEST_DATE != null and REFUND_REQUEST_DATE != '' ">
+			,REFUND_REQUEST_DATE = #{REFUND_REQUEST_DATE}
+			</if>
+		WHERE ORDER_ID = #{ORDER_ID} 
+		AND PRODUCT_ORDER_ID = #{PRODUCT_ORDER_ID}
+    </update>
+        
+     <!-- 상품 취소정보 체크 -->
+	<select id="cntNpayCancelInfo" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) 
+	  	FROM TO_NPAY_CANCEL_INFO
+		WHERE ORDER_ID = #{ORDER_ID} 
+		AND PRODUCT_ORDER_ID = #{PRODUCT_ORDER_ID}
+	</select>
+	
+	 <!-- 상품 반품정보 저장  -->
+	 <insert id="insertNpayReturnInfo" parameterType="hashmap">
+		INSERT
+		INTO   TO_NPAY_RETURN_INFO
+       (
+       		PRODUCT_ORDER_ID
+			,ORDER_ID
+			 <if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">			
+			,CLAIM_STATUS
+			</if>
+			<if test="CLAIM_REQUEST_DATE != null and CLAIM_REQUEST_DATE != '' ">
+			,CLAIM_REQUEST_DATE
+			</if>
+			<if test="REQUEST_CHANNEL != null and REQUEST_CHANNEL != '' ">
+			,REQUEST_CHANNEL
+			</if>
+			<if test="RETURN_REASON != null and RETURN_REASON != '' ">
+			,RETURN_REASON
+			</if>
+			<if test="RETURN_DETAILED_REASON != null and RETURN_DETAILED_REASON != '' ">
+			,RETURN_DETAILED_REASON
+			</if>
+			<if test="HOLDBACK_STATUS != null and HOLDBACK_STATUS != '' ">
+			,HOLDBACK_STATUS
+			</if>
+			<if test="HOLDBACK_REASON != null and HOLDBACK_REASON != '' ">
+			,HOLDBACK_REASON
+			</if>
+			<if test="HOLDBACK_DETAILED_REASON != null and HOLDBACK_DETAILED_REASON != '' ">
+			,HOLDBACK_DETAILED_REASON
+			</if>
+			<if test="HOLDBACK_CONFIG_DATE != null and HOLDBACK_CONFIG_DATE != '' ">
+			,HOLDBACK_CONFIG_DATE
+			</if>
+			<if test="HOLDBACK_CONFIGURER != null and HOLDBACK_CONFIGURER != '' ">
+			,HOLDBACK_CONFIGURER
+			</if>
+			<if test="HOLDBACK_RELEASE_DATE != null and HOLDBACK_RELEASE_DATE != '' ">
+			,HOLDBACK_RELEASE_DATE
+			</if>
+			<if test="HOLDBACK_RELEASER != null and HOLDBACK_RELEASER != '' ">
+			,HOLDBACK_RELEASER
+			</if>
+			<if test="COLLECT_STATUS != null and COLLECT_STATUS != '' ">
+			,COLLECT_STATUS
+			</if>
+			<if test="COLLECT_DELIVERY_METHOD != null and COLLECT_DELIVERY_METHOD != '' ">
+			,COLLECT_DELIVERY_METHOD
+			</if>
+			<if test="COLLECT_DELIVERY_COMPANY != null and COLLECT_DELIVERY_COMPANY != '' ">
+			,COLLECT_DELIVERY_COMPANY
+			</if>
+			<if test="COLLECT_TRACKING_NUMBER != null and COLLECT_TRACKING_NUMBER != '' ">
+			,COLLECT_TRACKING_NUMBER
+			</if>
+			<if test="COLLECT_COMPLETED_DATE != null and COLLECT_COMPLETED_DATE != '' ">
+			,COLLECT_COMPLETED_DATE
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != null and CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != '' ">
+			,CLAIM_DELIVERY_FEE_DEMAND_AMOUNT
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_METHOD != null and CLAIM_DELIVERY_FEE_PAY_METHOD != '' ">
+			,CLAIM_DELIVERY_FEE_PAY_METHOD
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_MEANS != null and CLAIM_DELIVERY_FEE_PAY_MEANS != '' ">
+			,CLAIM_DELIVERY_FEE_PAY_MEANS
+			</if>
+			<if test="ETC_FEE_DEMAND_AMOUNT != null and ETC_FEE_DEMAND_AMOUNT != '' ">
+			,ETC_FEE_DEMAND_AMOUNT
+			</if>
+			<if test="ETC_FEE_PAY_METHOD != null and ETC_FEE_PAY_METHOD != '' ">
+			,ETC_FEE_PAY_METHOD
+			</if>
+			<if test="ETC_FEE_PAY_MEANS != null and ETC_FEE_PAY_MEANS != '' ">
+			,ETC_FEE_PAY_MEANS
+			</if>
+			<if test="REFUND_EXPECTED_DATE != null and REFUND_EXPECTED_DATE != '' ">
+			,REFUND_EXPECTED_DATE
+			</if>
+			<if test="REFUND_STANDBY_STATUS != null and REFUND_STANDBY_STATUS != '' ">
+			,REFUND_STANDBY_STATUS
+			</if>
+			<if test="REFUND_STANDBY_REASON != null and REFUND_STANDBY_REASON != '' ">
+			,REFUND_STANDBY_REASON
+			</if>
+			<if test="REFUND_REQUEST_DATE != null and REFUND_REQUEST_DATE != '' ">
+			,REFUND_REQUEST_DATE
+			</if>
+			<if test="RETURN_COMPLETED_DATE != null and RETURN_COMPLETED_DATE != '' ">
+			,RETURN_COMPLETED_DATE
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != null and CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != '' ">
+			,CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT
+			</if>
+			<if test="ETC_FEE_DISCOUNT_AMOUNT != null and ETC_FEE_DISCOUNT_AMOUNT != '' ">
+			,ETC_FEE_DISCOUNT_AMOUNT
+			</if>
+			,REG_DT
+       )
+       VALUES
+       (
+	         #{PRODUCT_ORDER_ID}
+			,#{ORDER_ID}
+			<if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">			
+			,#{CLAIM_STATUS}
+			</if>
+			<if test="CLAIM_REQUEST_DATE != null and CLAIM_REQUEST_DATE != '' ">
+			,#{CLAIM_REQUEST_DATE}
+			</if>
+			<if test="REQUEST_CHANNEL != null and REQUEST_CHANNEL != '' ">
+			,#{REQUEST_CHANNEL}
+			</if>
+			<if test="RETURN_REASON != null and RETURN_REASON != '' ">
+			,#{RETURN_REASON}
+			</if>
+			<if test="RETURN_DETAILED_REASON != null and RETURN_DETAILED_REASON != '' ">
+			,#{RETURN_DETAILED_REASON}
+			</if>
+			<if test="HOLDBACK_STATUS != null and HOLDBACK_STATUS != '' ">
+			,#{HOLDBACK_STATUS}
+			</if>
+			<if test="HOLDBACK_REASON != null and HOLDBACK_REASON != '' ">
+			,#{HOLDBACK_REASON}
+			</if>
+			<if test="HOLDBACK_DETAILED_REASON != null and HOLDBACK_DETAILED_REASON != '' ">
+			,#{HOLDBACK_DETAILED_REASON}
+			</if>
+			<if test="HOLDBACK_CONFIG_DATE != null and HOLDBACK_CONFIG_DATE != '' ">
+			,#{HOLDBACK_CONFIG_DATE}
+			</if>
+			<if test="HOLDBACK_CONFIGURER != null and HOLDBACK_CONFIGURER != '' ">
+			,#{HOLDBACK_CONFIGURER}
+			</if>
+			<if test="HOLDBACK_RELEASE_DATE != null and HOLDBACK_RELEASE_DATE != '' ">
+			,#{HOLDBACK_RELEASE_DATE}
+			</if>
+			<if test="HOLDBACK_RELEASER != null and HOLDBACK_RELEASER != '' ">
+			,#{HOLDBACK_RELEASER}
+			</if>
+			<if test="COLLECT_STATUS != null and COLLECT_STATUS != '' ">
+			,#{COLLECT_STATUS}
+			</if>
+			<if test="COLLECT_DELIVERY_METHOD != null and COLLECT_DELIVERY_METHOD != '' ">
+			,#{COLLECT_DELIVERY_METHOD}
+			</if>
+			<if test="COLLECT_DELIVERY_COMPANY != null and COLLECT_DELIVERY_COMPANY != '' ">
+			,#{COLLECT_DELIVERY_COMPANY}
+			</if>
+			<if test="COLLECT_TRACKING_NUMBER != null and COLLECT_TRACKING_NUMBER != '' ">
+			,#{COLLECT_TRACKING_NUMBER}
+			</if>
+			<if test="COLLECT_COMPLETED_DATE != null and COLLECT_COMPLETED_DATE != '' ">
+			,#{COLLECT_COMPLETED_DATE}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != null and CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != '' ">
+			,#{CLAIM_DELIVERY_FEE_DEMAND_AMOUNT}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_METHOD != null and CLAIM_DELIVERY_FEE_PAY_METHOD != '' ">
+			,#{CLAIM_DELIVERY_FEE_PAY_METHOD}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_MEANS != null and CLAIM_DELIVERY_FEE_PAY_MEANS != '' ">
+			,#{CLAIM_DELIVERY_FEE_PAY_MEANS}
+			</if>
+			<if test="ETC_FEE_DEMAND_AMOUNT != null and ETC_FEE_DEMAND_AMOUNT != '' ">
+			,#{ETC_FEE_DEMAND_AMOUNT}
+			</if>
+			<if test="ETC_FEE_PAY_METHOD != null and ETC_FEE_PAY_METHOD != '' ">
+			,#{ETC_FEE_PAY_METHOD}
+			</if>
+			<if test="ETC_FEE_PAY_MEANS != null and ETC_FEE_PAY_MEANS != '' ">
+			,#{ETC_FEE_PAY_MEANS}
+			</if>
+			<if test="REFUND_EXPECTED_DATE != null and REFUND_EXPECTED_DATE != '' ">
+			,#{REFUND_EXPECTED_DATE}
+			</if>
+			<if test="REFUND_STANDBY_STATUS != null and REFUND_STANDBY_STATUS != '' ">
+			,#{REFUND_STANDBY_STATUS}
+			</if>
+			<if test="REFUND_STANDBY_REASON != null and REFUND_STANDBY_REASON != '' ">
+			,#{REFUND_STANDBY_REASON}
+			</if>
+			<if test="REFUND_REQUEST_DATE != null and REFUND_REQUEST_DATE != '' ">
+			,#{REFUND_REQUEST_DATE}
+			</if>
+			<if test="RETURN_COMPLETED_DATE != null and RETURN_COMPLETED_DATE != '' ">
+			,#{RETURN_COMPLETED_DATE}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != null and CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != '' ">
+			,#{CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT}
+			</if>
+			<if test="ETC_FEE_DISCOUNT_AMOUNT != null and ETC_FEE_DISCOUNT_AMOUNT != '' ">
+			,#{ETC_FEE_DISCOUNT_AMOUNT}
+			</if>
+			,NOW()
+       )
+     </insert>
+     
+     <!-- 상품 반품정보 저장  -->
+    <update id="updateNpayReturnInfo" parameterType="hashmap">
+    	UPDATE TO_NPAY_RETURN_INFO
+      	SET	
+      	    UPT_DT = NOW() 
+      	     <if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">			
+			,CLAIM_STATUS = #{CLAIM_STATUS}
+			</if>
+			<if test="CLAIM_REQUEST_DATE != null and CLAIM_REQUEST_DATE != '' ">
+			,CLAIM_REQUEST_DATE = #{CLAIM_REQUEST_DATE}
+			</if>
+			<if test="REQUEST_CHANNEL != null and REQUEST_CHANNEL != '' ">
+			,REQUEST_CHANNEL = #{REQUEST_CHANNEL}
+			</if>
+			<if test="RETURN_REASON != null and RETURN_REASON != '' ">
+			,RETURN_REASON = #{RETURN_REASON}
+			</if>
+			<if test="RETURN_DETAILED_REASON != null and RETURN_DETAILED_REASON != '' ">
+			,RETURN_DETAILED_REASON = #{RETURN_DETAILED_REASON}
+			</if>
+			<if test="HOLDBACK_STATUS != null and HOLDBACK_STATUS != '' ">
+			,HOLDBACK_STATUS = #{HOLDBACK_STATUS}
+			</if>
+			<if test="HOLDBACK_REASON != null and HOLDBACK_REASON != '' ">
+			,HOLDBACK_REASON = #{HOLDBACK_REASON}
+			</if>
+			<if test="HOLDBACK_DETAILED_REASON != null and HOLDBACK_DETAILED_REASON != '' ">
+			,HOLDBACK_DETAILED_REASON = #{HOLDBACK_DETAILED_REASON}
+			</if>
+			<if test="HOLDBACK_CONFIG_DATE != null and HOLDBACK_CONFIG_DATE != '' ">
+			,HOLDBACK_CONFIG_DATE = #{HOLDBACK_CONFIG_DATE}
+			</if>
+			<if test="HOLDBACK_CONFIGURER != null and HOLDBACK_CONFIGURER != '' ">
+			,HOLDBACK_CONFIGURER = #{HOLDBACK_CONFIGURER}
+			</if>
+			<if test="HOLDBACK_RELEASE_DATE != null and HOLDBACK_RELEASE_DATE != '' ">
+			,HOLDBACK_RELEASE_DATE = #{HOLDBACK_RELEASE_DATE}
+			</if>
+			<if test="HOLDBACK_RELEASER != null and HOLDBACK_RELEASER != '' ">
+			,HOLDBACK_RELEASER = #{HOLDBACK_RELEASER}
+			</if>
+			<if test="COLLECT_STATUS != null and COLLECT_STATUS != '' ">
+			,COLLECT_STATUS = #{COLLECT_STATUS}
+			</if>
+			<if test="COLLECT_DELIVERY_METHOD != null and COLLECT_DELIVERY_METHOD != '' ">
+			,COLLECT_DELIVERY_METHOD = #{COLLECT_DELIVERY_METHOD}
+			</if>
+			<if test="COLLECT_DELIVERY_COMPANY != null and COLLECT_DELIVERY_COMPANY != '' ">
+			,COLLECT_DELIVERY_COMPANY = #{COLLECT_DELIVERY_COMPANY}
+			</if>
+			<if test="COLLECT_TRACKING_NUMBER != null and COLLECT_TRACKING_NUMBER != '' ">
+			,COLLECT_TRACKING_NUMBER = #{COLLECT_TRACKING_NUMBER}
+			</if>
+			<if test="COLLECT_COMPLETED_DATE != null and COLLECT_COMPLETED_DATE != '' ">
+			,COLLECT_COMPLETED_DATE = #{COLLECT_COMPLETED_DATE}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != null and CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != '' ">
+			,CLAIM_DELIVERY_FEE_DEMAND_AMOUNT = #{CLAIM_DELIVERY_FEE_DEMAND_AMOUNT}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_METHOD != null and CLAIM_DELIVERY_FEE_PAY_METHOD != '' ">
+			,CLAIM_DELIVERY_FEE_PAY_METHOD = #{CLAIM_DELIVERY_FEE_PAY_METHOD}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_MEANS != null and CLAIM_DELIVERY_FEE_PAY_MEANS != '' ">
+			,CLAIM_DELIVERY_FEE_PAY_MEANS = #{CLAIM_DELIVERY_FEE_PAY_MEANS}
+			</if>
+			<if test="ETC_FEE_DEMAND_AMOUNT != null and ETC_FEE_DEMAND_AMOUNT != '' ">
+			,ETC_FEE_DEMAND_AMOUNT = #{ETC_FEE_DEMAND_AMOUNT}
+			</if>
+			<if test="ETC_FEE_PAY_METHOD != null and ETC_FEE_PAY_METHOD != '' ">
+			,ETC_FEE_PAY_METHOD = #{ETC_FEE_PAY_METHOD}
+			</if>
+			<if test="ETC_FEE_PAY_MEANS != null and ETC_FEE_PAY_MEANS != '' ">
+			,ETC_FEE_PAY_MEANS = #{ETC_FEE_PAY_MEANS}
+			</if>
+			<if test="REFUND_EXPECTED_DATE != null and REFUND_EXPECTED_DATE != '' ">
+			,REFUND_EXPECTED_DATE = #{REFUND_EXPECTED_DATE}
+			</if>
+			<if test="REFUND_STANDBY_STATUS != null and REFUND_STANDBY_STATUS != '' ">
+			,REFUND_STANDBY_STATUS = #{REFUND_STANDBY_STATUS}
+			</if>
+			<if test="REFUND_STANDBY_REASON != null and REFUND_STANDBY_REASON != '' ">
+			,REFUND_STANDBY_REASON = #{REFUND_STANDBY_REASON}
+			</if>
+			<if test="REFUND_REQUEST_DATE != null and REFUND_REQUEST_DATE != '' ">
+			,REFUND_REQUEST_DATE = #{REFUND_REQUEST_DATE}
+			</if>
+			<if test="RETURN_COMPLETED_DATE != null and RETURN_COMPLETED_DATE != '' ">
+			,RETURN_COMPLETED_DATE = #{RETURN_COMPLETED_DATE}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != null and CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != '' ">
+			,CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT = #{CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT}
+			</if>
+			<if test="ETC_FEE_DISCOUNT_AMOUNT != null and ETC_FEE_DISCOUNT_AMOUNT != '' ">
+			,ETC_FEE_DISCOUNT_AMOUNT = #{ETC_FEE_DISCOUNT_AMOUNT}
+			</if>
+		WHERE ORDER_ID = #{ORDER_ID} 
+		AND PRODUCT_ORDER_ID = #{PRODUCT_ORDER_ID}
+    </update>
+        
+     <!-- 상품 반품정보 체크 -->
+	<select id="cntNpayReturnInfo" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) 
+	  	FROM TO_NPAY_RETURN_INFO
+		WHERE ORDER_ID = #{ORDER_ID} 
+		AND PRODUCT_ORDER_ID = #{PRODUCT_ORDER_ID}
+	</select>
+	
+
+	 <!-- 상품 교환정보 저장  -->
+	 <insert id="insertNpayExchangeInfo" parameterType="hashmap">
+		INSERT
+		INTO   TO_NPAY_EXCHANGE_INFO
+       (
+       		PRODUCT_ORDER_ID
+			,ORDER_ID
+			 <if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">			
+			,CLAIM_STATUS
+			</if>
+			<if test="CLAIM_REQUEST_DATE != null and CLAIM_REQUEST_DATE != '' ">
+			,CLAIM_REQUEST_DATE
+			</if>
+			<if test="REQUEST_CHANNEL != null and REQUEST_CHANNEL != '' ">
+			,REQUEST_CHANNEL
+			</if>			
+			
+			<if test="EXCHANGE_REASON != null and EXCHANGE_REASON != '' ">
+			,EXCHANGE_REASON
+			</if>
+			<if test="EXCHANGE_DETAILED_REASON != null and EXCHANGE_DETAILED_REASON != '' ">
+			,EXCHANGE_DETAILED_REASON
+			</if>
+			<if test="HOLDBACK_STATUS != null and HOLDBACK_STATUS != '' ">
+			,HOLDBACK_STATUS
+			</if>
+			<if test="HOLDBACK_REASON != null and HOLDBACK_REASON != '' ">
+			,HOLDBACK_REASON
+			</if>
+			<if test="HOLDBACK_DETAILED_REASON != null and HOLDBACK_DETAILED_REASON != '' ">
+			,HOLDBACK_DETAILED_REASON
+			</if>
+			<if test="HOLDBACK_CONFIG_DATE != null and HOLDBACK_CONFIG_DATE != '' ">
+			,HOLDBACK_CONFIG_DATE
+			</if>
+			<if test="HOLDBACK_CONFIGURER != null and HOLDBACK_CONFIGURER != '' ">
+			,HOLDBACK_CONFIGURER
+			</if>
+			<if test="HOLDBACK_RELEASE_DATE != null and HOLDBACK_RELEASE_DATE != '' ">
+			,HOLDBACK_RELEASE_DATE
+			</if>
+			<if test="HOLDBACK_RELEASER != null and HOLDBACK_RELEASER != '' ">
+			,HOLDBACK_RELEASER
+			</if>
+			<if test="COLLECT_STATUS != null and COLLECT_STATUS != '' ">
+			,COLLECT_STATUS
+			</if>
+			<if test="COLLECT_DELIVERY_METHOD != null and COLLECT_DELIVERY_METHOD != '' ">
+			,COLLECT_DELIVERY_METHOD
+			</if>
+			<if test="COLLECT_DELIVERY_COMPANY != null and COLLECT_DELIVERY_COMPANY != '' ">
+			,COLLECT_DELIVERY_COMPANY
+			</if>
+			<if test="COLLECT_TRACKING_NUMBER != null and COLLECT_TRACKING_NUMBER != '' ">
+			,COLLECT_TRACKING_NUMBER
+			</if>
+			<if test="COLLECT_COMPLETED_DATE != null and COLLECT_COMPLETED_DATE != '' ">
+			,COLLECT_COMPLETED_DATE
+			</if>
+			<if test="RE_DELIVERY_STATUS != null and RE_DELIVERY_STATUS != '' ">
+			,RE_DELIVERY_STATUS
+			</if>
+			<if test="RE_DELIVERY_METHOD != null and RE_DELIVERY_METHOD != '' ">
+			,RE_DELIVERY_METHOD
+			</if>
+			<if test="RE_DELIVERY_COMPANY != null and RE_DELIVERY_COMPANY != '' ">
+			,RE_DELIVERY_COMPANY
+			</if>
+			<if test="RE_DELIVERY_TRACKING_NUMBER != null and RE_DELIVERY_TRACKING_NUMBER != '' ">
+			,RE_DELIVERY_TRACKING_NUMBER
+			</if>
+			<if test="RE_DELIVERY_OPERATION_DATE != null and RE_DELIVERY_OPERATION_DATE != '' ">
+			,RE_DELIVERY_OPERATION_DATE
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != null and CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != '' ">
+			,CLAIM_DELIVERY_FEE_DEMAND_AMOUNT
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PRODUCT_ORDER_IDS != null and CLAIM_DELIVERY_FEE_PRODUCT_ORDER_IDS != '' ">
+			,CLAIM_DELIVERY_FEE_PRODUCT_ORDER_IDS
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_METHOD != null and CLAIM_DELIVERY_FEE_PAY_METHOD != '' ">
+			,CLAIM_DELIVERY_FEE_PAY_METHOD
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_MEANS != null and CLAIM_DELIVERY_FEE_PAY_MEANS != '' ">
+			,CLAIM_DELIVERY_FEE_PAY_MEANS
+			</if>
+			<if test="ETC_FEE_DEMAND_AMOUNT != null and ETC_FEE_DEMAND_AMOUNT != '' ">
+			,ETC_FEE_DEMAND_AMOUNT
+			</if>
+			<if test="ETC_FEE_PAY_METHOD != null and ETC_FEE_PAY_METHOD != '' ">
+			,ETC_FEE_PAY_METHOD
+			</if>
+			<if test="ETC_FEE_PAY_MEANS != null and ETC_FEE_PAY_MEANS != '' ">
+			,ETC_FEE_PAY_MEANS
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != null and CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != '' ">
+			,CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT
+			</if>
+			,REG_DT
+       )
+       VALUES
+       (
+	         #{PRODUCT_ORDER_ID}
+			,#{ORDER_ID}
+			<if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">			
+			,#{CLAIM_STATUS}
+			</if>
+			<if test="CLAIM_REQUEST_DATE != null and CLAIM_REQUEST_DATE != '' ">
+			,#{CLAIM_REQUEST_DATE}
+			</if>
+			<if test="REQUEST_CHANNEL != null and REQUEST_CHANNEL != '' ">
+			,#{REQUEST_CHANNEL}
+			</if>
+			
+			<if test="EXCHANGE_REASON != null and EXCHANGE_REASON != '' ">
+			,#{EXCHANGE_REASON}
+			</if>
+			<if test="EXCHANGE_DETAILED_REASON != null and EXCHANGE_DETAILED_REASON != '' ">
+			,#{EXCHANGE_DETAILED_REASON}
+			</if>
+			<if test="HOLDBACK_STATUS != null and HOLDBACK_STATUS != '' ">
+			,#{HOLDBACK_STATUS}
+			</if>
+			<if test="HOLDBACK_REASON != null and HOLDBACK_REASON != '' ">
+			,#{HOLDBACK_REASON}
+			</if>
+			<if test="HOLDBACK_DETAILED_REASON != null and HOLDBACK_DETAILED_REASON != '' ">
+			,#{HOLDBACK_DETAILED_REASON}
+			</if>
+			<if test="HOLDBACK_CONFIG_DATE != null and HOLDBACK_CONFIG_DATE != '' ">
+			,#{HOLDBACK_CONFIG_DATE}
+			</if>
+			<if test="HOLDBACK_CONFIGURER != null and HOLDBACK_CONFIGURER != '' ">
+			,#{HOLDBACK_CONFIGURER}
+			</if>
+			<if test="HOLDBACK_RELEASE_DATE != null and HOLDBACK_RELEASE_DATE != '' ">
+			,#{HOLDBACK_RELEASE_DATE}
+			</if>
+			<if test="HOLDBACK_RELEASER != null and HOLDBACK_RELEASER != '' ">
+			,#{HOLDBACK_RELEASER}
+			</if>
+			<if test="COLLECT_STATUS != null and COLLECT_STATUS != '' ">
+			,#{COLLECT_STATUS}
+			</if>
+			<if test="COLLECT_DELIVERY_METHOD != null and COLLECT_DELIVERY_METHOD != '' ">
+			,#{COLLECT_DELIVERY_METHOD}
+			</if>
+			<if test="COLLECT_DELIVERY_COMPANY != null and COLLECT_DELIVERY_COMPANY != '' ">
+			,#{COLLECT_DELIVERY_COMPANY}
+			</if>
+			<if test="COLLECT_TRACKING_NUMBER != null and COLLECT_TRACKING_NUMBER != '' ">
+			,#{COLLECT_TRACKING_NUMBER}
+			</if>
+			<if test="COLLECT_COMPLETED_DATE != null and COLLECT_COMPLETED_DATE != '' ">
+			,#{COLLECT_COMPLETED_DATE}
+			</if>
+			<if test="RE_DELIVERY_STATUS != null and RE_DELIVERY_STATUS != '' ">
+			,#{RE_DELIVERY_STATUS}
+			</if>
+			<if test="RE_DELIVERY_METHOD != null and RE_DELIVERY_METHOD != '' ">
+			,#{RE_DELIVERY_METHOD}
+			</if>
+			<if test="RE_DELIVERY_COMPANY != null and RE_DELIVERY_COMPANY != '' ">
+			,#{RE_DELIVERY_COMPANY}
+			</if>
+			<if test="RE_DELIVERY_TRACKING_NUMBER != null and RE_DELIVERY_TRACKING_NUMBER != '' ">
+			,#{RE_DELIVERY_TRACKING_NUMBER}
+			</if>
+			<if test="RE_DELIVERY_OPERATION_DATE != null and RE_DELIVERY_OPERATION_DATE != '' ">
+			,#{RE_DELIVERY_OPERATION_DATE}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != null and CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != '' ">
+			,#{CLAIM_DELIVERY_FEE_DEMAND_AMOUNT}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PRODUCT_ORDER_IDS != null and CLAIM_DELIVERY_FEE_PRODUCT_ORDER_IDS != '' ">
+			,#{CLAIM_DELIVERY_FEE_PRODUCT_ORDER_IDS}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_METHOD != null and CLAIM_DELIVERY_FEE_PAY_METHOD != '' ">
+			,#{CLAIM_DELIVERY_FEE_PAY_METHOD}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_MEANS != null and CLAIM_DELIVERY_FEE_PAY_MEANS != '' ">
+			,#{CLAIM_DELIVERY_FEE_PAY_MEANS}
+			</if>
+			<if test="ETC_FEE_DEMAND_AMOUNT != null and ETC_FEE_DEMAND_AMOUNT != '' ">
+			,#{ETC_FEE_DEMAND_AMOUNT}
+			</if>
+			<if test="ETC_FEE_PAY_METHOD != null and ETC_FEE_PAY_METHOD != '' ">
+			,#{ETC_FEE_PAY_METHOD}
+			</if>
+			<if test="ETC_FEE_PAY_MEANS != null and ETC_FEE_PAY_MEANS != '' ">
+			,#{ETC_FEE_PAY_MEANS}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != null and CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != '' ">
+			,#{CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT}
+			</if>
+			,NOW()
+       )
+     </insert>
+     
+     <!-- 상품 교환정보 저장  -->
+    <update id="updateNpayExchangeInfo" parameterType="hashmap">
+    	UPDATE TO_NPAY_EXCHANGE_INFO
+      	SET	
+      	    UPT_DT = NOW() 
+      	     <if test="CLAIM_STATUS != null and CLAIM_STATUS != '' ">			
+			,CLAIM_STATUS = #{CLAIM_STATUS}
+			</if>
+			<if test="CLAIM_REQUEST_DATE != null and CLAIM_REQUEST_DATE != '' ">
+			,CLAIM_REQUEST_DATE = #{CLAIM_REQUEST_DATE}
+			</if>
+			<if test="REQUEST_CHANNEL != null and REQUEST_CHANNEL != '' ">
+			,REQUEST_CHANNEL = #{REQUEST_CHANNEL}
+			</if>
+			<if test="EXCHANGE_REASON != null and EXCHANGE_REASON != '' ">
+			,EXCHANGE_REASON = #{EXCHANGE_REASON}
+			</if>
+			<if test="EXCHANGE_DETAILED_REASON != null and EXCHANGE_DETAILED_REASON != '' ">
+			,EXCHANGE_DETAILED_REASON = #{EXCHANGE_DETAILED_REASON}
+			</if>
+			<if test="HOLDBACK_STATUS != null and HOLDBACK_STATUS != '' ">
+			,HOLDBACK_STATUS = #{HOLDBACK_STATUS}
+			</if>
+			<if test="HOLDBACK_REASON != null and HOLDBACK_REASON != '' ">
+			,HOLDBACK_REASON = #{HOLDBACK_REASON}
+			</if>
+			<if test="HOLDBACK_DETAILED_REASON != null and HOLDBACK_DETAILED_REASON != '' ">
+			,HOLDBACK_DETAILED_REASON = #{HOLDBACK_DETAILED_REASON}
+			</if>
+			<if test="HOLDBACK_CONFIG_DATE != null and HOLDBACK_CONFIG_DATE != '' ">
+			,HOLDBACK_CONFIG_DATE = #{HOLDBACK_CONFIG_DATE}
+			</if>
+			<if test="HOLDBACK_CONFIGURER != null and HOLDBACK_CONFIGURER != '' ">
+			,HOLDBACK_CONFIGURER = #{HOLDBACK_CONFIGURER}
+			</if>
+			<if test="HOLDBACK_RELEASE_DATE != null and HOLDBACK_RELEASE_DATE != '' ">
+			,HOLDBACK_RELEASE_DATE = #{HOLDBACK_RELEASE_DATE}
+			</if>
+			<if test="HOLDBACK_RELEASER != null and HOLDBACK_RELEASER != '' ">
+			,HOLDBACK_RELEASER = #{HOLDBACK_RELEASER}
+			</if>
+			<if test="COLLECT_STATUS != null and COLLECT_STATUS != '' ">
+			,COLLECT_STATUS = #{COLLECT_STATUS}
+			</if>
+			<if test="COLLECT_DELIVERY_METHOD != null and COLLECT_DELIVERY_METHOD != '' ">
+			,COLLECT_DELIVERY_METHOD = #{COLLECT_DELIVERY_METHOD}
+			</if>
+			<if test="COLLECT_DELIVERY_COMPANY != null and COLLECT_DELIVERY_COMPANY != '' ">
+			,COLLECT_DELIVERY_COMPANY = #{COLLECT_DELIVERY_COMPANY}
+			</if>
+			<if test="COLLECT_TRACKING_NUMBER != null and COLLECT_TRACKING_NUMBER != '' ">
+			,COLLECT_TRACKING_NUMBER = #{COLLECT_TRACKING_NUMBER}
+			</if>
+			<if test="COLLECT_COMPLETED_DATE != null and COLLECT_COMPLETED_DATE != '' ">
+			,COLLECT_COMPLETED_DATE = #{COLLECT_COMPLETED_DATE}
+			</if>
+			<if test="RE_DELIVERY_STATUS != null and RE_DELIVERY_STATUS != '' ">
+			,RE_DELIVERY_STATUS = #{RE_DELIVERY_STATUS}
+			</if>
+			<if test="RE_DELIVERY_METHOD != null and RE_DELIVERY_METHOD != '' ">
+			,RE_DELIVERY_METHOD = #{RE_DELIVERY_METHOD}
+			</if>
+			<if test="RE_DELIVERY_COMPANY != null and RE_DELIVERY_COMPANY != '' ">
+			,RE_DELIVERY_COMPANY = #{RE_DELIVERY_COMPANY}
+			</if>
+			<if test="RE_DELIVERY_TRACKING_NUMBER != null and RE_DELIVERY_TRACKING_NUMBER != '' ">
+			,RE_DELIVERY_TRACKING_NUMBER = #{RE_DELIVERY_TRACKING_NUMBER}
+			</if>
+			<if test="RE_DELIVERY_OPERATION_DATE != null and RE_DELIVERY_OPERATION_DATE != '' ">
+			,RE_DELIVERY_OPERATION_DATE = #{RE_DELIVERY_OPERATION_DATE}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != null and CLAIM_DELIVERY_FEE_DEMAND_AMOUNT != '' ">
+			,CLAIM_DELIVERY_FEE_DEMAND_AMOUNT = #{CLAIM_DELIVERY_FEE_DEMAND_AMOUNT}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PRODUCT_ORDER_IDS != null and CLAIM_DELIVERY_FEE_PRODUCT_ORDER_IDS != '' ">
+			,CLAIM_DELIVERY_FEE_PRODUCT_ORDER_IDS = #{CLAIM_DELIVERY_FEE_PRODUCT_ORDER_IDS}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_METHOD != null and CLAIM_DELIVERY_FEE_PAY_METHOD != '' ">
+			,CLAIM_DELIVERY_FEE_PAY_METHOD = #{CLAIM_DELIVERY_FEE_PAY_METHOD}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_PAY_MEANS != null and CLAIM_DELIVERY_FEE_PAY_MEANS != '' ">
+			,CLAIM_DELIVERY_FEE_PAY_MEANS = #{CLAIM_DELIVERY_FEE_PAY_MEANS}
+			</if>
+			<if test="ETC_FEE_DEMAND_AMOUNT != null and ETC_FEE_DEMAND_AMOUNT != '' ">
+			,ETC_FEE_DEMAND_AMOUNT = #{ETC_FEE_DEMAND_AMOUNT}
+			</if>
+			<if test="ETC_FEE_PAY_METHOD != null and ETC_FEE_PAY_METHOD != '' ">
+			,ETC_FEE_PAY_METHOD = #{ETC_FEE_PAY_METHOD}
+			</if>
+			<if test="ETC_FEE_PAY_MEANS != null and ETC_FEE_PAY_MEANS != '' ">
+			,ETC_FEE_PAY_MEANS = #{ETC_FEE_PAY_MEANS}
+			</if>
+			<if test="CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != null and CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT != '' ">
+			,CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT = #{CLAIM_DELIVERY_FEE_DISCOUNT_AMOUNT}
+			</if>
+		WHERE ORDER_ID = #{ORDER_ID} 
+		AND PRODUCT_ORDER_ID = #{PRODUCT_ORDER_ID}
+    </update>
+        
+     <!-- 상품 교환정보 체크 -->
+	<select id="cntNpayExchangeInfo" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) 
+	  	FROM TO_NPAY_EXCHANGE_INFO
+		WHERE ORDER_ID = #{ORDER_ID} 
+		AND PRODUCT_ORDER_ID = #{PRODUCT_ORDER_ID}
+	</select>
+	
+		
+	<!-- npay주문저장프로시저 -->
+	<select id="callSpNpayOrderPayed" parameterType="hashmap" statementType="CALLABLE">
+		{ CALL SP_NPAY_ORDER_PAYED(#{ORDER_ID, mode=IN, jdbcType=VARCHAR}) }
+	</select>
+	
+	<!-- npay 클레임 프로시저 -->
+	<select id="callSpNpayClaim" parameterType="hashmap" statementType="CALLABLE">
+		{ CALL SP_NPAY_CLAIM(#{CLAIM_TYPE, mode=IN, jdbcType=VARCHAR}, #{ORDER_ID, mode=IN, jdbcType=VARCHAR}) }
+	</select>
+		
+</mapper>

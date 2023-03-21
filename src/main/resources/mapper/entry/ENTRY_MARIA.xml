@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="entryDAO">
+
+	<!-- 응모번호 체크 -->
+	<select id="entryNoCheck" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TE_ENTRY_NUMBER A
+		WHERE A.ENTRY_NO = #{ENTRYNO}
+		AND  A.ENTRY_YN = 'N'
+	</select>
+	
+	<!-- 응모정보 저장 -->
+	<insert id="entryEventSave" parameterType="hashmap">
+ 		INSERT INTO TE_ENTRY_INFO (
+	 			ENTRY_NO, ENTRY_NM, TEL_NO, BIRTH_DATE, ZIP_CD, OLD_ADDR, OLD_ZIP_CD, ADDR, ADDR_DETAIL, GENDER, PURCHASE_TYPE, REG_IDX, REG_DT
+	 		)
+			VALUES (
+				#{ENTRYNO}, 
+				#{ENTRYNM},
+				FN_ENCRYPT(#{TELNO}),
+				#{BIRTHDATE},
+				#{ZIPCD},
+				FN_ENCRYPT(#{OLDADDR}),
+				#{OLDZIPCD},
+				FN_ENCRYPT(#{ADDR}),
+				FN_ENCRYPT(#{ADDRDETAIL}),
+				#{GENDER},
+				#{PURCHASETYPE},
+				#{REGIDX},
+				NOW()
+			)
+ 	</insert>
+ 	
+	<!-- 응모 여부 업데이트 -->
+	<update id="entryEventUpdate" parameterType="hashmap">
+		UPDATE TE_ENTRY_NUMBER
+      	SET	ENTRY_YN = 'Y' 
+		WHERE ENTRY_NO = #{ENTRYNO}
+	</update>
+	
+	<!-- 토종비결 저장  -->
+	<insert id="predictEventSave" parameterType="hashmap">
+ 		INSERT INTO TE_PREDICT_INFO (
+	 			CP, PYEAR, PMONTH, PDAY, PHOUR, PMINUTE, PLEAP, PGENDER, DEVICE, REG_IDX, REG_DT
+	 		)
+			VALUES (
+				#{CP}, 
+				#{PYEAR},
+				#{PMONTH},
+				#{PDAY},
+				#{PHOUR},
+				#{PMINUTE},
+				#{PLEAP},
+				#{PGENDER},
+				#{DEVICE},
+				#{REGIDX},
+				NOW()
+			)
+ 	</insert>
+
+	<!-- 네이버 타임보드 이벤트 (2019-11-13 회원 가입자 대상)용 - 구매시 유효성 체크 -->
+	<select id="procSpPgCheckNaverEvent" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="sqlMap">
+		{ CALL SP_CHECK_NAVER_EVENT(#{MEMBERIDX, mode=IN, jdbcType=INTEGER}) }
+	</select>
+	
+	<!-- 커플링 신청 중복 체크 -->
+	<select id="day100ringCheck"  parameterType="java.util.HashMap" resultType="int">
+		/** entryDAO.day100ringCheck **/
+		SELECT COUNT(*)
+		FROM TE_EVENT_RING 
+		WHERE REG_IDX = #{REGIDX}
+	</select>
+	
+	<!-- 커플링 신청 -->
+	<insert id="day100ringSave" parameterType="java.util.HashMap">
+		/** entryDAO.day100ringSave **/
+		INSERT INTO TE_EVENT_RING 
+					( REG_IDX, REG_DT )
+		VALUES ( #{REGIDX}, NOW() )
+	</insert>
+	
+	<!-- 100일 이벤트 댓글 리스트 -->
+	<select id="get100dayReplyList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** entryDAO.get100dayReplyList **/
+		SELECT A.REPLY_IDX, 				/* 댓글 일련번호 */
+				   A.EVENT_IDX,					/* 이벤트 일련번호 */
+				   A.GUBUN,						/* 구분 */
+				   A.REPLY_CONTENTS,		/* 댓글 내용 */
+				   DATE_FORMAT(A.REG_DT,'%m.%d') AS REG_MD, 		/* 작성 월일 */
+				   DATE_FORMAT(A.REG_DT,'%H:%i:%s') AS REG_HMS,	/* 작성 시분초 */
+				   FN_MASK_NM(B.MEMBER_NM) AS MEMBER_NM, 			/* 회원명 */
+				   A.REG_IDX,					/* 작성자 일련번호 */
+				   RIGHT(A.REG_IDX, 1) AS REG_TYPE	/* 작성자 일련번호 뒷자리 */
+		FROM TE_EVENT_REPLY A INNER JOIN TM_MEMBER_DETAIL B ON A.REG_IDX = B.MEMBER_DETAIL_IDX
+		WHERE A.EVENT_IDX = #{EVENTIDX}
+  		ORDER BY A.REG_DT DESC
+  		
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 종료 된 이벤트 리스트 총 개수 => 2018 리뉴얼 이벤트 -->
+	<select id="get100dayReplyListCnt" parameterType="java.util.HashMap" resultType="int">
+		/** entryDAO.get100dayReplyListCnt **/
+		SELECT COUNT(*)
+		FROM TE_EVENT_REPLY 
+		WHERE EVENT_IDX = #{EVENTIDX}
+	</select>
+	
+	<!-- 2018 리뉴얼 이벤트 댓글 저장 => 2018 리뉴얼 이벤트 -->
+	<insert id="renewReplySave" parameterType="java.util.HashMap">
+		/** entryDAO.renewReplySave **/
+		INSERT INTO TE_EVENT_REPLY 
+					( EVENT_IDX, GUBUN, REPLY_CONTENTS, REG_IDX, REG_DT )
+		VALUES ( #{EVENTIDX}, #{GUBUN}, #{REPLYCONTENTS}, #{REGIDX}, NOW() )
+	</insert>
+	
+	<select id="renewQuizCheck" parameterType="java.util.HashMap" resultType="int">
+		/** entryDAO.renewQuizCheck **/
+		SELECT COUNT(*)
+		FROM TE_EVENT_RENEW_QUIZ 
+		WHERE EVENT_IDX = #{EVENTNO}
+		AND QUIZ_NO = #{QUIZNO}
+		AND MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+	<insert id="renewQuizSave" parameterType="java.util.HashMap">
+		INSERT INTO TE_EVENT_RENEW_QUIZ 
+					( EVENT_IDX, QUIZ_NO, MEMBER_IDX, REG_DT )
+		VALUES ( #{EVENTNO}, #{QUIZNO}, #{MEMBERIDX}, NOW() )
+	</insert>
+
+	<select id="renewQuizList" parameterType="java.util.HashMap" resultType="sqlMap">
+		SELECT *
+		FROM TE_EVENT_RENEW_QUIZ 
+		WHERE EVENT_IDX = #{EVENTNO}
+		AND MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+	<!-- 크리에이터 제출 -->
+	<insert id="creatorSave" parameterType="java.util.HashMap">
+		/** entryDAO.creatorSave **/
+		INSERT INTO TE_EVENT_CREATOR 
+					( MEMBER_IDX, MEMBER_NM, AGE, PHONE_NO, AREA, INTRODUCE, MOMENT, SNS_URL, VIDEO_NM, VIDEO_URL, MESSAGE, PRIVACY_YN, REG_DT )
+		VALUES ( #{MEMBERIDX}, #{MEMBERNM}, #{AGE}, FN_ENCRYPT(#{PHONENO}), #{AREA}, #{INTRODUCE}, #{MOMENT}, #{SNSURL}, #{VIDEONM}, #{VIDEOURL}, #{MESSAGE}, #{PRIVACYYN}, NOW() )
+	</insert>
+	
+	<!-- 상품 정보 -->
+	<select id="getGoodsDetail" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+		FROM TP_GOODS A
+		WHERE A.GOODS_CD = #{GOODSCD}
+		LIMIT 1
+	</select>
+
+
+	<!-- 응모번호 체크 -->
+	<select id="entryNo2020Check" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TE_ENTRY_NUMBER2020 A
+		WHERE A.ENTRY_NO = #{ENTRYNO}
+		AND  A.ENTRY_YN = 'N'
+	</select>
+	
+	<!-- 응모정보 저장 -->
+	<insert id="entryEvent2020Save" parameterType="hashmap">
+ 		INSERT INTO TE_ENTRY_INFO2020 (
+	 			ENTRY_NO, ENTRY_NM, TEL_NO, ZIP_CD, OLD_ADDR, OLD_ZIP_CD, ADDR, ADDR_DETAIL, REG_IDX, REG_DT
+	 		)
+			VALUES (
+				#{ENTRYNO}, 
+				#{ENTRYNM},
+				#{TELNO},
+				#{ZIPCD},
+				#{OLDADDR},
+				#{OLDZIPCD},
+				#{ADDR},
+				#{ADDRDETAIL},
+				#{REGIDX},
+				NOW()
+			)
+ 	</insert>
+ 	
+	<!-- 응모 여부 업데이트 -->
+	<update id="entryNumber2020Update" parameterType="hashmap">
+		UPDATE TE_ENTRY_NUMBER2020
+      	SET	ENTRY_YN = 'Y' 
+		WHERE ENTRY_NO = #{ENTRYNO}
+	</update>
+		
+</mapper>

@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="pointDAO">
+	
+	<!-- 포인트 리스트 총 개수 -->
+	<select id="getPointListCnt" parameterType="java.util.HashMap" resultType="int">
+		/** pointDAO.getPointListCnt **/
+		SELECT 
+			COUNT(*)
+		FROM TM_POINT_INFO
+		WHERE MEMBER_IDX = #{MEMBERIDX}
+		
+		<!-- 날짜 검색 -->
+		<if test="SCHSTARTDT != null and SCHSTARTDT != '' ">
+			AND ( DATE_FORMAT(PAY_DED_DT,'%Y-%m-%d') <![CDATA[>=]]> #{SCHSTARTDT} )
+		</if>
+		<if test="SCHENDDT != null and SCHENDDT != '' ">
+			AND ( DATE_FORMAT(PAY_DED_DT,'%Y-%m-%d') <![CDATA[<=]]> #{SCHENDDT} )
+		</if>
+		
+  		<!-- 지급, 차감 구분 -->
+  		<if test="SCHSUBTYPE != null and SCHSUBTYPE != '' ">
+			AND PAY_DED_TYPE = #{SCHSUBTYPE}
+		</if>
+	</select>
+	
+	<!-- 포인트 리스트 -->
+	<select id="getPointList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** pointDAO.getPointList **/
+		SELECT 
+			DATE_FORMAT(PAY_DED_DT, '%Y.%m.%d %H:%i') AS PAY_DED_DT,	/* 날짜 */
+			PAY_DED_REASON,		/* 사유 코드 */
+			FN_COMMON_NM(PAY_DED_REASON) AS PAY_DED_REASON_NM,	/* 사유 명 */
+			PAY_DED_TYPE,			/* 지급, 차감 구분 */
+			CASE
+				WHEN PAY_DED_TYPE = 'P' THEN '적립'
+				WHEN PAY_DED_TYPE = 'M' THEN '사용'
+			END AS PAY_DED_TYPE_NM,	/* 지급, 차감 구분 명 */
+			FLOOR(PAYMENT_PRICE) AS PAYMENT_PRICE,				/* 지급 금액 */
+			FLOOR(DEDUCTION_PRICE) AS DEDUCTION_PRICE,		/* 차감 금액 */
+			CASE 
+				WHEN PAY_DED_TYPE = 'P' THEN FLOOR(PAYMENT_PRICE) ELSE FLOOR(DEDUCTION_PRICE*-1) 
+			END AS POINT,				/* 지급, 차감 금액 */
+			CASE
+				WHEN PAY_DED_TYPE = 'P' THEN DATE_FORMAT(DATE_ADD(PAY_DED_DT, INTERVAL 25 MONTH), '%Y.%m.01') ELSE NULL 
+			END AS EXTINCTION_DT	/* 소멸 예정 일 */
+		FROM TM_POINT_INFO
+		WHERE MEMBER_IDX = #{MEMBERIDX}
+		
+		<!-- 날짜 검색 -->
+		<if test="SCHSTARTDT != null and SCHSTARTDT != '' ">
+			AND ( DATE_FORMAT(PAY_DED_DT,'%Y-%m-%d') <![CDATA[>=]]> #{SCHSTARTDT} )
+		</if>
+		<if test="SCHENDDT != null and SCHENDDT != '' ">
+			AND ( DATE_FORMAT(PAY_DED_DT,'%Y-%m-%d') <![CDATA[<=]]> #{SCHENDDT} )
+		</if>
+		
+  		<!-- 지급, 차감 구분 -->
+  		<if test="SCHSUBTYPE != null and SCHSUBTYPE != '' ">
+			AND PAY_DED_TYPE = #{SCHSUBTYPE}
+		</if>
+  		
+		<!-- 정렬 -->
+		ORDER BY POINT_INFO_IDX DESC
+		
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 페이지 적용 포인트 합 -->
+	<select id="getSumPoint" parameterType="java.util.HashMap" resultType="int">
+		/** pointDAO.getSumPoint **/
+		SELECT COALESCE(SUM(POINT), 0)
+		FROM (
+			SELECT
+				CASE WHEN PAY_DED_TYPE = 'P' THEN COALESCE(PAYMENT_PRICE, 0) ELSE COALESCE(DEDUCTION_PRICE, 0)*-1 END POINT
+			FROM TM_POINT_INFO
+			WHERE MEMBER_IDX = #{MEMBERIDX}
+			<!-- 날짜 검색 -->
+			<!-- AND ( DATE_FORMAT(A.QUESTN_REG_DT,'%Y-%m-%d') <![CDATA[>=]]> #{SCHSTARTDT} AND DATE_FORMAT(A.QUESTN_REG_DT,'%Y-%m-%d') <![CDATA[<=]]> #{SCHENDDT} ) -->
+			
+	  		<!-- 지급, 차감 구분 -->
+	  		<if test="SCHTYPE != null and SCHTYPE != '' ">
+				AND PAY_DED_TYPE = #{SCHTYPE}
+			</if>
+			
+			ORDER BY POINT_INFO_IDX DESC
+			LIMIT #{PAGESTART}, #{TOTALCOUNT}
+		) aa
+	</select>
+	
+	<!-- 보유 포인트 -->
+	<select id="getTotalPoint" parameterType="java.util.HashMap" resultType="int">
+		/** pointDAO.getTotalPoint **/
+		SELECT COALESCE(SUM(POINT), 0)
+		FROM (
+			SELECT
+				CASE WHEN PAY_DED_TYPE = 'P' THEN COALESCE(PAYMENT_PRICE, 0) ELSE COALESCE(DEDUCTION_PRICE, 0)*-1 END POINT
+			FROM TM_POINT_INFO
+			WHERE MEMBER_IDX = #{MEMBERIDX}
+			ORDER BY POINT_INFO_IDX DESC
+		)  aa
+	</select>
+	
+	<!-- 포인트 조회 프로시져 -->
+	<select id="getSpPointDeduct" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="sqlMap">
+		{ CALL SP_POINT_DEDUCT( #{DEDUCT_DAY, mode=IN, jdbcType=VARCHAR},  #{INTERVAL, mode=IN, jdbcType=INTEGER} , #{MEMBER_IDX, mode=IN, jdbcType=INTEGER} , #{PROCESS_GBN, mode=IN, jdbcType=CHAR} )  }
+	</select>
+	
+	
+	<!-- 사용가능한 쿠폰 리스트 총 개수 -->
+	<select id="getUsableCouponCnt" parameterType="java.util.HashMap" resultType="int">
+		/** pointDAO.getUsableCouponCnt **/
+		select COUNT(*) from (
+				SELECT 
+					       A.COUPON_IDX
+					  FROM TO_COUPON_MEMBER A
+					  WHERE A.USE_YN = 'N' AND A.ORDER_IDX IS NULL AND A.ORDER_DETAIL_IDX IS NULL
+					  AND A.METHOD IN ('D','S')
+					  AND (A.USE_DATE_LIMIT_YN = 'N' OR ( A.USE_DATE_LIMIT_YN IN ('Y', 'P') AND  DATE(A.REAL_USE_START_DT) <![CDATA[<=]]> CURDATE() AND DATE(A.REAL_USE_END_DT) <![CDATA[>=]]> CURDATE() ))
+					 AND A.MEMBER_IDX = #{MEMBER_IDX} 
+			UNION ALL
+			SELECT   A.COUPON_IDX  
+					FROM TO_COUPON A
+					WHERE A.USE_YN = 'Y'   
+			        AND A.METHOD = 'A'       	 
+						AND (CURDATE() <![CDATA[>=]]> DATE(DOWN_START_DT) OR DOWN_START_DT IS NULL)	/* 다운로드 시작일 */
+						AND (CURDATE() <![CDATA[<=]]> DATE(DOWN_END_DT) OR DOWN_END_DT IS NULL) 		/* 다운로드 종료일 */
+						AND (A.USE_DATE_LIMIT_YN IN ('N','P') OR (USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(USE_START_DT) OR USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(USE_END_DT) OR USE_END_DT IS NULL)))	/* 사용기한 제한여부 */
+						AND (A.TARGET_MEMBER = 'A' 
+									OR (A.TARGET_MEMBER = 'G' AND A.TARGET_GRADE = (select LEVEL_IDX from tm_member_detail d where d.MEMBER_DETAIL_IDX = #{MEMBER_IDX}  ) ) 
+									OR (A.TARGET_MEMBER = 'M' AND 
+											EXISTS ( 
+														SELECT COUPON_IDX 
+														FROM TO_COUPON_TARGET_MEMBER
+														WHERE COUPON_IDX = A.COUPON_IDX
+														AND MEMBER_IDX = #{MEMBER_IDX} 
+														)
+										)
+							  )
+						AND (A.ISSUE_CNT_LIMIT_YN = 'N' OR (A.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(A.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(A.MAX_ISSUE_CNT,0) <![CDATA[>]]> 0 AND IFNULL(A.MAX_ISSUE_CNT,0) <![CDATA[>]]> (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = A.COUPON_IDX)))))	/* 최대 발급수량 조건 */
+			) AA
+	</select>
+	
+	<!-- 사용가능한 쿠폰 리스트 -->
+	<select id="getUsableCouponList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** pointDAO.getUsableCouponList **/
+			select * from (
+				SELECT A.COUPON_MEMBER_IDX,
+					       A.COUPON_IDX,
+					       A.COUPON_NM,
+					       A.COUPON_DESC,
+					       A.GUBUN,     
+					       A.METHOD,   
+					       A.DEVICE,
+					       A.DISCOUNT_TYPE,  
+					       A.DISCOUNT,
+					       IFNULL(A.MAX_DISCOUNT,0) AS MAX_DISCOUNT,
+					       A.ORDER_AMT_LIMIT_YN,
+					       A.MIN_ORDER_AMT,
+					       A.USE_DATE_LIMIT_YN,
+					       A.USE_START_DT,
+					       A.USE_END_DT,
+					       A.DOWN_DT,
+					       A.USE_DT,
+					       A.REAL_USE_START_DT,
+					       A.REAL_USE_END_DT,
+					       DATEDIFF(NOW(),A.REAL_USE_END_DT) AS  DIFF_DAY,
+					       BM.TARGET_BRAND_IDX,			/* 대상 브랜드 인덱스 (여러 브랜드 등록돼도 한개만) */
+					       A.TARGET_GOODS
+					  FROM TO_COUPON_MEMBER A
+				        LEFT OUTER JOIN (	/* 대상 브랜드 인덱스 */
+							SELECT GUBUN_IDX, MIN(BRAND_IDX) AS TARGET_BRAND_IDX 
+							FROM TS_BRAND_MAPPING
+							WHERE GUBUN = 'COUPON'
+							GROUP BY GUBUN_IDX
+				        ) BM ON A.COUPON_IDX = BM.GUBUN_IDX
+					  WHERE A.USE_YN = 'N' AND A.ORDER_IDX IS NULL AND A.ORDER_DETAIL_IDX IS NULL
+					  AND A.METHOD IN ('D','S')
+					  AND (A.USE_DATE_LIMIT_YN = 'N' OR ( A.USE_DATE_LIMIT_YN IN ('Y', 'P') AND  DATE(A.REAL_USE_START_DT) <![CDATA[<=]]> CURDATE() AND DATE(A.REAL_USE_END_DT) <![CDATA[>=]]> CURDATE() ))
+					 AND A.MEMBER_IDX = #{MEMBER_IDX} 
+			UNION ALL
+			SELECT  0 AS COUPON_MEMBER_IDX,
+					       A.COUPON_IDX,
+					       A.COUPON_NM,
+					       A.COUPON_DESC,
+					       A.GUBUN,     
+					       A.METHOD,   
+					       A.DEVICE,
+					       A.DISCOUNT_TYPE,  
+					       A.DISCOUNT,
+					       IFNULL(A.MAX_DISCOUNT,0) AS MAX_DISCOUNT,
+					       A.ORDER_AMT_LIMIT_YN,
+					       A.MIN_ORDER_AMT,
+					       A.USE_DATE_LIMIT_YN,
+					       A.USE_START_DT,
+					       A.USE_END_DT,
+					       NOW() AS DOWN_DT,
+					       NULL AS USE_DT,
+			                CASE WHEN A.USE_DATE_LIMIT_YN = 'P' AND IFNULL(A.USABLE_DAYS,0) <![CDATA[>]]> 0 THEN CURDATE() ELSE A.USE_START_DT END AS REAL_USE_START_DT,	
+							CASE WHEN A.USE_DATE_LIMIT_YN = 'P' AND IFNULL(A.USABLE_DAYS,0) <![CDATA[>]]> 0 THEN DATE_ADD(CURDATE(), INTERVAL IFNULL(A.USABLE_DAYS,0) DAY) ELSE A.USE_END_DT END AS REAL_USE_END_DT,	 
+					       DATEDIFF(NOW(),CASE WHEN A.USE_DATE_LIMIT_YN = 'P' AND IFNULL(A.USABLE_DAYS,0) <![CDATA[>]]> 0 THEN DATE_ADD(CURDATE(), INTERVAL IFNULL(A.USABLE_DAYS,0) DAY) ELSE A.USE_END_DT END) AS  DIFF_DAY,
+					       BM.TARGET_BRAND_IDX,			/* 대상 브랜드 인덱스 (여러 브랜드 등록돼도 한개만) */
+					       A.TARGET_GOODS
+					FROM TO_COUPON A
+			        LEFT OUTER JOIN (	/* 대상 브랜드 인덱스 */
+						SELECT GUBUN_IDX, MIN(BRAND_IDX) AS TARGET_BRAND_IDX 
+						FROM TS_BRAND_MAPPING
+						WHERE GUBUN = 'COUPON'
+						GROUP BY GUBUN_IDX
+			        ) BM ON A.COUPON_IDX = BM.GUBUN_IDX
+					WHERE A.USE_YN = 'Y'   
+			        AND A.METHOD = 'A'       	 
+						AND (CURDATE() <![CDATA[>=]]> DATE(DOWN_START_DT) OR DOWN_START_DT IS NULL)	/* 다운로드 시작일 */
+						AND (CURDATE() <![CDATA[<=]]> DATE(DOWN_END_DT) OR DOWN_END_DT IS NULL) 		/* 다운로드 종료일 */
+						AND (A.USE_DATE_LIMIT_YN IN ('N','P') OR (USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(USE_START_DT) OR USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(USE_END_DT) OR USE_END_DT IS NULL)))	/* 사용기한 제한여부 */
+						AND (A.TARGET_MEMBER = 'A' 
+									OR (A.TARGET_MEMBER = 'G' AND A.TARGET_GRADE = (select LEVEL_IDX from tm_member_detail d where d.MEMBER_DETAIL_IDX = #{MEMBER_IDX}  ) ) 
+									OR (A.TARGET_MEMBER = 'M' AND 
+											EXISTS ( /* 대상 회원에 포함되어 있는지 */
+														SELECT COUPON_IDX 
+														FROM TO_COUPON_TARGET_MEMBER
+														WHERE COUPON_IDX = A.COUPON_IDX
+														AND MEMBER_IDX = #{MEMBER_IDX} 
+														)
+										)
+							  )
+						AND (A.ISSUE_CNT_LIMIT_YN = 'N' OR (A.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(A.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(A.MAX_ISSUE_CNT,0) <![CDATA[>]]> 0 AND IFNULL(A.MAX_ISSUE_CNT,0) <![CDATA[>]]> (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = A.COUPON_IDX)))))	/* 최대 발급수량 조건 */
+			) AA
+		 order by AA.diff_day DESC, AA.down_dt DESC  
+		  LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 7일이내 만료 쿠폰 리스트 총 개수 -->
+	<select id="getSevenExpireCouponCnt" parameterType="java.util.HashMap" resultType="int">
+		/** pointDAO.getSevenExpireCouponCnt **/
+		select COUNT(*) from (
+				SELECT
+					       A.COUPON_IDX,
+					       DATEDIFF(NOW(),A.REAL_USE_END_DT) AS  DIFF_DAY    
+					  FROM TO_COUPON_MEMBER A
+					  WHERE A.USE_YN = 'N' AND A.ORDER_IDX IS NULL AND A.ORDER_DETAIL_IDX IS NULL
+					  AND A.METHOD IN ('D','S')
+					  AND (A.USE_DATE_LIMIT_YN = 'N' OR ( A.USE_DATE_LIMIT_YN IN ('Y', 'P') AND  DATE(A.REAL_USE_START_DT) <![CDATA[<=]]> CURDATE() AND DATE(A.REAL_USE_END_DT) <![CDATA[>=]]> CURDATE() ))
+					 AND A.MEMBER_IDX = #{MEMBER_IDX} 
+			UNION ALL
+			SELECT     A.COUPON_IDX,				       	 
+					       DATEDIFF(NOW(),CASE WHEN A.USE_DATE_LIMIT_YN = 'P' AND IFNULL(A.USABLE_DAYS,0) <![CDATA[>]]> 0 THEN DATE_ADD(CURDATE(), INTERVAL IFNULL(A.USABLE_DAYS,0) DAY) ELSE A.USE_END_DT END) AS  DIFF_DAY    
+					FROM TO_COUPON A
+					WHERE A.USE_YN = 'Y'   
+			        AND A.METHOD = 'A'       	 
+						AND (CURDATE() <![CDATA[>=]]> DATE(DOWN_START_DT) OR DOWN_START_DT IS NULL)	/* 다운로드 시작일 */
+						AND (CURDATE() <![CDATA[<=]]> DATE(DOWN_END_DT) OR DOWN_END_DT IS NULL) 		/* 다운로드 종료일 */
+						AND (A.USE_DATE_LIMIT_YN IN ('N','P') OR (USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(USE_START_DT) OR USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(USE_END_DT) OR USE_END_DT IS NULL)))	/* 사용기한 제한여부 */
+						AND (A.TARGET_MEMBER = 'A' 
+									OR (A.TARGET_MEMBER = 'G' AND A.TARGET_GRADE = (select LEVEL_IDX from tm_member_detail d where d.MEMBER_DETAIL_IDX = #{MEMBER_IDX}  ) ) 
+									OR (A.TARGET_MEMBER = 'M' AND 
+											EXISTS ( /* 대상 회원에 포함되어 있는지 */
+														SELECT COUPON_IDX 
+														FROM TO_COUPON_TARGET_MEMBER
+														WHERE COUPON_IDX = A.COUPON_IDX
+														AND MEMBER_IDX = #{MEMBER_IDX} 
+														)
+										)
+							  )
+						AND (A.ISSUE_CNT_LIMIT_YN = 'N' OR (A.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(A.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(A.MAX_ISSUE_CNT,0) <![CDATA[>]]> 0 AND IFNULL(A.MAX_ISSUE_CNT,0) <![CDATA[>]]> (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = A.COUPON_IDX)))))	/* 최대 발급수량 조건 */
+			) AA
+		  WHERE AA.diff_day IS NOT NULL 
+		  AND AA.diff_day <![CDATA[>=]]> -7
+		  AND AA.diff_day <![CDATA[<=]]> 0
+		  
+
+	</select>
+	
+	<!-- 7일이내 만료 쿠폰 리스트 -->
+	<select id="getSevenExpireCouponList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** pointDAO.getSevenExpireCouponList **/
+		select * from (
+				SELECT A.COUPON_MEMBER_IDX,
+					       A.COUPON_IDX,
+					       A.COUPON_NM,
+					       A.COUPON_DESC,
+					       A.GUBUN,     
+					       A.METHOD,   
+					       A.DEVICE,
+					       A.DISCOUNT_TYPE,  
+					       A.DISCOUNT,
+					       IFNULL(A.MAX_DISCOUNT,0) AS MAX_DISCOUNT,
+					       A.ORDER_AMT_LIMIT_YN,
+					       A.MIN_ORDER_AMT,
+					       A.USE_DATE_LIMIT_YN,
+					       A.USE_START_DT,
+					       A.USE_END_DT,
+					       A.DOWN_DT,
+					       A.USE_DT,
+					       A.REAL_USE_START_DT,
+					       A.REAL_USE_END_DT,
+					       DATEDIFF(NOW(),A.REAL_USE_END_DT) AS  DIFF_DAY,
+					       BM.TARGET_BRAND_IDX,			/* 대상 브랜드 인덱스 (여러 브랜드 등록돼도 한개만) */
+					       A.TARGET_GOODS
+					  FROM TO_COUPON_MEMBER A
+				        LEFT OUTER JOIN (	/* 대상 브랜드 인덱스 */
+							SELECT GUBUN_IDX, MIN(BRAND_IDX) AS TARGET_BRAND_IDX 
+							FROM TS_BRAND_MAPPING
+							WHERE GUBUN = 'COUPON'
+							GROUP BY GUBUN_IDX
+				        ) BM ON A.COUPON_IDX = BM.GUBUN_IDX
+					  WHERE A.USE_YN = 'N' AND A.ORDER_IDX IS NULL AND A.ORDER_DETAIL_IDX IS NULL
+					  AND A.METHOD IN ('D','S')
+					  AND (A.USE_DATE_LIMIT_YN = 'N' OR ( A.USE_DATE_LIMIT_YN IN ('Y', 'P') AND  DATE(A.REAL_USE_START_DT) <![CDATA[<=]]> CURDATE() AND DATE(A.REAL_USE_END_DT) <![CDATA[>=]]> CURDATE() ))
+					 AND A.MEMBER_IDX = #{MEMBER_IDX} 
+			UNION ALL
+			SELECT  0 AS COUPON_MEMBER_IDX,
+					       A.COUPON_IDX,
+					       A.COUPON_NM,
+					       A.COUPON_DESC,
+					       A.GUBUN,     
+					       A.METHOD,   
+					       A.DEVICE,
+					       A.DISCOUNT_TYPE,  
+					       A.DISCOUNT,
+					       IFNULL(A.MAX_DISCOUNT,0) AS MAX_DISCOUNT,    
+					       A.ORDER_AMT_LIMIT_YN,
+					       A.MIN_ORDER_AMT,
+					       A.USE_DATE_LIMIT_YN,
+					       A.USE_START_DT,
+					       A.USE_END_DT,
+					       NOW() AS DOWN_DT,
+					       NULL AS USE_DT,
+			                CASE WHEN A.USE_DATE_LIMIT_YN = 'P' AND IFNULL(A.USABLE_DAYS,0) <![CDATA[>]]> 0 THEN CURDATE() ELSE A.USE_START_DT END AS REAL_USE_START_DT,	
+							CASE WHEN A.USE_DATE_LIMIT_YN = 'P' AND IFNULL(A.USABLE_DAYS,0) <![CDATA[>]]> 0 THEN DATE_ADD(CURDATE(), INTERVAL IFNULL(A.USABLE_DAYS,0) DAY) ELSE A.USE_END_DT END AS REAL_USE_END_DT,	 
+					       DATEDIFF(NOW(),CASE WHEN A.USE_DATE_LIMIT_YN = 'P' AND IFNULL(A.USABLE_DAYS,0) <![CDATA[>]]> 0 THEN DATE_ADD(CURDATE(), INTERVAL IFNULL(A.USABLE_DAYS,0) DAY) ELSE A.USE_END_DT END) AS  DIFF_DAY,
+					       BM.TARGET_BRAND_IDX,			/* 대상 브랜드 인덱스 (여러 브랜드 등록돼도 한개만) */
+					       A.TARGET_GOODS
+					FROM TO_COUPON A
+			        LEFT OUTER JOIN (	/* 대상 브랜드 인덱스 */
+						SELECT GUBUN_IDX, MIN(BRAND_IDX) AS TARGET_BRAND_IDX 
+						FROM TS_BRAND_MAPPING
+						WHERE GUBUN = 'COUPON'
+						GROUP BY GUBUN_IDX
+			        ) BM ON A.COUPON_IDX = BM.GUBUN_IDX
+					WHERE A.USE_YN = 'Y'   
+			        AND A.METHOD = 'A'       	 
+						AND (CURDATE() <![CDATA[>=]]> DATE(DOWN_START_DT) OR DOWN_START_DT IS NULL)	/* 다운로드 시작일 */
+						AND (CURDATE() <![CDATA[<=]]> DATE(DOWN_END_DT) OR DOWN_END_DT IS NULL) 		/* 다운로드 종료일 */
+						AND (A.USE_DATE_LIMIT_YN IN ('N','P') OR (USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(USE_START_DT) OR USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(USE_END_DT) OR USE_END_DT IS NULL)))	/* 사용기한 제한여부 */
+						AND (A.TARGET_MEMBER = 'A' 
+									OR (A.TARGET_MEMBER = 'G' AND A.TARGET_GRADE = (select LEVEL_IDX from tm_member_detail d where d.MEMBER_DETAIL_IDX = #{MEMBER_IDX}  ) ) 
+									OR (A.TARGET_MEMBER = 'M' AND 
+											EXISTS ( /* 대상 회원에 포함되어 있는지 */
+														SELECT COUPON_IDX 
+														FROM TO_COUPON_TARGET_MEMBER
+														WHERE COUPON_IDX = A.COUPON_IDX
+														AND MEMBER_IDX = #{MEMBER_IDX} 
+														)
+										)
+							  )
+						AND (A.ISSUE_CNT_LIMIT_YN = 'N' OR (A.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(A.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(A.MAX_ISSUE_CNT,0) <![CDATA[>]]> 0 AND IFNULL(A.MAX_ISSUE_CNT,0) <![CDATA[>]]> (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = A.COUPON_IDX)))))	/* 최대 발급수량 조건 */
+			) AA
+		  WHERE AA.diff_day IS NOT NULL 
+		  AND AA.diff_day <![CDATA[>=]]> -7
+		  AND AA.diff_day <![CDATA[<=]]> 0
+		  order by AA.diff_day DESC, AA.down_dt DESC  
+		  LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	
+	<!--  만료 or 사용한 쿠폰 리스트 총 개수 -->
+	<select id="getExpireCouponCnt" parameterType="java.util.HashMap" resultType="int">
+		/** pointDAO.getSevenExpireCouponCnt **/
+		SELECT 
+			COUNT(*)
+		FROM TO_COUPON_MEMBER A
+	    WHERE ( 
+	  		(A.USE_YN = 'Y' AND A.ORDER_IDX IS NOT NULL AND A.ORDER_DETAIL_IDX IS NOT NULL)
+	    	OR ( A.USE_YN = 'N' 
+	    			AND (A.USE_DATE_LIMIT_YN IN ('Y', 'P') AND DATE(A.REAL_USE_END_DT) <![CDATA[<]]> CURDATE())
+	      			AND A.METHOD IN ('D','S')  -- 다운로드, 시스템발급
+	      	) 
+	   	 )
+	  	AND A.MEMBER_IDX =#{MEMBER_IDX} 	
+	  	AND A.DISP_YN = 'Y' 
+	</select>
+	
+	<!--만료 or 사용한 쿠폰 리스트 -->
+	<select id="getExpireCouponList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** pointDAO.getExpireCouponList **/
+		SELECT A.COUPON_MEMBER_IDX,
+	       A.COUPON_IDX,
+	       A.MEMBER_IDX,
+	       A.COUPON_NM,
+	       A.COUPON_DESC,
+	       A.GUBUN,     		/* 쿠폰구분 ( G : 상품쿠폰, C : 장바구니쿠폰, S : 무료배송쿠폰 ) */
+	       A.METHOD,    		/* 발급방식 ( D : 회원다운로드, A : 자동발급(발급수량 제한없을때만 가능), S : 시스템발급(AGENT) ) */
+	       A.METHOD_TAG,
+	       A.DEVICE,
+	       A.DISCOUNT_TYPE,  /* 할인종류 ( R : 정률할인, A : 정액할인 ) */
+	       A.DISCOUNT,
+	       A.MAX_DISCOUNT,    /* 최대할인금액 ( DISCOUNT_RATE(할인종류)가 R(정률)일때만 사용됨, 0 이면 제한 없음 ) */
+	       A.ORDER_AMT_LIMIT_YN,
+	       A.MIN_ORDER_AMT,
+	       A.DOWN_START_DT,
+	       A.DOWN_END_DT,
+	       A.USE_DATE_LIMIT_YN,
+	       A.USE_START_DT,
+	       A.USE_END_DT,
+	       A.USABLE_DAYS,
+	       A.TARGET_MEMBER,  /* 대상회원 ( A : 전체회원, G : 등급선택, M : 회원선택 ) */
+	       A.TARGET_GRADE,
+	       A.TARGET_CATEGORY,
+	       A.TARGET_GOODS,
+	       A.ISSUE_CNT_LIMIT_YN,
+	       A.MAX_ISSUE_CNT,
+	       A.REISSUE_YN,    /* 주문 취소시 재발급 여부 ( Y : 재발급, N : 재발급 안함 ) */
+	       A.REISSUE_MIN_USABLE_DAYS,   /* 재발급 최소기간보장일수 ( REISSUE_YN(주문 취소시 재발급 여부)가 Y(재발급)일때만 사용됨 ) */
+	       A.DUP_USE_YN,  /* 동일 유형 쿠폰 중복 사용 여부 ( Y : 중복사용가능, N : 중복사용불가 ) */
+	       A.DISP_YN,
+	       A.USE_YN,  /* 사용여부 ( Y : 사용완료, N : 미사용, D : 사용불가 ) */
+	       A.DOWN_DT,
+	       A.USE_DT,
+	       A.REAL_USE_START_DT,
+	       A.REAL_USE_END_DT,
+	       DATEDIFF(NOW(),A.REAL_USE_END_DT) AS  DIFF_DAY,  /* 남은일수 */
+	       BM.TARGET_BRAND_IDX			/* 대상 브랜드 인덱스 (여러 브랜드 등록돼도 한개만) */
+	  FROM TO_COUPON_MEMBER A
+       LEFT OUTER JOIN (	/* 대상 브랜드 인덱스 */
+		SELECT GUBUN_IDX, MIN(BRAND_IDX) AS TARGET_BRAND_IDX 
+		FROM TS_BRAND_MAPPING
+		WHERE GUBUN = 'COUPON'
+		GROUP BY GUBUN_IDX
+       ) BM ON A.COUPON_IDX = BM.GUBUN_IDX
+	    WHERE ( 
+	  		(A.USE_YN = 'Y' AND A.ORDER_IDX IS NOT NULL 
+<!-- 	  			AND A.ORDER_DETAIL_IDX IS NOT NULL		 --><!-- 장바구니나 무료배송쿠폰은 ORDER_DETAIL_IDX가 없어서 -->
+	  		)
+	    	OR ( A.USE_YN = 'N' 
+	    			AND (A.USE_DATE_LIMIT_YN IN ('Y', 'P') AND DATE(A.REAL_USE_END_DT) <![CDATA[<]]> CURDATE())
+	      			AND A.METHOD IN ('D','S')  /* 다운로드, 시스템발급 */
+	      	) 
+	   	 )
+	  	AND A.MEMBER_IDX =#{MEMBER_IDX} 	
+	  	AND A.DISP_YN = 'Y' 
+  		ORDER BY A.USE_DT DESC, A.DOWN_DT DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+</mapper>

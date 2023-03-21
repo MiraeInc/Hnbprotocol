@@ -1,0 +1,2 @@
+[20170809 19:25:09][주문취소요청] [callUrl :https://alpha-api-bill.payco.com/outseller/order/cancel ] {"requestMemo":"고객직접취소","orderNo":"201707262002283674","orderCertifyKey":"L5tQdHw6gRP8ftPR0hMAAmWYhooqagWiw983VT9dFCOICC","cancelTotalAmt":10340,"sellerKey":"S0FSJE"}
+[20170809 19:25:09][주문취소결과] {"result":{"orderNo":"201707262002283674","cancelTradeSeq":2000278391,"totalCancelPaymentAmt":10340.0,"remainCancelPossibleAmt":0.0,"cancelYmdt":"20170801090032"},"code":0,"message":"success"}

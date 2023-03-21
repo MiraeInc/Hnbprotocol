@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="timeSaleDAO">
+
+	<!-- 타임 세일 상세 -->
+	<select id="getTimeSaleDetail" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.TIMESALE_IDX, A.BRAND_IDX, A.BRAND_NM, A.GOODS_IDX, A.START_DT, A.END_DT, A.DISCOUNT_PRICE, A.DISCOUNT_RATE, A.MAX_CNT, A.LIMIT_CNT
+			      	, A.TIME_SALE_DATE, A.GOODS_CD, A.GOODS_TITLE, A.MAIN_FILE, A.PRICE, A.SHORT_INFO, A.TIME_SALE
+			      	, CASE WHEN ( DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i')  <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') > DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')) THEN '1'
+							     WHEN ( DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i')  <![CDATA[>]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN '2' END AS STATUS
+					, A.SOLDOUT_YN
+					<if test="MEMBERIDX != null and MEMBERIDX != '' ">
+            			, A.IS_WISH    
+            		</if> 
+		FROM (
+				      SELECT A.TIMESALE_IDX, A.BRAND_IDX, A.BRAND_NM, A.GOODS_IDX, A.START_DT, A.END_DT, A.DISCOUNT_PRICE, A.DISCOUNT_RATE, A.LIMIT_CNT
+				             		, A.TIME_SALE_DATE, A.GOODS_CD, A.GOODS_TITLE, A.MAIN_FILE, A.PRICE, A.SHORT_INFO, A.TIME_SALE
+				             		, CASE WHEN (A.MAX_CNT-A.ORDER_CNT) <![CDATA[<]]> 0 THEN '0' ELSE (A.MAX_CNT-A.ORDER_CNT) END AS MAX_CNT
+				             		, A.SOLDOUT_YN
+				             		<if test="MEMBERIDX != null and MEMBERIDX != '' ">
+				             			, A.IS_WISH    
+				             		</if>
+				      FROM (
+				            		SELECT A.TIMESALE_IDX, B.BRAND_IDX, B.BRAND_NM, A.GOODS_IDX, A.START_DT, A.END_DT, A.DISCOUNT_PRICE, A.DISCOUNT_RATE, A.MAX_CNT, A.LIMIT_CNT
+								                   , CONCAT(
+											                            DATE_FORMAT(A.START_DT, "%c월 %e일 ")
+											                            , '(',SUBSTR(_UTF8'일월화수목금토', DAYOFWEEK(A.START_DT), 1),') '
+											                            , DATE_FORMAT(A.START_DT, "%H:%i")
+											                            , ' ~ '
+											                            , DATE_FORMAT(A.END_DT, "%c월 %e일 "), ' (',SUBSTR(_UTF8'일월화수목금토', DAYOFWEEK(A.END_DT), 1),') ', DATE_FORMAT(A.END_DT, "%H:%i")    
+											                          ) AS TIME_SALE_DATE
+											       , TIME_FORMAT(TIMEDIFF(DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i:%s'),DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s')),'%H:%i:%s') AS TIME_SALE                          
+								                   , B.GOODS_CD, B.GOODS_TITLE, B.MAIN_FILE, B.PRICE, B.SHORT_INFO  
+								                   , IFNULL(C.ORDER_CNT,0) AS ORDER_CNT
+								                   , B.SOLDOUT_YN
+								                   <if test="MEMBERIDX != null and MEMBERIDX != '' ">
+											       		, CASE WHEN D.WISH_IDX IS NULL THEN 'N' ELSE 'Y' END AS IS_WISH
+											       </if> 
+				            		FROM TE_TIMESALE A
+						            JOIN VW_GOODS B
+						            ON A.GOODS_IDX = B.GOODS_IDX
+						            LEFT OUTER JOIN (
+										                             SELECT A.TIMESALE_IDX, IFNULL(SUM(A.ORDER_CNT),0) AS ORDER_CNT 
+										                             FROM TO_ORDER_DETAIL A
+										                             WHERE A.ORDER_STATUS_CD  <![CDATA[<>]]> '890'
+										                             AND A.ORDER_STATUS_CD  <![CDATA[<>]]> '000'
+										                             GROUP BY A.TIMESALE_IDX
+										                            ) C
+						            ON A.TIMESALE_IDX = C.TIMESALE_IDX
+						            <if test="MEMBERIDX != null and MEMBERIDX != '' ">
+										LEFT OUTER JOIN TO_WISH D
+										ON D.MEMBER_IDX = #{MEMBERIDX} 
+										AND A.GOODS_IDX = D.GOODS_IDX	
+									</if>      
+						            WHERE A.USE_YN = 'Y'
+						            	AND DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i')  <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i')  <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')
+						            <if test="MAINGUBUN != null and MAINGUBUN != '' ">
+						            	AND B.BRAND_IDX = #{MAINGUBUN}
+						            </if>
+						            ORDER BY A.END_DT ASC
+						            LIMIT 1
+				           		 ) A
+			      		UNION ALL
+			      		SELECT A.TIMESALE_IDX, A.BRAND_IDX, A.BRAND_NM, A.GOODS_IDX, A.START_DT, A.END_DT, A.DISCOUNT_PRICE, A.DISCOUNT_RATE, A.LIMIT_CNT
+			             			, A.TIME_SALE_DATE, A.GOODS_CD, A.GOODS_TITLE, A.MAIN_FILE, A.PRICE, A.SHORT_INFO, A.TIME_SALE
+			             			, CASE WHEN (A.MAX_CNT-A.ORDER_CNT) <![CDATA[<]]> 0 THEN '0' ELSE (A.MAX_CNT-A.ORDER_CNT) END AS MAX_CNT
+			             			, A.SOLDOUT_YN
+			             			<if test="MEMBERIDX != null and MEMBERIDX != '' ">
+				            			, A.IS_WISH    
+				            		</if>    
+				      	FROM (
+				            			SELECT A.TIMESALE_IDX, B.BRAND_IDX, B.BRAND_NM, A.GOODS_IDX, A.START_DT, A.END_DT, A.DISCOUNT_PRICE, A.DISCOUNT_RATE, A.MAX_CNT, A.LIMIT_CNT
+									                   , CONCAT(
+												                            DATE_FORMAT(A.START_DT, "%c월 %e일 ")
+												                            , '(',SUBSTR(_UTF8'일월화수목금토', DAYOFWEEK(A.START_DT), 1),') '
+												                            , DATE_FORMAT(A.START_DT, "%H:%i")
+												                            , ' ~ '
+												                            , DATE_FORMAT(A.END_DT, "%c월 %e일 "), ' (',SUBSTR(_UTF8'일월화수목금토', DAYOFWEEK(A.END_DT), 1),') ', DATE_FORMAT(A.END_DT, "%H:%i")    
+												                          ) AS TIME_SALE_DATE
+												       , CASE WHEN DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')
+										                            THEN TIME_FORMAT(TIMEDIFF(DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i:%s'),DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s')),'%H:%i:%s') 
+										                            ELSE '00:00:00'
+										                            END AS TIME_SALE                   
+									                   , B.GOODS_CD, B.GOODS_TITLE, B.MAIN_FILE, B.PRICE, B.SHORT_INFO  
+									                   , IFNULL(C.ORDER_CNT,0) AS ORDER_CNT 
+									                   , B.SOLDOUT_YN
+									                   <if test="MEMBERIDX != null and MEMBERIDX != '' ">
+											       			, CASE WHEN D.WISH_IDX IS NULL THEN 'N' ELSE 'Y' END AS IS_WISH
+										       			</if> 
+							            FROM TE_TIMESALE A
+							            JOIN VW_GOODS B
+							            ON A.GOODS_IDX = B.GOODS_IDX
+							            LEFT OUTER JOIN (
+											                             SELECT A.TIMESALE_IDX, IFNULL(SUM(A.ORDER_CNT),0) AS ORDER_CNT 
+											                             FROM TO_ORDER_DETAIL A
+											                             WHERE A.ORDER_STATUS_CD  <![CDATA[<>]]> '890'
+											                             AND A.ORDER_STATUS_CD  <![CDATA[<>]]> '000'
+											                             GROUP BY A.TIMESALE_IDX
+											                            ) C
+							            ON A.TIMESALE_IDX = C.TIMESALE_IDX
+							            <if test="MEMBERIDX != null and MEMBERIDX != '' ">
+											LEFT OUTER JOIN TO_WISH D
+											ON D.MEMBER_IDX = #{MEMBERIDX} 
+											AND A.GOODS_IDX = D.GOODS_IDX	
+										</if>      
+							            WHERE A.USE_YN = 'Y'
+							          		AND DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i')  <![CDATA[>]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')
+							            <if test="MAINGUBUN != null and MAINGUBUN != '' ">
+							            	AND B.BRAND_IDX = #{MAINGUBUN}
+							            </if>
+							            ORDER BY A.END_DT ASC
+				            			LIMIT 1
+				           		 	) A
+		     			 ) A
+		ORDER BY A.END_DT ASC   
+		LIMIT 1
+	</select>
+	
+	<!-- 타임 세일 진행 예정 상품 리스트 -->
+	<select id="getTimeSaleProductList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.TIMESALE_IDX, A.TITLE, A.START_DT, A.END_DT, A.GOODS_IDX, A.DISCOUNT_RATE
+      		 		, A.DISCOUNT_PRICE, A.MAX_CNT, A.LIMIT_CNT
+       			 	, CONCAT(
+						                DATE_FORMAT(A.START_DT, "%c월 %e일 ")
+						                , DATE_FORMAT(A.START_DT, "%h:%i")
+						                , ' ~ '
+						                , DATE_FORMAT(A.END_DT, "%c월 %e일 "), DATE_FORMAT(A.END_DT, "%h:%i"),' 예정'    
+				                	) AS TIME_SALE_DATE
+			       , B.GOODS_TITLE, B.GOODS_CD, B.MAIN_FILE         
+		FROM TE_TIMESALE A
+		JOIN VW_GOODS B
+		ON A.GOODS_IDX = B.GOODS_IDX
+		WHERE DATE(A.START_DT) > CURDATE()
+		AND A.USE_YN = 'Y'
+		AND A.TIMESALE_IDX != #{TIMESALEIDX} 
+		ORDER BY A.END_DT ASC
+	</select>
+	
+	<!-- 타임세일 진행 건수 -->
+	<select id="getTimeSaleListCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TE_TIMESALE A
+		WHERE A.USE_YN = 'Y'
+		AND (DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]>  DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]>  DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') OR DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') > DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i'))
+	</select>
+</mapper>

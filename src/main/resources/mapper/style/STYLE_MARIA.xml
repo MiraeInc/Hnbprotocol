@@ -1,0 +1,503 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="styleDAO">
+
+	<!-- 스타일 문의 리스트 총 개수 -->
+	<select id="getCounselListCnt" parameterType="java.util.HashMap" resultType="int">
+		/** styleDAO.getCounselListCnt **/
+		SELECT COUNT(*)
+		FROM TA_COUNSEL 
+		WHERE DISP_YN = 'Y' 
+	</select>
+	
+	<!-- 스타일 문의 리스트 -->
+	<select id="getCounselList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getCounselList **/
+		SELECT A.COUNSEL_IDX, 		/* 일련번호 */
+				   A.Q_TITLE,				/* 제목 */
+				   A.Q_IMG1,
+				   A.Q_IMG2,
+				   A.Q_IMG3,
+				   A.Q_IMG4,
+				   CASE WHEN A.A_REG_IDX IS NULL
+				       THEN 'N'
+				       ELSE 'Y'
+				   END AS ANS_YN,	/* 답변유무 */
+				   DATE_FORMAT(A.Q_REG_DT,'%Y.%m.%d') AS Q_REG_DT,
+				   FN_MASK_NM(B.MEMBER_NM) AS MEMBER_NM
+		FROM TA_COUNSEL A LEFT OUTER JOIN TM_MEMBER_DETAIL B ON A.Q_REG_IDX = B.MEMBER_DETAIL_IDX 
+		WHERE A.DISP_YN = 'Y'
+		  		
+  		ORDER BY DATE_FORMAT(A.Q_REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+  		
+  		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+
+	<!-- 스타일 상담 신청 -->
+	<insert id="counselSave" parameterType="java.util.HashMap">
+		/** styleDAO.counselSave **/
+		INSERT INTO TA_COUNSEL 
+					( Q_TITLE, Q_CONTENTS, HAIR_STYLE, HAIR_TYPE, ALARM_YN, Q_EMAIL, Q_REG_IDX, Q_REG_DT )
+		VALUES ( #{QTITLE}, #{QCONTENTS}, #{HAIRSTYLE}, #{HAIRTYPE}, #{ALARMYN}, #{QEMAIL}, #{QREGIDX}, NOW() )
+		
+		<selectKey keyProperty="COUNSELIDX" resultType="int" order="AFTER">
+			    SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<!-- 스타일 상담 수정 -->
+	<update id="counselUpdate" parameterType="java.util.HashMap">
+		/** styleDAO.counselUpdate **/
+		UPDATE TA_COUNSEL 
+		SET Q_TITLE = #{QTITLE},					/* 질문제목 */
+			  Q_CONTENTS = #{QCONTENTS},	/* 질문내용 */
+			  HAIR_STYLE = #{HAIRSTYLE},		/* 헤어길이 */
+			  HAIR_TYPE = #{HAIRTYPE},			/* 헤어타입 */
+			  ALARM_YN = #{ALARMYN}, 			/* 답변알람여부 */
+			  Q_EMAIL = #{QEMAIL},					/* 질문자이메일 */
+			  Q_IMG1 = #{QIMG1},
+			  Q_REAL_IMG1 = #{QIMG1},
+			  Q_IMG2 = #{QIMG2},
+			  Q_REAL_IMG2 = #{QIMG2},
+			  Q_IMG3 = #{QIMG3},	
+			  Q_REAL_IMG3 = #{QIMG3},
+			  Q_IMG4 = #{QIMG4},	
+			  Q_REAL_IMG4 = #{QIMG4}
+		WHERE COUNSEL_IDX = #{COUNSELIDX}
+		AND Q_REG_IDX= #{MEMBERIDX}
+		
+	</update>
+
+	<!-- 스타일 상담 상세 -->
+	<select id="counselView"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.counselView **/
+		SELECT A.COUNSEL_IDX,	/* 일련번호 */
+				   A.Q_TITLE,			/* 질문 제목 */
+				   A.Q_CONTENTS,	/* 질문 내용 */
+				   A.HAIR_STYLE,		/* 헤어 길이 */
+				   A.HAIR_TYPE, 		/* 헤어 타입 */
+				   A.Q_IMG1,
+				   A.Q_IMG2, 
+				   A.Q_IMG3, 
+				   A.Q_IMG4, 
+				   A.Q_EMAIL,			/* 질문자 이메일 */
+				   A.Q_REG_IDX,		/* 등록자 일련번호 */
+				   DATE_FORMAT(A.Q_REG_DT,'%Y-%m-%d') AS Q_REG_DT, /* 등록일자 */
+				   A.ALARM_YN, 		/* 답변 알람 여부 */
+				   FN_MASK_NM(B.MEMBER_NM) AS MEMBER_NM, /* 회원명 */
+				   A.A_TITLE,			/* 답변 제목 */
+				   A.A_CONTENTS,	/* 답변 내용 */
+				   A.A_IMG1,
+				   A.A_IMG2,
+				   A.A_IMG3,
+				   A.A_IMG4,
+				   A.A_REG_IDX,		/* 답변자 일련번호 */
+				   DATE_FORMAT(A.A_REG_DT,'%Y-%m-%d') AS A_REG_DT
+		FROM TA_COUNSEL A LEFT OUTER JOIN TM_MEMBER_DETAIL B ON A.Q_REG_IDX = B.MEMBER_DETAIL_IDX
+		WHERE A.COUNSEL_IDX = ${COUNSELIDX}
+	</select>
+	
+	<!-- 스타일 상담 삭제 -->
+	<delete id="counselDelete"  parameterType="java.util.HashMap">
+		/** styleDAO.counselDelete **/
+		DELETE FROM TA_COUNSEL 
+		WHERE COUNSEL_IDX = #{COUNSELIDX}
+		AND Q_REG_IDX= #{MEMBERIDX}
+	</delete>
+	
+	<!-- 정품신청 댓글 리스트 총 개수 -->
+	<select id="getSampleReplyListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** styleDAO.getSampleReplyListCnt **/
+		SELECT COUNT(*)
+		FROM TA_SAMPLE_REPLY A LEFT OUTER JOIN TA_SAMPLE B ON A.SAMPLE_IDX = B.SAMPLE_IDX
+											  INNER JOIN TM_MEMBER_DETAIL C ON A.REG_IDX = C.MEMBER_DETAIL_IDX AND C.MEMBER_NM IS NOT NULL AND C.MEMBER_NM != ''
+		WHERE B.DISP_YN = 'Y'
+		AND A.SAMPLE_IDX = #{SAMPLEIDX}
+	</select>
+	
+	<!-- 정품신청 댓글 리스트 -->
+	<select id="getSampleReplyList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getSampleReplyList **/
+		SELECT A.SAMPLE_REPLY_IDX, 	/* 댓글 일련번호 */
+				   A.SAMPLE_IDX,			/* 샘플 마스터 일련번호 */
+				   A.REPLY_CONTENTS,		/* 댓글 내용 */
+				   DATE_FORMAT(A.REG_DT,'%Y.%m.%d') AS REG_YMD,
+				   DATE_FORMAT(A.REG_DT,'%H:%i:%s') AS REG_HMS,
+				   FN_MASK_NM(C.MEMBER_NM) AS MEMBER_NM, /* 회원명 */
+				   A.REG_IDX,					/* 댓글 작성자 일련번호 */
+				   CASE
+				   	WHEN C.JOIN_TYPE = 0 THEN ''
+				   ELSE (SELECT SNS_TYPE FROM TM_MEMBER_SNS D WHERE A.REG_IDX = D.MEMBER_IDX LIMIT 1)
+				   END AS SNS_TYPE	/* SNS 유형 */
+		FROM TA_SAMPLE_REPLY A LEFT OUTER JOIN TA_SAMPLE B ON A.SAMPLE_IDX = B.SAMPLE_IDX
+											  INNER JOIN TM_MEMBER_DETAIL C ON A.REG_IDX = C.MEMBER_DETAIL_IDX AND C.MEMBER_NM IS NOT NULL AND C.MEMBER_NM != ''
+		WHERE B.DISP_YN = 'Y'
+		AND A.SAMPLE_IDX = #{SAMPLEIDX}
+		
+  		ORDER BY DATE_FORMAT(A.REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+  		
+  		<if test="SCHCHECK eq 'LIST'.toString()">
+  			LIMIT #{PAGESTART}, #{PAGEBLOCK}
+  		</if>
+	</select>
+	
+	<!-- 정품신청 댓글 등록 -->
+	<insert id="sampleReplySave" parameterType="java.util.HashMap">
+		/** styleDAO.sampleReplySave **/
+		INSERT INTO TA_SAMPLE_REPLY 
+					( SAMPLE_IDX, REPLY_CONTENTS, REG_IDX, REG_DT )
+		VALUES ( #{SAMPLEIDX}, #{REPLYCONTENTS}, #{REGIDX}, NOW() )
+	</insert>
+	
+	<!-- 중복 댓글 체크 -->
+	<select id="replyCheck"  parameterType="java.util.HashMap" resultType="int">
+		/** styleDAO.replyCheck **/
+		SELECT COUNT(*)
+		FROM TA_SAMPLE_REPLY 
+		WHERE SAMPLE_IDX = #{SAMPLEIDX}
+		AND REG_IDX = #{REGIDX}
+	</select>
+	
+	<!-- 정품신청 댓글 삭제 -->
+	<select id="sampleReplyDeleteAjax"  parameterType="java.util.HashMap" resultType="int">
+		/** styleDAO.sampleReplyDeleteAjax **/
+		DELETE FROM TA_SAMPLE_REPLY 
+		WHERE SAMPLE_REPLY_IDX = #{SAMPLEREPLYIDX}
+		AND REG_IDX = #{MEMBERIDX}
+	</select>
+	
+	<!-- 정품신청 조회 수 증가 -->
+	<update id="addSampleReadCnt" parameterType="java.util.HashMap">
+		/** styleDAO.addSampleReadCnt **/
+		UPDATE TA_SAMPLE
+		SET READ_CNT = READ_CNT+1
+		WHERE SAMPLE_IDX = #{SAMPLEIDX}
+	</update>
+	
+	<!-- 스타일 팁 리스트 총 개수 -->
+	<select id="getTipListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** styleDAO.getTipListCnt **/
+		SELECT COUNT(*)
+		FROM TA_STYLE_TIP  
+		WHERE DISP_YN = 'Y' 
+	</select>
+	
+	<!-- 스타일 팁 리스트 -->
+	<select id="getTipList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getTipList **/
+		SELECT A.TIP_IDX, 			/* 팁 일련번호 */
+				   A.GOODS_IDX,		/* 상품 일련번호 */
+				   B.GOODS_NM,		/* 상품 명 */
+				   A.TIP_TITLE,			/* 팁 제목 */
+				   A.TIP_INFO,			/* 팁 정보 */
+				   A.TIP_GUBUN,		/* 구분 */
+				   A.VIDEO_URL,		/* 동영상 URL */
+				   A.VIDEO_IMG,		/* 동영상 썸네일 이미지 */
+				   A.TIP_IMG,				/* 리스트 이미지 */
+				   A.TIP_REAL_IMG,	/* 리스트 실제 이미지 */
+				   A.LINK_YN,				/* PC 링크 여부 */
+				   A.LINK_URL,			/* PC 링크 URL */
+				   A.MO_LINK_URL,	/* MO 링크 URL */
+				   A.READ_CNT,			/* 조회 수 */
+				   DATE_FORMAT(A.REG_DT,'%Y.%m.%d') AS REG_DT
+		FROM TA_STYLE_TIP A LEFT OUTER JOIN VW_GOODS B ON A.GOODS_IDX = B.GOODS_IDX 
+		WHERE A.DISP_YN = 'Y'
+		  		
+  		ORDER BY A.REG_DT DESC
+  		
+  		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 스타일 팁 브랜드 리스트 총 개수 -->
+	<select id="getTipBrandListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** styleDAO.getTipBrandListCnt **/
+		SELECT COUNT(<if test="BRANDYN eq 'N'.toString()">DISTINCT</if> ST.TIP_IDX) AS CNT
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_STYLE_TIP ST ON ST.TIP_IDX = M.GUBUN_IDX 
+																								<if test="BRANDYN eq 'Y'.toString()">
+																								AND M.BRAND_IDX = #{BRANDIDX} 
+																								</if>
+																								AND M.GUBUN = 'styletip'
+													 LEFT OUTER JOIN VW_GOODS B ON ST.GOODS_IDX = B.GOODS_IDX  
+		WHERE ST.DISP_YN = 'Y' 
+	</select>
+	
+	<!-- 스타일 팁 브랜드 리스트 -->
+	<select id="getTipBrandList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getTipBrandList **/
+		SELECT <if test="BRANDYN eq 'N'.toString()">DISTINCT</if> ST.TIP_IDX, 			/* 팁 일련번호 */
+				   ST.GOODS_IDX,			/* 상품 일련번호 */
+				   B.GOODS_NM,			/* 상품 명 */
+				   B.GOODS_CD, 			/* 상품 코드 */
+				   B.PRICE,						/* 원가 */
+				   B.DISCOUNT_RATE,		/* 할인율 */
+				   B.DISCOUNT_PRICE,	/* 할인가 */
+				   B.MAIN_FILE,				/* 상품 이미지 */
+				   B.MAIN_REAL_FILE,	/* 상품 실제 이미지 */
+				   ST.TIP_TITLE,				/* 팁 제목 */
+				   ST.TIP_INFO,				/* 팁 정보 */
+				   ST.TIP_GUBUN,			/* 구분 */
+				   ST.VIDEO_URL,			/* 동영상 URL */
+				   ST.VIDEO_IMG,			/* 동영상 썸네일 이미지 */
+			   	   ST.TIP_IMG,				/* 리스트 이미지 */
+				   ST.TIP_REAL_IMG,		/* 리스트 실제 이미지 */
+				   ST.LINK_YN,				/* PC 링크 여부 */
+				   ST.LINK_URL,				/* PC 링크 URL */
+				   ST.MO_LINK_URL,		/* MO 링크 URL */
+			   	   ST.READ_CNT,			/* 조회 수 */
+				   DATE_FORMAT(ST.REG_DT,'%Y.%m.%d') AS REG_DT
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_STYLE_TIP ST ON ST.TIP_IDX = M.GUBUN_IDX 
+																									<if test="BRANDYN eq 'Y'.toString()">
+																									AND M.BRAND_IDX = #{BRANDIDX} 
+																									</if>
+																									AND M.GUBUN = 'styletip'
+													 LEFT OUTER JOIN VW_GOODS B ON ST.GOODS_IDX = B.GOODS_IDX 
+		WHERE ST.DISP_YN = 'Y'
+		  		
+  		ORDER BY DATE_FORMAT(ST.REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+  		
+  		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 스타일 팁 상세 -->
+	<select id="getTipView" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getTipView **/
+		SELECT A.TIP_IDX, 			/* 팁 일련번호 */
+				   A.GOODS_IDX,		/* 상품 일련번호 */
+				   B.GOODS_NM,		/* 상품 명 */
+				   A.TIP_GUBUN,		/* 팁 구분 */
+				   A.TIP_TITLE,			/* 팁 제목 */
+				   A.TIP_INFO,			/* 팁 정보 */
+				   A.TIP_CONTENTS,	/* 팁 내용 */
+				   A.VIDEO_URL,		/* 동영상 URL */
+				   A.READ_CNT,			/* 조회 수 */
+				   DATE_FORMAT(A.REG_DT,'%Y.%m.%d') AS REG_DT
+		FROM TA_STYLE_TIP A LEFT OUTER JOIN VW_GOODS B ON A.GOODS_IDX = B.GOODS_IDX 
+		WHERE A.TIP_IDX = #{TIPIDX}
+		AND A.DISP_YN = 'Y'
+	</select>
+	
+	<!-- 스타일 팁 조회 수 증가 -->
+	<update id="addTipReadCnt" parameterType="java.util.HashMap">
+		/** styleDAO.addTipReadCnt **/
+		UPDATE TA_STYLE_TIP
+		SET READ_CNT = READ_CNT+1
+		WHERE TIP_IDX = #{TIPIDX}
+	</update>
+	
+	<!-- 상품 사용법 리스트 총 개수 -->
+	<select id="getHowtouseListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** styleDAO.getHowtouseListCnt **/
+		SELECT COUNT(*)
+		FROM TA_HOWTOUSE
+		WHERE DISP_YN = 'Y' 
+	</select>
+	
+	<!-- 상품 사용법 리스트 -->
+	<select id="getHowtouseList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getHowtouseList **/
+		SELECT HOWTOUSE_IDX, 	/* 일련번호 */	
+				   TITLE, 				/* 제목 */
+				   SHORT_INFO, 		/* 부가설명 */
+				   USE_IMG, 			/* 리스트 이미지 */
+				   USE_REAL_IMG, 	/* 리스트 실제 이미지 */
+				   READ_CNT, 			/* 조회 수 */
+				   DATE_FORMAT(REG_DT,'%Y.%m.%d') AS REG_DT
+		FROM TA_HOWTOUSE 
+		WHERE DISP_YN = 'Y'
+		  		
+  		ORDER BY DATE_FORMAT(REG_DT,'%Y.%m.%d %H:%i') DESC
+  		
+  		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 상품 사용법 브랜드 리스트 총 개수 -->
+	<select id="getHowtouseBrandListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** styleDAO.getHowtouseBrandListCnt **/
+		SELECT COUNT(<if test="BRANDYN eq 'N'.toString()">DISTINCT</if> H.HOWTOUSE_IDX) AS CNT
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_HOWTOUSE H ON H.HOWTOUSE_IDX = M.GUBUN_IDX 
+																								<if test="BRANDYN eq 'Y'.toString()">
+																								AND M.BRAND_IDX = #{BRANDIDX} 
+																								</if>
+																								AND M.GUBUN = 'howtouse'
+		WHERE DISP_YN = 'Y' 
+	</select>
+	
+	<!-- 상품 사용법 브랜드 리스트 -->
+	<select id="getHowtouseBrandList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getHowtouseBrandList **/
+		SELECT <if test="BRANDYN eq 'N'.toString()">DISTINCT</if> H.HOWTOUSE_IDX, 	/* 일련번호 */	
+				   H.TITLE, 				/* 제목 */
+				   H.SHORT_INFO, 		/* 부가설명 */
+				   H.USE_IMG, 			/* 리스트 이미지 */
+				   H.USE_REAL_IMG, 	/* 리스트 실제 이미지 */
+				   H.READ_CNT, 			/* 조회 수 */
+				   DATE_FORMAT(H.REG_DT,'%Y.%m.%d') AS REG_DT
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_HOWTOUSE H ON H.HOWTOUSE_IDX = M.GUBUN_IDX 
+																								<if test="BRANDYN eq 'Y'.toString()">
+																								AND M.BRAND_IDX = #{BRANDIDX} 
+																								</if>
+																								AND M.GUBUN = 'howtouse'
+		WHERE H.DISP_YN = 'Y'
+		  		
+  		ORDER BY DATE_FORMAT(H.REG_DT,'%Y.%m.%d %H:%i') DESC
+  		
+  		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 상품 사용법 상세 -->
+	<select id="getHowtouseDetailMaster" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getHowtouseDetailMaster **/
+		SELECT HOWTOUSE_IDX, 	/* 상품 사용법 일련번호 */
+				   TITLE,					/* 제목 */
+				   SHORT_INFO		/* 부가 설명 */
+		FROM TA_HOWTOUSE
+		WHERE HOWTOUSE_IDX = #{HOWTOUSEIDX}
+	</select>
+	
+	<!-- 상품 사용법 상세 -->
+	<select id="getHowtouseDetailList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getHowtouseDetailList **/
+		SELECT A.HOWTOUSE_DETAIL_IDX, 	/* 팁 일련번호 */
+				   A.GOODS_IDX,						/* 상품 일련번호 */
+				   B.GOODS_NM,						/* 상품 명 */
+				   A.P_CONTENTS,					/* PC 내용 */
+				   A.M_CONTENTS,					/* MOBILE 내용 */
+				   DATE_FORMAT(A.REG_DT,'%Y.%m.%d') AS REG_DT /* 등록일자 */
+		FROM TA_HOWTOUSE_DETAIL A LEFT OUTER JOIN VW_GOODS B ON A.GOODS_IDX = B.GOODS_IDX 
+		WHERE A.HOWTOUSE_IDX = #{HOWTOUSEIDX}
+	</select>
+	
+	<!-- 상품 사용법 조회 수 증가 -->
+	<update id="addHowReadCnt" parameterType="java.util.HashMap">
+		/** styleDAO.addHowReadCnt **/
+		UPDATE TA_HOWTOUSE
+		SET READ_CNT = READ_CNT+1
+		WHERE HOWTOUSE_IDX = #{HOWTOUSEIDX}
+	</update>
+	
+	<!-- 스타일 팁 브랜드 별 개수 -->
+	<select id="getTipBrandCnt" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getTipBrandCnt **/
+		SELECT 
+			SUM(CASE when M.BRAND_IDX = 1 THEN 1 ELSE 0 END) AS GB_CNT,
+			SUM(CASE when M.BRAND_IDX = 3 THEN 1 ELSE 0 END) AS BF_CNT,
+			SUM(CASE when M.BRAND_IDX = 4 THEN 1 ELSE 0 END) AS LD_CNT,
+			SUM(CASE when M.BRAND_IDX = 6 THEN 1 ELSE 0 END) AS MM_CNT,
+			SUM(CASE when M.BRAND_IDX = 7 THEN 1 ELSE 0 END) AS DP_CNT,
+			SUM(CASE when M.BRAND_IDX = 8 THEN 1 ELSE 0 END) AS CL_CNT,
+			SUM(CASE when M.BRAND_IDX = 9 THEN 1 ELSE 0 END) AS BR_CNT,
+			SUM(CASE when M.BRAND_IDX = 10 THEN 1 ELSE 0 END) AS GP_CNT,
+			SUM(CASE when M.BRAND_IDX = 13 THEN 1 ELSE 0 END) AS LO_CNT,
+			COUNT(*) AS ALL_CNT
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_STYLE_TIP ST ON ST.TIP_IDX = M.GUBUN_IDX AND M.GUBUN = 'styletip'
+		WHERE ST.DISP_YN = 'Y'
+	</select>
+	
+	<!-- 상품 사용법 브랜드 별 개수 -->
+	<select id="getHowtoBrandCnt" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getHowtoBrandCnt **/
+		SELECT 
+			SUM(CASE when M.BRAND_IDX = 1 THEN 1 ELSE 0 END) AS GB_CNT,
+			SUM(CASE when M.BRAND_IDX = 3 THEN 1 ELSE 0 END) AS BF_CNT,
+			SUM(CASE when M.BRAND_IDX = 4 THEN 1 ELSE 0 END) AS LD_CNT,
+			SUM(CASE when M.BRAND_IDX = 6 THEN 1 ELSE 0 END) AS MM_CNT,
+			SUM(CASE when M.BRAND_IDX = 7 THEN 1 ELSE 0 END) AS DP_CNT,
+			SUM(CASE when M.BRAND_IDX = 8 THEN 1 ELSE 0 END) AS CL_CNT,
+			SUM(CASE when M.BRAND_IDX = 9 THEN 1 ELSE 0 END) AS BR_CNT,
+			SUM(CASE when M.BRAND_IDX = 10 THEN 1 ELSE 0 END) AS GP_CNT,
+			SUM(CASE when M.BRAND_IDX = 13 THEN 1 ELSE 0 END) AS LO_CNT,
+			COUNT(*) AS ALL_CNT
+		FROM TS_BRAND_MAPPING M INNER JOIN TA_HOWTOUSE H ON H.HOWTOUSE_IDX = M.GUBUN_IDX AND M.GUBUN = 'howtouse'
+		WHERE H.DISP_YN = 'Y'
+	</select>
+	
+	<!-- 정품신청 리스트 총 개수 -->
+	<select id="getSampleListCnt" parameterType="java.util.HashMap" resultType="int">
+		/** styleDAO.getSampleListCnt **/
+		SELECT
+			COUNT(*) AS CNT
+		FROM TA_SAMPLE S
+		WHERE S.DISP_YN = 'Y'
+	</select>
+	
+	<!-- 정품신청 리스트 -->
+	<select id="getSampleList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getSampleList **/
+		SELECT
+			S.SAMPLE_IDX				/* 정품신청 일련번호 */
+			, S.SAMPLE_TITLE			/* 정품신청 제목 */
+			, S.ING_BANNER			/* 예정,진행 배너 */
+			, S.END_BANNER			/* 종료 배너 */
+			, DATE_FORMAT(S.START_DT,'%Y.%m.%d') AS START_DT	/* 시작일 */
+			, DATE_FORMAT(S.END_DT,'%m.%d') AS END_DT				/* 종료일 */
+			, S.READ_CNT				/* 조회수 */
+			, CASE
+    			WHEN ( DATE_FORMAT(S.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(S.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'I'
+    			WHEN ( DATE_FORMAT(S.START_DT,'%Y-%m-%d %H:%i') <![CDATA[>]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'P'
+     			WHEN ( DATE_FORMAT(S.END_DT,'%Y-%m-%d %H:%i') <![CDATA[<]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'E'
+     		END AS STATUS																		/* 상태 */
+     		, B.GUBUN_IDX			/* 공지사항에 등록 된 구분 일련번호 */
+			, B.NOTICE_IDX			/* 공지사항 일련번호 */
+		FROM TA_SAMPLE S LEFT OUTER JOIN TA_NOTICE B ON S.SAMPLE_IDX = B.GUBUN_IDX AND B.WINNER_GUBUN = 'STYLE'
+		WHERE S.DISP_YN = 'Y'
+		  		
+  		ORDER BY DATE_FORMAT(S.START_DT,'%Y.%m.%d %H:%i:%s') DESC
+  		
+  		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 정품신청 정보 -->
+	<select id="getSampleInfo"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** styleDAO.getSampleInfo **/
+		SELECT 
+			A.SAMPLE_IDX			/* 정품신청 일련번호 */
+			, A.GOODS_IDX			/* 상품 일련번호 */
+			, (SELECT GOODS_CD FROM TP_GOODS G WHERE A.GOODS_IDX = G.GOODS_IDX) AS GOODS_CD
+			, A.SAMPLE_TITLE		/* 제목 */
+			, A.SAMPLE_TYPE		/* 정품 구분 [I:이미지, H:HTML] */	
+			, A.ING_BANNER		/* 진행,예정 이미지 */
+			, A.END_BANNER		/* 종료 이미지 */
+			, A.P_SAMPLE_DESC	/* HTML 내용[PC] */
+			, A.M_SAMPLE_DESC	/* HTML 내용[MO] */	   
+			, DATE_FORMAT(A.START_DT,'%Y.%m.%d') AS START_DT	/* 시작일 */
+			, DATE_FORMAT(A.END_DT,'%Y.%m.%d') AS END_DT		/* 종료일 */
+			, A.REG_IDX				/* 작성자 일련번호 */
+			, DATE_FORMAT(A.REG_DT,'%Y.%m.%d') AS REG_DT	/* 작성일자 */
+			, CASE
+    			WHEN ( DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'I'
+    			WHEN ( DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[>]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'P'
+     			WHEN ( DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[<]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'E'
+     		END AS STATUS			/* 상태 */
+     		, CONCAT('(',ADR.ZIP_CD,') ', FN_DECRYPT(ADR.ADDR) , ' ', FN_DECRYPT(ADR.ADDR_DETAIL)) ADDR_STR	/* 기본 배송지 주소 */
+     		, CASE
+				WHEN ADR.DEFAULT_YN IS NULL THEN 'N'
+                WHEN ADR.DEFAULT_YN IS NOT NULL THEN 'Y'
+ 			END AS ADDR_YN		/* 기본 배송지 주소 존재 여부 */
+			, B.GUBUN_IDX			/* 공지사항에 등록 된 구분 일련번호 */
+			, B.NOTICE_IDX			/* 공지사항 일련번호 */
+		FROM TA_SAMPLE A LEFT OUTER JOIN TA_NOTICE B ON A.SAMPLE_IDX = B.GUBUN_IDX AND B.WINNER_GUBUN = 'STYLE'
+										LEFT OUTER JOIN TO_ADDRESS ADR ON ADR.MEMBER_IDX = #{MEMBERIDX} AND ADR.DEFAULT_YN = 'Y'
+		WHERE A.DISP_YN = 'Y'
+		AND A.SAMPLE_IDX = #{SAMPLEIDX}
+		AND (B.WINNER_GUBUN IS NULL OR B.WINNER_GUBUN != 'EVENT')
+	</select>
+	
+	<!-- 정품신청 중복체크 -->
+	<select id="sampleDupCheck"  parameterType="java.util.HashMap" resultType="int">
+		/** styleDAO.sampleDupCheck **/
+		SELECT COUNT(*)
+		FROM TA_SAMPLE_APPL
+		WHERE SAMPLE_IDX = #{SAMPLEIDX}
+		AND MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+	<!-- 정품신청 -->
+	<insert id="sampleAppl" parameterType="java.util.HashMap">
+		/** styleDAO.sampleAppl **/
+		INSERT INTO TA_SAMPLE_APPL 
+					( SAMPLE_IDX, MEMBER_IDX, WINNER_YN, REG_DT )
+		VALUES ( #{SAMPLEIDX}, #{MEMBERIDX}, 'N', NOW() )
+	</insert>
+
+</mapper>

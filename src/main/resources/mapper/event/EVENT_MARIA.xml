@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="eventDAO">
+	
+	<!-- 이벤트 배너 리스트 -->
+	<select id="getEventBannerList"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** eventDAO.getEventBannerList **/
+		SELECT BANNER_IDX,		/* 일련번호 */
+				   DEVICE_GUBUN,		/* 디바이스 */
+				   BANNER_NM,			/* 배너 명 */
+				   BANNER_POS,		/* 배너 타입 */
+				   BANNER_IMG,			/* 배너 이미지 */
+				   LINK_YN,				/* 링크 여부 */
+				   LINK_FLAG,			/* 링크 창 */
+				   LINK_URL,				/* 링크 URL */
+				   MO_BANNER_IMG,				/* MO 배너 이미지 */
+				   MO_BANNER_REAL_IMG,		/* MO 배너 실제 이미지 */
+				   MO_LINK_YN,						/* MO 링크 여부 */
+				   MO_LINK_URL,					/* MO 링크 URL */
+				   MO_LINK_FLAG					/* MO 링크 창 */
+		FROM TS_BANNER 
+		WHERE BANNER_POS = 'BANNER_EVENT' 
+		AND USE_YN = 'Y'
+		AND ( DATE_FORMAT(BANNER_START_DATE,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(BANNER_END_DATE,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) 
+		ORDER BY ORD_SEQ
+	</select>
+	
+	<!-- 진행 중 이벤트 리스트 -->
+	<select id="getIngEventList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** eventDAO.getIngEventList **/
+		SELECT A.EVENT_IDX,					/* 일련번호 */
+				   A.TITLE,								/* 제목 */
+				   DATE_FORMAT(A.START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				   DATE_FORMAT(A.END_DT,'%m.%d') AS END_DT,				/* 종료일 */
+				   A.P_EVENT_IMG,					/* PC 리스트 이미지 */
+				   A.P_EVENT_REAL_IMG,		/* PC 리스트 실제 이미지 */
+				   A.M_EVENT_IMG,				/* MOBILE 리스트 이미지 */
+				   A.M_EVENT_REAL_IMG,		/* MOBILE 리스트 실제 이미지 */
+				   A.DEVICE,							/* 디바이스 [A:전체, P:PC, M:MOBILE] */
+				   A.LINK_YN,							/* PC 링크 여부 */
+				   A.LINK_URL,						/* PC 링크 URL */
+				   A.LINK_WINDOW,				/* PC 링크 창 구분 [C:현재창, N:새창] */
+				   A.MO_LINK_YN,					/* MO 링크 여부 */
+				   A.MO_LINK_URL,				/* MO 링크 URL */
+				   A.MO_LINK_WINDOW,			/* MO 링크 창 구분 [C:현재창, N:새창] */
+				   A.REPLY_YN,						/* 댓글 여부 */
+				   A.EVENT_INFO, 					/* 부가 설명 */
+				   A.READ_CNT						/* 조회 수 */
+		FROM TE_EVENT A 
+		<if test="BRANDIDX != null and BRANDIDX != '' and BRANDIDX != '0' ">
+			INNER JOIN TS_BRAND_MAPPING B ON A.EVENT_IDX = B.GUBUN_IDX AND B.GUBUN = 'event' 			
+		</if>
+		WHERE A.DISP_YN = 'Y' 
+		AND A.USE_YN = 'Y'
+		<choose>
+			<when test="DEVICE eq 'm'.toString()">AND A.DEVICE != 'P'</when>
+			<otherwise>AND A.DEVICE != 'M'</otherwise>
+		</choose>
+		AND ( DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i')  AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i')  )
+		<if test="BRANDIDX != null and BRANDIDX != '' and BRANDIDX != '0' ">
+			AND B.BRAND_IDX = #{BRANDIDX}
+		</if>
+		ORDER BY A.REG_DT DESC
+	</select>
+	
+	<!-- 종료 된 이벤트 리스트 총 개수 -->
+	<select id="getEndEventListCnt" parameterType="java.util.HashMap" resultType="int">
+		/** eventDAO.getEndEventListCnt **/
+		SELECT COUNT(*)
+		FROM TE_EVENT 
+		WHERE DISP_YN = 'Y' 
+		AND USE_YN = 'Y'
+		AND ( DATE_FORMAT(END_DT,'%Y-%m-%d %H:%i') <![CDATA[<]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i')  )
+	</select>
+	
+	<!-- 종료 된 이벤트 리스트 -->
+	<select id="getEndEventList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** eventDAO.getEndEventList **/
+		SELECT A.EVENT_IDX,					/* 일련번호 */
+				   A.TITLE,								/* 제목 */
+				   DATE_FORMAT(A.START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				   DATE_FORMAT(A.END_DT,'%m.%d') AS END_DT,				/* 종료일 */
+				   A.P_EVENT_IMG,					/* PC 이미지 */
+				   A.P_EVENT_REAL_IMG,		/* PC 실제 이미지 */
+				   A.M_EVENT_IMG,				/* MOBILE 이미지 */
+				   A.M_EVENT_REAL_IMG,		/* MOBILE 실제 이미지 */
+				   A.DEVICE,							/* 디바이스 [A:전체, P:PC, M:MOBILE] */
+				   A.LINK_YN,							/* PC 링크 여부 */
+				   A.LINK_URL,						/* PC 링크 URL */
+				   A.LINK_WINDOW,				/* PC 링크 창 구분 [C:현재창, N:새창] */
+				   A.MO_LINK_YN,					/* MO 링크 여부 */
+				   A.MO_LINK_URL,				/* MO 링크 URL */
+				   A.MO_LINK_WINDOW,			/* MO 링크 창 구분 [C:현재창, N:새창] */
+				   A.REPLY_YN,						/* 댓글 여부 */
+				   A.EVENT_INFO, 					/* 부가 설명 */
+				   A.READ_CNT,						/* 조회 수 */
+				   B.GUBUN_IDX,					/* 공지사항에 등록 된 구분 일련번호 */
+				   B.NOTICE_IDX					/* 공지사항 일련번호 */
+		FROM TE_EVENT A LEFT OUTER JOIN TA_NOTICE B ON A.EVENT_IDX = B.GUBUN_IDX AND B.WINNER_GUBUN = 'EVENT'
+		WHERE A.DISP_YN = 'Y' 
+		AND A.USE_YN = 'Y'
+		AND ( DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i:%s') <![CDATA[<]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i')  )
+		
+		ORDER BY DATE_FORMAT(A.END_DT,'%Y.%m.%d %H:%i:%s') DESC
+		
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 이벤트 상세 -->
+	<select id="getEventDetail" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** eventDAO.getEventDetail **/
+		SELECT EVENT_IDX,			/* 일련번호 */
+				   TITLE,					/* 제목 */
+				   P_EVENT_IMG,				/* PC 리스트 이미지 */
+				   M_EVENT_IMG,				/* MOBILE 리스트 이미지 */
+				   P_EVENT_DESC,	/* PC 내용 */
+				   M_EVENT_DESC,	/* MOBILE 내용 */
+				   DATE_FORMAT(START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				   DATE_FORMAT(END_DT,'%Y.%m.%d') AS END_DT,		/* 종료일 */
+				   REPLY_YN,			/* 댓글여부 */
+				   EVENT_INFO,		/* 부가설명 */
+				   READ_CNT			/* 조회수 */
+		FROM TE_EVENT
+		WHERE EVENT_IDX = #{EVENTIDX}
+		AND USE_YN = 'Y'
+		AND ( DATE_FORMAT(START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i')  AND DATE_FORMAT(END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i')  )
+	</select>
+	
+	<!-- 이벤트 조회 수 증가 -->
+	<update id="addEventReadCnt" parameterType="java.util.HashMap">
+		/** eventDAO.addEventReadCnt **/
+		UPDATE TE_EVENT
+		SET READ_CNT = READ_CNT+1
+		WHERE EVENT_IDX = #{EVENTIDX}
+	</update>
+	
+	<!-- 이벤트 댓글 리스트 총 개수 -->
+	<select id="getEventReplyListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** eventDAO.getEventReplyListCnt **/
+		SELECT COUNT(*)
+		FROM TE_EVENT_REPLY A INNER JOIN TM_MEMBER_DETAIL B ON A.REG_IDX = B.MEMBER_DETAIL_IDX AND B.MEMBER_NM IS NOT NULL AND B.MEMBER_NM != ''
+		WHERE A.EVENT_IDX = #{EVENTIDX}
+	</select>
+	
+	<!-- 이벤트 댓글 리스트 -->
+	<select id="getEventReplyList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** eventDAO.getEventReplyList **/
+		SELECT A.REPLY_IDX, 				/* 댓글 일련번호 */
+				   A.EVENT_IDX,				/* 샘플 마스터 일련번호 */
+				   A.REPLY_CONTENTS,		/* 댓글 내용 */
+				   DATE_FORMAT(A.REG_DT,'%Y.%m.%d') AS REG_YMD, 	/* 작성 년월일 */
+				   DATE_FORMAT(A.REG_DT,'%H:%i:%s') AS REG_HMS,		/* 작성 시분초 */
+				   FN_MASK_NM(B.MEMBER_NM) AS MEMBER_NM, 			/* 회원명 */
+				   A.REG_IDX,					/* 댓글 작성자 일련번호 */
+				   CASE
+				   	WHEN B.JOIN_TYPE = 0 THEN ''
+				   	ELSE (SELECT SNS_TYPE FROM TM_MEMBER_SNS C WHERE A.REG_IDX = C.MEMBER_IDX LIMIT 1)
+				   END AS SNS_TYPE		/* SNS 유형 */
+		FROM TE_EVENT_REPLY A INNER JOIN TM_MEMBER_DETAIL B ON A.REG_IDX = B.MEMBER_DETAIL_IDX AND B.MEMBER_NM IS NOT NULL AND B.MEMBER_NM != ''
+		WHERE A.EVENT_IDX = #{EVENTIDX}
+  		ORDER BY A.REG_DT DESC
+  		
+  		<if test="SCHCHECK eq 'LIST'.toString()">
+  			LIMIT #{PAGESTART}, #{PAGEBLOCK}
+  		</if>
+	</select>
+	
+	<!-- 중복 댓글 체크 -->
+	<select id="replyCheck"  parameterType="java.util.HashMap" resultType="int">
+		/** eventDAO.replyCheck **/
+		SELECT COUNT(*)
+		FROM TE_EVENT_REPLY 
+		WHERE EVENT_IDX = #{EVENTIDX}
+		AND REG_IDX = #{REGIDX}
+	</select>
+	
+	<!-- 이벤트 댓글 등록 -->
+	<insert id="eventReplySave" parameterType="java.util.HashMap">
+		/** eventDAO.eventReplySave **/
+		INSERT INTO TE_EVENT_REPLY 
+					( EVENT_IDX, REPLY_CONTENTS, REG_IDX, REG_DT )
+		VALUES ( #{EVENTIDX}, #{REPLYCONTENTS}, #{REGIDX}, NOW() )
+	</insert>
+	
+	<!-- 이벤트 댓글 삭제 -->
+	<select id="eventReplyDeleteAjax"  parameterType="java.util.HashMap" resultType="int">
+		/** eventDAO.eventReplyDeleteAjax **/
+		DELETE FROM TE_EVENT_REPLY 
+		WHERE REPLY_IDX = #{REPLYIDX}
+		AND REG_IDX= #{MEMBERIDX}
+	</select>
+	
+		<!-- 쿠폰북 -->
+	<select id="couponBookList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** eventDAO.couponBookList **/
+		SELECT A.COUPON_IDX,
+		       A.COUPON_NM,
+		       A.COUPON_DESC,
+		       A.GUBUN,
+		       A.METHOD,
+		       A.METHOD_TAG,
+		       A.DEVICE,
+		       A.DISCOUNT_TYPE,
+		       A.DISCOUNT,
+		       A.MAX_DISCOUNT,
+		       A.ORDER_AMT_LIMIT_YN,
+		       A.MIN_ORDER_AMT,
+		       A.DOWN_START_DT,
+		       A.DOWN_END_DT,
+		       A.USE_DATE_LIMIT_YN,
+		       A.USE_START_DT,
+		       A.USE_END_DT,
+		       A.USABLE_DAYS,
+		       A.TARGET_MEMBER,
+		       A.TARGET_GRADE,
+		       A.TARGET_CATEGORY,
+		       A.TARGET_GOODS,
+		       A.ISSUE_CNT_LIMIT_YN,
+		       A.MAX_ISSUE_CNT,
+		       A.REISSUE_YN,
+		       A.REISSUE_MIN_USABLE_DAYS,
+		       A.DUP_USE_YN,
+		       A.DISP_YN,
+		       A.USE_YN,
+		       A.REG_DT,
+		       BM.TARGET_BRAND_IDX
+		FROM TO_COUPON A
+		LEFT OUTER JOIN (	/* 대상 브랜드 인덱스 */
+			SELECT GUBUN_IDX, MIN(BRAND_IDX) AS TARGET_BRAND_IDX 
+			FROM TS_BRAND_MAPPING
+			WHERE GUBUN = 'COUPON'
+			GROUP BY GUBUN_IDX
+        ) BM ON A.COUPON_IDX = BM.GUBUN_IDX
+		WHERE A.METHOD = 'D'   -- 다운로드 쿠폰
+		AND A.DISP_YN = 'Y'
+		AND A.USE_YN = 'Y'         -- 사용가능여부
+		AND A.DEVICE IN ('A','P')
+		AND A.DOWN_START_DT <![CDATA[<=]]> NOW() AND A.DOWN_END_DT <![CDATA[>=]]> NOW()
+		ORDER BY A.REG_DT DESC
+		<if test="DEVICE eq 'M'.toString()">
+  			LIMIT #{PAGESTART}, #{PAGEBLOCK}
+  		</if>
+	</select>
+	
+	<!-- 쿠폰북 리스트 총 개수 -->
+	<select id="couponBookListCnt" parameterType="java.util.HashMap" resultType="int">
+		/** eventDAO.couponBookListCnt **/
+		SELECT COUNT(*)
+		FROM TO_COUPON A
+		LEFT OUTER JOIN (	/* 대상 브랜드 인덱스 */
+			SELECT GUBUN_IDX, MIN(BRAND_IDX) AS TARGET_BRAND_IDX 
+			FROM TS_BRAND_MAPPING
+			WHERE GUBUN = 'COUPON'
+			GROUP BY GUBUN_IDX
+        ) BM ON A.COUPON_IDX = BM.GUBUN_IDX
+		WHERE A.METHOD = 'D'   -- 다운로드 쿠폰
+		AND A.DISP_YN = 'Y'
+		AND A.USE_YN = 'Y'         -- 사용가능여부
+		AND A.DEVICE IN ('A','P')
+		AND A.DOWN_START_DT <![CDATA[<=]]> NOW() AND A.DOWN_END_DT <![CDATA[>=]]> NOW()
+	</select>
+	
+	
+	<!-- 쿠폰북 쿠폰 다운로드 -->
+	<select id="procCouponDownload" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="sqlMap">
+		{ CALL SP_COUPON_DOWN_ONE(#{MEMBERIDX, mode=IN, jdbcType=INTEGER}, #{COUPONIDX, mode=IN, jdbcType=INTEGER}) }
+	</select>
+		<!-- 쿠폰북 쿠폰 다운로드 전체 -->
+	<select id="procCouponAllDownload" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="sqlMap">
+		{ CALL SP_COUPON_DOWN_ALL(#{MEMBERIDX, mode=IN, jdbcType=INTEGER}) }
+	</select>
+	
+	<!-- 이벤트 투표하기 -->
+	<insert id="eventVoteSave" parameterType="java.util.HashMap">
+		/** eventDAO.eventVoteSave **/
+		INSERT INTO TE_EVENT_VOTE 
+					( EVENT_IDX, VOTE_NUM, REG_IDX, REG_DT )
+		VALUES ( #{EVENTIDX}, #{VOTENUM}, #{REGIDX}, NOW() )
+	</insert>
+	
+	<!-- 이벤트 상세 -->
+	<select id="getVoteNum" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** eventDAO.getVoteNum **/
+		SELECT
+			IFNULL(SUM(CASE WHEN VOTE_NUM = 1 THEN 1 ELSE 0 END),0) AS VOTE_SUM1
+			, IFNULL(SUM(CASE WHEN VOTE_NUM = 2 THEN 1 ELSE 0 END),0) AS VOTE_SUM2
+			, IFNULL(SUM(CASE WHEN VOTE_NUM = 3 THEN 1 ELSE 0 END),0) AS VOTE_SUM3
+			, IFNULL(SUM(CASE WHEN VOTE_NUM = 4 THEN 1 ELSE 0 END),0) AS VOTE_SUM4
+			, IFNULL(SUM(CASE WHEN VOTE_NUM = 5 THEN 1 ELSE 0 END),0) AS VOTE_SUM5
+			, IFNULL(SUM(CASE WHEN VOTE_NUM = 6 THEN 1 ELSE 0 END),0) AS VOTE_SUM6
+		FROM TE_EVENT_VOTE
+		WHERE EVENT_IDX = #{EVENTIDX}
+	</select>
+	
+</mapper>

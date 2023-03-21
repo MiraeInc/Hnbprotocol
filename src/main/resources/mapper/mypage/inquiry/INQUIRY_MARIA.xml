@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="inquiryDAO">
+
+	<!-- 1:1 문의 리스트 총 개수 -->
+	<select id="getInquiryListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** inquiryDAO.getInquiryListCnt **/
+		SELECT COUNT(*)
+		FROM TA_INQUIRY A 
+		WHERE 1=1
+		<!-- 회원, 비회원 체크 -->
+		<choose>
+			<when test="QUESTNREGIDX != null and QUESTNREGIDX != '' ">AND A.QUESTN_REG_IDX = #{QUESTNREGIDX} </when>
+			<otherwise>AND A.NOMEMBER_ORDER_CD = #{NOMEMBERORDERCD}	</otherwise>
+		</choose>
+		
+		<!-- 날짜 검색 -->
+		<if test="SCHSTARTDT != null">
+			AND ( DATE_FORMAT(A.QUESTN_REG_DT,'%Y-%m-%d') <![CDATA[>=]]> #{SCHSTARTDT} )
+		</if>
+		<if test="SCHENDDT != null">
+			AND ( DATE_FORMAT(A.QUESTN_REG_DT,'%Y-%m-%d') <![CDATA[<=]]> #{SCHENDDT} )
+		</if>
+		
+  		<!-- 유형 -->
+  		<if test="SCHSUBTYPE != null and SCHSUBTYPE != '' ">
+			AND A.INQUIRY_TYPE = #{SCHSUBTYPE}
+		</if>
+	</select>
+	
+	<!-- 1:1 문의 리스트 -->
+	<select id="getInquiryList"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** inquiryDAO.getInquiryList **/
+		SELECT AA.INQUIRY_IDX, AA.INQUIRY_NM, AA.ORDER_DETAIL_IDX, AA.QUESTN_REG_DT, AA.QUESTN_TITLE, AA.QUESTN_DESC, AA.ANS_YN, AA.ANS_YN_NM, 
+				   AA.ANS_DESC, AA.USER_GOODS_NM, AA.GOODS_IDX, AA.Q_IMG1, AA.Q_IMG2, AA.Q_IMG3, AA.Q_IMG4, AA.INQUIRY_TYPE,
+				   B.GOODS_IDX AS R_GOODS_IDX, B.GOODS_CD AS R_GOODS_CD, B.GOODS_NM AS R_GOODS_NM, C.IMG_FILE AS R_IMG_FILE,
+				   VG.BRAND_IDX, VG.SOLDOUT_YN, VG.BEST_YN, VG.NEW_YN, VG.OPO_YN, VG.TPO_YN, VG.POINTICON_YN, VG.SALEICON_YN, VG.GOODS_IDX AS V_GOODS_IDX
+		FROM (
+			SELECT A.INQUIRY_IDX,
+					   A.INQUIRY_TYPE,
+					   FN_COMMON_NM(A.INQUIRY_TYPE) AS INQUIRY_NM,
+					   A.ORDER_DETAIL_IDX,
+					   DATE_FORMAT(A.QUESTN_REG_DT, '%Y.%m.%d %H:%i:%s') AS QUESTN_REG_DT,
+					   A.QUESTN_TITLE,
+					   A.QUESTN_DESC,
+					   A.ANS_YN,
+					   CASE
+					   		WHEN A.ANS_YN = 'Y' THEN '답변완료'
+					   		WHEN A.ANS_YN = 'N' THEN '답변대기'
+					   END AS ANS_YN_NM,
+					   A.ANS_DESC,
+					   A.Q_IMG1, A.Q_IMG2, A.Q_IMG3, A.Q_IMG4,
+					   CASE
+					   		WHEN A.QUESTN_GOODS_NM != '' AND A.QUESTN_GOODS_NM IS NOT NULL THEN A.QUESTN_GOODS_NM
+					   		ELSE
+					   			(
+					   				CASE
+					   					WHEN (A.ORDER_GOODS_NM != '' AND A.ORDER_GOODS_NM IS NOT NULL)
+					   					THEN A.ORDER_GOODS_NM
+					   					ELSE NULL
+					   				END
+					   			)
+					   END AS USER_GOODS_NM,
+					   CASE
+					   		WHEN A.QUESTN_GOODS_IDX != '' AND A.QUESTN_GOODS_IDX IS NOT NULL THEN A.QUESTN_GOODS_IDX
+					   		ELSE
+					   			(
+					   				CASE
+					   					WHEN (A.ORDER_DETAIL_IDX != '' AND A.ORDER_DETAIL_IDX IS NOT NULL)
+					   					THEN (SELECT OD.GOODS_IDX FROM TO_ORDER_DETAIL OD WHERE OD.ORDER_DETAIL_IDX = A.ORDER_DETAIL_IDX)
+					   					ELSE NULL
+					   				END
+					   			)
+					   	END AS GOODS_IDX
+			FROM TA_INQUIRY A
+			WHERE 1=1
+			<!-- 회원, 비회원 체크 -->
+			<choose>
+				<when test="QUESTNREGIDX != null and QUESTNREGIDX != '' ">AND A.QUESTN_REG_IDX = #{QUESTNREGIDX} </when>
+				<otherwise>AND A.NOMEMBER_ORDER_CD = #{NOMEMBERORDERCD}	</otherwise>
+			</choose>
+			
+			<!-- 날짜 검색 -->
+			<if test="SCHSTARTDT != null and SCHSTARTDT != '' ">
+				AND ( DATE_FORMAT(A.QUESTN_REG_DT,'%Y-%m-%d') <![CDATA[>=]]> #{SCHSTARTDT} )
+			</if>
+			<if test="SCHENDDT != null and SCHENDDT != '' ">
+				AND ( DATE_FORMAT(A.QUESTN_REG_DT,'%Y-%m-%d') <![CDATA[<=]]> #{SCHENDDT} )
+			</if>
+			
+	  		<!-- 유형 -->
+	  		<if test="SCHSUBTYPE != null and SCHSUBTYPE != '' ">
+				AND A.INQUIRY_TYPE = #{SCHSUBTYPE}
+			</if>
+		) AA LEFT OUTER JOIN TP_GOODS B ON AA.GOODS_IDX = B.GOODS_IDX
+			   LEFT OUTER JOIN TP_GOODS_FILE C ON AA.GOODS_IDX = C.GOODS_IDX AND C.MAIN_FLAG = 'Y'
+			   LEFT OUTER JOIN VW_GOODS VG ON AA.GOODS_IDX = VG.GOODS_IDX
+		ORDER BY DATE_FORMAT(AA.QUESTN_REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+		LIMIT	 #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 1:1 문의 삭제 -->
+	<delete id="inquiryDelete" parameterType="java.util.HashMap">
+		/** inquiryDAO.inquiryDelete **/
+		DELETE FROM TA_INQUIRY
+		WHERE INQUIRY_IDX = #{INQUIRYIDX}
+		<if test="QUESTNREGIDX != null and QUESTNREGIDX != '' ">
+			AND QUESTN_REG_IDX = #{QUESTNREGIDX}
+		</if>
+	</delete>
+	
+	<!-- 1:1 문의 상세 -->
+	<select id="getInquiryDetail" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** inquiryDAO.getInquiryDetail **/
+		SELECT 
+			A.INQUIRY_IDX,				/* 일련번호 */
+			A.INQUIRY_TYPE,			/* 문의 유형 */
+			FN_COMMON_NM(A.INQUIRY_TYPE) AS INQUIRY_TYPE_NM, /* 문의 유형 명 */
+			A.ORDER_IDX,				/* 주문검색 주문번호 */
+			A.ORDER_DETAIL_IDX,		/* 주문검색 주문 디테일 번호 */
+			A.ORDER_CD,					/* 주문검색 주문 코드 */
+			A.ORDER_GOODS_NM,		/* 주문검색 상품 명 */
+			A.QUESTN_GOODS_IDX,	/* 상품검색 상품 일련번호 */
+			A.QUESTN_GOODS_NM,	/* 상품검색 상품 명 */
+			A.NOMEMBER_ORDER_CD,	/* 비회원 주문 코드 */
+			FN_DECRYPT(A.QUESTN_PHONE) QUESTN_PHONE,			/* 핸드폰 번호 */
+			FN_DECRYPT(A.QUESTN_EMAIL) QUESTN_EMAIL,			/* 이메일 */
+			A.QUESTN_TITLE,			/* 질문 제목 */
+			A.QUESTN_DESC,				/* 질문 내용 */
+			A.PHONE_SEND_YN,			/* 문자 수신 여부 */
+			A.Q_IMG1,						
+			A.Q_IMG2,
+			A.Q_IMG3,
+			A.Q_IMG4
+		FROM TA_INQUIRY A 
+		WHERE A.INQUIRY_IDX = #{INQUIRYIDX}
+	</select>
+	
+	<!-- 1:1 문의 작성 -->
+	<insert id="inquirySave" parameterType="java.util.HashMap">
+		/** inquiryDAO.inquirySave **/
+		INSERT INTO TA_INQUIRY  
+					( 
+						MEMBER_YN, INQUIRY_TYPE, QUESTN_REG_DT, 
+						
+						<choose>
+							<when test="QUESTNREGIDX != null and QUESTNREGIDX != '' ">QUESTN_REG_IDX, </when>
+							<otherwise>NOMEMBER_ORDER_CD, </otherwise>
+						</choose>
+						
+						<if test="ORDERIDX != null and ORDERIDX != '' ">ORDER_IDX, ORDER_DETAIL_IDX, </if>
+						
+						ORDER_CD, ORDER_GOODS_NM, 
+						
+						<if test="QUESTNGOODSIDX != null and QUESTNGOODSIDX != '' ">QUESTN_GOODS_IDX, </if>
+						
+						QUESTN_GOODS_NM, PHONE_SEND_YN, QUESTN_PHONE, QUESTN_EMAIL, QUESTN_TITLE, QUESTN_DESC
+					)
+		VALUES (
+						#{MEMBERYN}, #{INQUIRYTYPE}, NOW(), 
+						
+						<choose>
+							<when test="QUESTNREGIDX != null and QUESTNREGIDX != '' ">#{QUESTNREGIDX}, </when>
+							<otherwise>#{NOMEMBERORDERCD}, </otherwise>
+						</choose>
+						
+						<if test="ORDERIDX != null and ORDERIDX != '' ">#{ORDERIDX}, #{ORDERDETAILIDX}, </if>
+						
+						#{ORDERCD}, #{ORDERGOODSNM}, 
+						
+						<if test="QUESTNGOODSIDX != null and QUESTNGOODSIDX != '' ">#{QUESTNGOODSIDX}, </if>
+						
+						#{QUESTNGOODSNM}, #{PHONESENDYN}, FN_ENCRYPT(#{QUESTNPHONE}) , FN_ENCRYPT(#{QUESTNEMAIL}), #{QUESTNTITLE}, #{QUESTNDESC} 
+					)
+		
+		<selectKey keyProperty="INQUIRYIDX" resultType="int" order="AFTER">
+			    SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<!-- 1:1 문의 수정 -->
+	<update id="inquiryUpdate" parameterType="java.util.HashMap">
+		/** inquiryDAO.inquiryUpdate **/
+		UPDATE TA_INQUIRY  
+		SET MEMBER_YN = #{MEMBERYN},			/* 회원 여부 */
+			  INQUIRY_TYPE = #{INQUIRYTYPE}, 	/* 문의 유형 */
+			  QUESTN_REG_DT = NOW(),				/* 문의 일자 */
+			  <if test="ORDERIDX != null and ORDERIDX != '' ">
+			  	ORDER_IDX = #{ORDERIDX}, 						/* 주문검색 주문 일련번호 */
+			  	ORDER_DETAIL_IDX = #{ORDERDETAILIDX}, 	/* 주문검색 주문 디테일 일련번호 */
+			  </if>
+			  ORDER_CD = #{ORDERCD}, 							/* 주문검색 주문 코드 */
+			  ORDER_GOODS_NM = #{ORDERGOODSNM}, 	/* 주문검색 상품 명 */
+			  <if test="QUESTNGOODSIDX != null and QUESTNGOODSIDX != '' ">
+			  	QUESTN_GOODS_IDX = #{QUESTNGOODSIDX}, /* 상품검색 상품 일련번호 */
+			  </if>
+			  QUESTN_GOODS_NM = #{QUESTNGOODSNM}, 		/* 상품검색 상품 명 */
+			  PHONE_SEND_YN = #{PHONESENDYN}, 				/* 문자 수신 여부 */
+			  QUESTN_PHONE = FN_ENCRYPT(#{QUESTNPHONE}), 				/* 핸드폰 번호 */
+			  QUESTN_EMAIL = FN_ENCRYPT(#{QUESTNEMAIL}), 					/* 이메일 */
+			  QUESTN_TITLE = #{QUESTNTITLE}, 					/* 제목 */
+			  QUESTN_DESC = #{QUESTNDESC}, 					/* 내용 */
+			  Q_IMG1 = #{QIMG1},
+			  Q_REAL_IMG1 = #{QIMG1},
+			  Q_IMG2 = #{QIMG2},
+			  Q_REAL_IMG2 = #{QIMG2},
+			  Q_IMG3 = #{QIMG3},	
+			  Q_REAL_IMG3 = #{QIMG3},
+			  Q_IMG4 = #{QIMG4},	
+			  Q_REAL_IMG4 = #{QIMG4}
+		WHERE INQUIRY_IDX = #{INQUIRYIDX}
+		<choose>
+			<when test="QUESTNREGIDX != null and QUESTNREGIDX != '' ">AND QUESTN_REG_IDX = #{QUESTNREGIDX} </when>
+			<otherwise>AND NOMEMBER_ORDER_CD = #{NOMEMBERORDERCD} </otherwise>
+		</choose>
+	</update>
+	
+	<!-- 1:1 상품 검색 리스트 총 개수 -->
+	<select id="getInquiryGoodsListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** inquiryDAO.getInquiryGoodsListCnt **/
+		SELECT COUNT(*)
+		FROM VW_GOODS
+		WHERE 1=1
+		<if test="USERQUESTNGOODSNM != null and USERQUESTNGOODSNM != '' ">
+		AND GOODS_NM LIKE '%${USERQUESTNGOODSNM}%'
+		</if>
+	</select>
+	
+	<!-- 1:1 상품 검색 리스트 -->
+	<select id="getInquiryGoodsList"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** inquiryDAO.getInquiryGoodsList **/
+		SELECT GOODS_IDX,	/* 상품 일련번호 */
+				   GOODS_CD,		/* 상품 코드 */
+				   GOODS_NM,		/* 상품 명 */
+				   MAIN_FILE		/* 상품 이미지 */
+		FROM VW_GOODS
+		WHERE 1=1
+		<if test="USERQUESTNGOODSNM != null and USERQUESTNGOODSNM != '' ">
+		AND GOODS_NM LIKE '%${USERQUESTNGOODSNM}%'
+		</if>
+		ORDER BY GOODS_NM 
+		LIMIT	 #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 1:1 주문 검색 리스트 총 개수 -->
+	<select id="getInquiryOrderListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** inquiryDAO.getInquiryOrderListCnt **/
+		SELECT
+			COUNT(*)
+		FROM (
+			SELECT
+				OD.ORDER_IDX,
+				OD.ORDER_CD,
+				DATE_FORMAT(OD.ORDER_DT, '%Y.%m.%d') AS ORDER_DT,
+				COUNT(*) AS CNT
+			FROM TO_ORDER OD INNER JOIN TO_ORDER_DETAIL ODD ON OD.ORDER_IDX = ODD.ORDER_IDX
+			WHERE 1=1
+			AND OD.ORDER_STATUS_CD != '000'
+			
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">
+				AND OD.MEMBER_IDX = #{MEMBERIDX}
+				</when>
+				<when test="NOMEMBERORDERCD != null and NOMEMBERORDERCD != '' ">
+				AND OD.ORDER_CD = #{NOMEMBERORDERCD}
+				</when>
+			</choose>
+			
+			<if test="USERORDERCD != null and USERORDERCD != '' ">
+			AND ODD.ORDER_CD LIKE '%${USERORDERCD}%'
+			</if>
+			
+			<if test="USERORDERGOODSNM != null and USERORDERGOODSNM != '' ">
+			AND ODD.GOODS_NM LIKE '%${USERORDERGOODSNM}%'
+			</if>
+			
+			GROUP BY OD.ORDER_IDX, OD.ORDER_CD, DATE_FORMAT(OD.ORDER_DT, '%Y.%m.%d')
+		) A 
+		WHERE 1=1
+	</select>
+	
+	<!-- 1:1 주문 검색 리스트 -->
+	<select id="getInquiryOrderList"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** inquiryDAO.getInquiryOrderList **/
+		SELECT
+			A.ORDER_IDX,					/* 주문 일련번호번호 */
+			A.ORDER_CD,						/* 주문 코드 */
+			DATE_FORMAT(A.ORDER_DT, '%Y.%m.%d') AS ORDER_DT,	/* 주문 일자 */
+			A.CNT,								/* 한 주문 당 상품 개수 */
+			B.ORDER_DETAIL_IDX,			/* 주문 디테일 일련번호 */
+			B.GOODS_IDX,					/* 상품 일련번호 */
+			B.GOODS_CD,						/* 상품 코드 */
+			B.GOODS_NM,						/* 상품 명 */
+			C.IMG_FILE AS MAIN_FILE,	/* 상품 이미지 */
+			B.ORDER_CNT,					/* 상품 수량 */
+			B.DISCOUNT_PRICE*B.ORDER_CNT AS PRICE,	/* 결제 한 금액 */
+			FN_ORDER_STATUS_NM(B.ORDER_STATUS_CD) AS ORDER_STATUS_CD_NM	/* 주문 상태 명 */
+		FROM (
+			SELECT
+				OD.ORDER_IDX,
+				OD.ORDER_CD,
+				DATE_FORMAT(OD.ORDER_DT, '%Y.%m.%d') AS ORDER_DT,
+				COUNT(*) AS CNT
+			FROM TO_ORDER OD INNER JOIN TO_ORDER_DETAIL ODD ON OD.ORDER_IDX = ODD.ORDER_IDX
+			WHERE 1=1
+			AND OD.ORDER_STATUS_CD != '000'
+			
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">
+				AND OD.MEMBER_IDX = #{MEMBERIDX}
+				</when>
+				<when test="NOMEMBERORDERCD != null and NOMEMBERORDERCD != '' ">
+				AND OD.ORDER_CD = #{NOMEMBERORDERCD}
+				</when>
+			</choose>
+			
+			<if test="USERORDERCD != null and USERORDERCD != '' ">
+			AND ODD.ORDER_CD LIKE '%${USERORDERCD}%'
+			</if>
+			
+			<if test="USERORDERGOODSNM != null and USERORDERGOODSNM != '' ">
+			AND ODD.GOODS_NM LIKE '%${USERORDERGOODSNM}%'
+			</if>
+			
+			GROUP BY OD.ORDER_IDX, OD.ORDER_CD, DATE_FORMAT(OD.ORDER_DT, '%Y.%m.%d')
+			
+			ORDER BY OD.ORDER_IDX DESC
+			
+			LIMIT #{PAGESTART}, #{PAGEBLOCK}
+		) A JOIN TO_ORDER_DETAIL B ON A.ORDER_IDX = B.ORDER_IDX 
+				<if test="USERORDERCD != null and USERORDERCD != '' ">
+				AND B.ORDER_CD LIKE '%${USERORDERCD}%'
+				</if>
+				<if test="USERORDERGOODSNM != null and USERORDERGOODSNM != '' ">
+				AND B.GOODS_NM LIKE '%${USERORDERGOODSNM}%'
+				</if>
+			 JOIN TP_GOODS_FILE C ON B.GOODS_IDX = C.GOODS_IDX AND C.MAIN_FLAG = 'Y'
+		WHERE 1=1
+		ORDER BY A.ORDER_IDX DESC, B.ORDER_DETAIL_IDX
+	</select>
+	
+	<!-- 비회원 주문 정보 -->
+	<select id="getInquiryOrderDetail" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** inquiryDAO.getInquiryOrderDetail **/
+		SELECT 
+			A.SENDER_NM,				/* 이름 */
+			FN_DECRYPT(A.SENDER_PHONE_NO) SENDER_PHONE_NO,		/* 핸드폰 번호 */
+			FN_DECRYPT(A.SENDER_EMAIL) SENDER_EMAIL			/* 이메일 */
+		FROM TO_ORDER A 
+		WHERE A.ORDER_CD = #{NOMEMBERORDERCD}
+		AND A.MEMBER_ORDER_YN = 'N'
+	</select>
+	
+</mapper>

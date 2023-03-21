@@ -1,0 +1,34 @@
+*.bak
+*.cache
+*.ilk
+bin
+target
+[Tt]est/[Tt]arget/
+
+# Compiled class file
+*.class
+*/*.class
+
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.MF
+*.bak
+
+.[^git]*
+.svn*
+
+src/main/webapp/WEB-INF/lib/GxModule_1.0.jar

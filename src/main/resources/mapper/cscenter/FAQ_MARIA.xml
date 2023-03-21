@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="faqDAO">
+	
+	<!-- FAQ 리스트 총 개수 -->
+	<select id="getFaqListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** faqDAO.getFaqListCnt **/
+		SELECT COUNT(*)
+		FROM TA_FAQ
+		WHERE DISP_YN = 'Y'
+		
+		<!-- FAQ 유형 -->
+		<if test="SCHTYPE != null and SCHTYPE != '' ">
+			AND FAQ_TYPE = #{SCHTYPE}
+		</if>
+		
+		<!-- 검색어 -->
+		<if test="SCHVALUE != null and SCHVALUE !='' ">
+  			<choose>
+  				<when test="SCHSUBTYPE eq 'ALL'.toString() ">
+  					AND ( TITLE LIKE CONCAT('%', #{SCHVALUE}, '%') OR FAQ_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  				<when test="SCHSUBTYPE eq 'TITLE'.toString() ">
+  					AND TITLE LIKE CONCAT('%', #{SCHVALUE}, '%')
+  				</when>
+  				<when test="SCHSUBTYPE eq 'CONTENT'.toString() ">
+  					AND ( FAQ_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') OR FAQ_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  			</choose>
+  		</if>
+	</select>
+	
+	<!-- FAQ 리스트 -->
+	<select id="getFaqList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** faqDAO.getFaqList **/
+		SELECT FAQ_IDX, 	/* 일련번호 */
+				   FAQ_TYPE,	/* 유형 */
+				   FN_COMMON_NM(FAQ_TYPE) AS FAQ_NM, /* 유형이름 */ 
+				   TITLE,			/* 제목 */
+				   FAQ_DESC,	/* 내용 */
+				   READ_CNT,	/* 조회 수 */
+				   DATE_FORMAT(REG_DT,'%Y-%m-%d') AS REG_DT	/* 등록일자 */
+		FROM TA_FAQ 
+		WHERE DISP_YN = 'Y'
+		
+		<!-- FAQ 유형 -->
+		<if test="SCHTYPE != null and SCHTYPE != '' ">
+			AND FAQ_TYPE = #{SCHTYPE}
+		</if>
+		
+		<!-- 검색어 -->
+		<if test="SCHVALUE != null and SCHVALUE !='' ">
+  			<choose>
+  				<when test="SCHSUBTYPE eq 'ALL'.toString() ">
+  					AND ( TITLE LIKE CONCAT('%', #{SCHVALUE}, '%') OR FAQ_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  				<when test="SCHSUBTYPE eq 'TITLE'.toString() ">
+  					AND TITLE LIKE CONCAT('%', #{SCHVALUE}, '%')
+  				</when>
+  				<when test="SCHSUBTYPE eq 'CONTENT'.toString() ">
+  					AND ( FAQ_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') OR FAQ_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  			</choose>
+  		</if>
+  		ORDER BY DATE_FORMAT(REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+  		
+  		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- FAQ 조회 수 증가 -->
+	<update id="addFaqReadCnt" parameterType="java.util.HashMap">
+		/** faqDAO.addFaqReadCnt **/
+		UPDATE TA_FAQ
+		SET READ_CNT = READ_CNT+1
+		WHERE FAQ_IDX = #{FAQIDX}
+	</update>
+	
+	<!-- FAQ Top5 리스트 -->
+	<select id="getFaqTop5List" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** faqDAO.getFaqTop5List **/
+		SELECT FAQ_IDX, 	/* 일련번호 */
+				   FAQ_TYPE,	/* 유형 */
+				   FN_COMMON_NM(FAQ_TYPE) AS FAQ_NM, /* 유형이름 */ 
+				   TITLE,			/* 제목 */
+				   FAQ_DESC,	/* 내용 */
+				   READ_CNT,	/* 조회 수 */
+				   DATE_FORMAT(REG_DT,'%Y-%m-%d') AS REG_DT	/* 등록일자 */
+		FROM TA_FAQ 
+		WHERE DISP_YN = 'Y'
+		
+		<!-- 검색어 -->
+		<if test="SCHVALUE != null and SCHVALUE !='' ">
+			AND ( TITLE LIKE CONCAT('%', #{SCHVALUE}, '%') OR FAQ_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  		</if>
+  		
+  		ORDER BY READ_CNT DESC
+  		
+  		LIMIT 5
+	</select>
+	
+</mapper>

@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="noticeDAO">
+
+	<!-- 공지사항 리스트 총 개수 -->
+	<select id="getNoticeTopListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** noticeDAO.getNoticeTopListCnt **/
+		SELECT COUNT(*)
+		FROM TA_NOTICE 
+		WHERE TOP_YN = 'Y'
+		
+		<!-- 게시판 타입 -->
+  		<if test="SCHCHECK != null and SCHCHECK != '' ">
+			AND NOTICE_TYPE = #{SCHCHECK}
+		</if>
+		
+		<!-- 검색어 -->
+		<if test="SCHVALUE != null and SCHVALUE !='' ">
+  			<choose>
+  				<when test="SCHSUBTYPE eq 'ALL'.toString() ">
+  					AND ( TITLE LIKE CONCAT('%', #{SCHVALUE}, '%') OR P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%')
+  							 OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  				<when test="SCHSUBTYPE eq 'TITLE'.toString() ">
+  					AND TITLE LIKE CONCAT('%', #{SCHVALUE}, '%')
+  				</when>
+  				<when test="SCHSUBTYPE eq 'CONTENT'.toString() ">
+  					AND ( P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  			</choose>
+  		</if>
+	</select>
+
+	<!-- 공지사항 Top 리스트 -->
+	<select id="getNoticeTopList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** noticeDAO.getNoticeTopList **/
+		SELECT NOTICE_IDX, 	/* 일련번호 */
+				   NOTICE_TYPE,	/* 타입 */
+				   FN_COMMON_NM(NOTICE_TYPE) AS NOTICE_TYPE_NM, /* 유형이름 */ 
+				   TITLE,				/* 제목 */
+				   READ_CNT,		/* 조회 수 */
+				   TOP_YN,			/* 탑 노출 여부 */
+				   DATE_FORMAT(REG_DT,'%Y.%m.%d') AS REG_DT	/* 등록일자 */
+		FROM TA_NOTICE 
+		WHERE TOP_YN = 'Y'
+		
+		<!-- 게시판 타입 -->
+  		<if test="SCHCHECK != null and SCHCHECK != '' ">
+			AND NOTICE_TYPE = #{SCHCHECK}
+		</if>
+		
+		<!-- 검색어 -->
+		<if test="SCHVALUE != null and SCHVALUE !='' ">
+  			<choose>
+  				<when test="SCHSUBTYPE eq 'ALL'.toString() ">
+  					AND ( TITLE LIKE CONCAT('%', #{SCHVALUE}, '%') OR P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%')
+  							 OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  				<when test="SCHSUBTYPE eq 'TITLE'.toString() ">
+  					AND TITLE LIKE CONCAT('%', #{SCHVALUE}, '%')
+  				</when>
+  				<when test="SCHSUBTYPE eq 'CONTENT'.toString() ">
+  					AND ( P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  			</choose>
+  		</if>
+		
+		ORDER BY DATE_FORMAT(REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+		LIMIT 0, 5
+	</select>
+	
+	<!-- 공지사항 리스트 총 개수 -->
+	<select id="getNoticeListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** noticeDAO.getNoticeListCnt **/
+		SELECT COUNT(*)
+		FROM TA_NOTICE
+		WHERE DISP_YN = 'Y' 
+		AND TOP_YN = 'N'
+		
+		<!-- 게시판 타입 -->
+  		<if test="SCHCHECK != null and SCHCHECK != '' ">
+			AND NOTICE_TYPE = #{SCHCHECK}
+		</if>
+		
+		<!-- 검색어 -->
+		<if test="SCHVALUE != null and SCHVALUE !='' ">
+  			<choose>
+  				<when test="SCHSUBTYPE eq 'ALL'.toString() ">
+  					AND ( TITLE LIKE CONCAT('%', #{SCHVALUE}, '%') OR P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%')
+  							 OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  				<when test="SCHSUBTYPE eq 'TITLE'.toString() ">
+  					AND TITLE LIKE CONCAT('%', #{SCHVALUE}, '%')
+  				</when>
+  				<when test="SCHSUBTYPE eq 'CONTENT'.toString() ">
+  					AND ( P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  			</choose>
+  		</if>
+	</select>
+	
+	<!-- 공지사항 리스트 -->
+	<select id="getNoticeList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** noticeDAO.getNoticeList **/
+		SELECT NOTICE_IDX, 	/* 일련번호 */
+				   NOTICE_TYPE,	/* 타입 */
+				   FN_COMMON_NM(NOTICE_TYPE) AS NOTICE_TYPE_NM, /* 유형이름 */ 
+				   TITLE,				/* 제목 */
+				   READ_CNT,		/* 조회 수 */
+				   TOP_YN,			/* 탑 노출 여부 */
+				   DATE_FORMAT(REG_DT,'%Y.%m.%d') AS REG_DT	/* 등록일자 */
+		FROM TA_NOTICE 
+		WHERE DISP_YN = 'Y'
+		AND TOP_YN = 'N'
+		
+		<!-- 게시판 타입 -->
+  		<if test="SCHCHECK != null and SCHCHECK != '' ">
+			AND NOTICE_TYPE = #{SCHCHECK}
+		</if>
+		
+		<!-- 검색어 -->
+		<if test="SCHVALUE != null and SCHVALUE !='' ">
+  			<choose>
+  				<when test="SCHSUBTYPE eq 'ALL'.toString() ">
+  					AND ( TITLE LIKE CONCAT('%', #{SCHVALUE}, '%') OR P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%')
+  							 OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  				<when test="SCHSUBTYPE eq 'TITLE'.toString() ">
+  					AND TITLE LIKE CONCAT('%', #{SCHVALUE}, '%')
+  				</when>
+  				<when test="SCHSUBTYPE eq 'CONTENT'.toString() ">
+  					AND ( P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+  				</when>
+  			</choose>
+  		</if>
+  		
+  		ORDER BY DATE_FORMAT(REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+  		
+  		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 공지사항 상세 -->
+	<select id="getNoticeDetail" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** noticeDAO.getNoticeDetail **/
+		SELECT 
+			A.NOTICE_IDX,			/* 일련번호 */
+			A.NOTICE_TYPE, 			/* 타입 */
+			FN_COMMON_NM(A.NOTICE_TYPE) AS NOTICE_TYPE_NM, /* 유형이름 */ 
+			A.TITLE, 					/* 제목 */
+			A.P_NOTICE_DESC, 		/* PC 내용 */
+			A.M_NOTICE_DESC,		/* MOBILE 내용 */
+			A.READ_CNT, 				/* 조회 수 */
+			A.WINNER_GUBUN,		/* 당첨자 구분 [EVENT / STYLE] */
+			A.GUBUN_IDX,			/* 구분 일련번호 [EVENT / STYLE] */
+			DATE_FORMAT(A.REG_DT,'%Y.%m.%d') AS REG_DT 	/* 작성일자 */
+		FROM TA_NOTICE A
+		WHERE NOTICE_IDX = #{NOTICEIDX}
+	</select>
+	
+	<!-- 이전 공지사항 게시글 -->
+	<select id="getPrevNotice" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** noticeDAO.getPrevNotice */
+		SELECT NOTICE_IDX, 	/* 일련번호 */
+				   TITLE				/* 제목 */
+		FROM TA_NOTICE
+		WHERE NOTICE_IDX IN
+			(	SELECT MIN(NOTICE_IDX)
+				FROM TA_NOTICE
+				WHERE NOTICE_IDX <![CDATA[>]]> #{NOTICEIDX}
+				AND DISP_YN = 'Y' 
+				<!-- 게시판 타입 -->
+				<if test="SCHCHECK != null and SCHCHECK != '' ">
+					AND NOTICE_TYPE = #{SCHCHECK}
+				</if>
+				
+				<!-- 검색어 -->
+				<if test="SCHVALUE != null and SCHVALUE !='' ">
+		  			<choose>
+		  				<when test="SCHSUBTYPE eq 'ALL'.toString() ">
+		  					AND ( TITLE LIKE CONCAT('%', #{SCHVALUE}, '%') OR P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%')
+		  							 OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+		  				</when>
+		  				<when test="SCHSUBTYPE eq 'TITLE'.toString() ">
+		  					AND TITLE LIKE CONCAT('%', #{SCHVALUE}, '%')
+		  				</when>
+		  				<when test="SCHSUBTYPE eq 'CONTENT'.toString() ">
+		  					AND ( P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+		  				</when>
+		  			</choose>
+		  		</if>
+			)
+		ORDER BY DATE_FORMAT(REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+	</select>
+	
+	<!-- 다음 공지사항 게시글 -->
+	<select id="getNextNotice" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** noticeDAO.getNextNotice */
+		SELECT NOTICE_IDX, 	/* 일련번호 */
+				   TITLE				/* 제목 */
+		FROM TA_NOTICE
+		WHERE NOTICE_IDX IN
+			(	SELECT MAX(NOTICE_IDX)
+				FROM TA_NOTICE
+				WHERE NOTICE_IDX <![CDATA[<]]> #{NOTICEIDX}
+				AND DISP_YN = 'Y' 
+				<!-- 게시판 타입 -->
+				<if test="SCHCHECK != null and SCHCHECK != '' ">
+					AND NOTICE_TYPE = #{SCHCHECK}
+				</if>
+				
+				<!-- 검색어 -->
+				<if test="SCHVALUE != null and SCHVALUE !='' ">
+		  			<choose>
+		  				<when test="SCHSUBTYPE eq 'ALL'.toString() ">
+		  					AND ( TITLE LIKE CONCAT('%', #{SCHVALUE}, '%') OR P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%')
+		  							 OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+		  				</when>
+		  				<when test="SCHSUBTYPE eq 'TITLE'.toString() ">
+		  					AND TITLE LIKE CONCAT('%', #{SCHVALUE}, '%')
+		  				</when>
+		  				<when test="SCHSUBTYPE eq 'CONTENT'.toString() ">
+		  					AND ( P_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') OR M_NOTICE_DESC LIKE CONCAT('%', #{SCHVALUE}, '%') )
+		  				</when>
+		  			</choose>
+		  		</if>
+			)
+		ORDER BY DATE_FORMAT(REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+	</select>
+	
+	<!-- 공지사항 조회 수 증가 -->
+	<update id="addNoticeReadCnt" parameterType="java.util.HashMap">
+		/** noticeDAO.addNoticeReadCnt **/
+		UPDATE TA_NOTICE
+		SET READ_CNT = READ_CNT+1
+		WHERE NOTICE_IDX = #{NOTICEIDX}
+	</update>
+	
+	<!-- 공지사항 파일 리스트 -->
+	<select id="getNoticeFileList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** noticeDAO.getNoticeFileList **/
+		SELECT TABLE_IDX,					/* 공지사항 일련번호 */
+				   CSCENTER_FILE_IDX, 	/* 일련번호 */
+				   CSCENTER_FILE,			/* 파일명 */
+				   REAL_CSCENTER_FILE	/* 실제 파일 명 */
+		FROM TA_CSCENTER_FILE 
+		WHERE TABLE_IDX = #{NOTICEIDX}
+		AND TABLE_GUBUN = #{TABLEGUBUN}
+	</select>
+	
+	<!-- 메인 공지사항 리스트 -->
+	<select id="getMainNoticeList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** noticeDAO.getMainNoticeList **/
+		SELECT NOTICE_IDX, 	/* 일련번호 */
+				   NOTICE_TYPE,	/* 타입 */
+				   FN_COMMON_NM(NOTICE_TYPE) AS NOTICE_TYPE_NM, /* 유형이름 */ 
+				   TITLE,				/* 제목 */
+				   READ_CNT,		/* 조회 수 */
+				   TOP_YN,			/* 탑 노출 여부 */
+				   DATE_FORMAT(REG_DT,'%Y.%m.%d') AS REG_DT	/* 등록일자 */
+		FROM TA_NOTICE 
+		WHERE DISP_YN = 'Y'
+  		
+  		ORDER BY DATE_FORMAT(REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+	</select>
+	
+	<!-- 푸터 공지사항 -->
+	<select id="getFooterNotice" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** noticeDAO.getFooterNotice **/
+		SELECT 
+			A.NOTICE_IDX,			/* 일련번호 */
+			FN_COMMON_NM(A.NOTICE_TYPE) AS NOTICE_TYPE_NM, /* 유형이름 */ 
+			A.TITLE, 					/* 제목 */
+			DATE_FORMAT(A.REG_DT,'%Y.%m.%d') AS REG_DT 	/* 작성일자 */
+		FROM TA_NOTICE A
+		WHERE A.DISP_YN = 'Y'
+		ORDER BY DATE_FORMAT(A.REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+		LIMIT 1
+	</select>
+	
+</mapper>

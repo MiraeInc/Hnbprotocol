@@ -1,0 +1,775 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="productDAO">
+	<!--  상품 리스트 -->
+	<select id="getProductList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+		FROM VW_GOODS_LIST A
+		WHERE 1=1
+		<choose>
+			<when test="SCH2DEPTHCATEIDX != '' and SCH2DEPTHCATEIDX != 0 ">
+ 				AND A.CATE_IDX1 = #{SCH2DEPTHCATEIDX}
+				AND A.CATE_IDX2 = #{SCHCATEIDX}		 			
+			</when>
+ 			<otherwise>
+ 				AND A.CATE_IDX1 = #{SCHCATEIDX}
+ 			</otherwise>
+		</choose>
+		<if test="SCH3DEPTHCATEIDX != '' and SCH3DEPTHCATEIDX != 0 ">
+			AND A.CATE_IDX3 = #{SCH3DEPTHCATEIDX}
+		</if>		 
+		ORDER BY 1=1
+		<choose>
+			<when test="SCHORDERGUBUN eq '1'.toString() or SCHORDERGUBUN eq '' ">
+				,A.GOODS_ORDER_CNT DESC, A.REG_DT DESC, A.GOODS_TITLE         
+			</when>
+			<when test="SCHORDERGUBUN eq '2'.toString() ">
+				, A.NEW_YN DESC, A.REG_DT DESC
+			</when>
+			<when test="SCHORDERGUBUN eq '3'.toString() ">
+				, A.DISCOUNT_RATE DESC, A.REG_DT DESC
+			</when>
+			<when test="SCHORDERGUBUN eq '4'.toString() ">
+				, A.DISCOUNT_PRICE DESC, A.REG_DT DESC
+			</when>
+			<when test="SCHORDERGUBUN eq '5'.toString() ">
+				, A.DISCOUNT_PRICE ASC, A.REG_DT DESC
+			</when>
+		</choose>
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!--  상품 리스트 총 건수 -->
+	<select id="getProductListCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM VW_GOODS_LIST A
+		WHERE 1=1
+		<choose>
+			<when test="SCH2DEPTHCATEIDX != '' and SCH2DEPTHCATEIDX != 0 ">
+ 				AND A.CATE_IDX1 = #{SCH2DEPTHCATEIDX}
+				AND A.CATE_IDX2 = #{SCHCATEIDX}		 			
+			</when>
+ 			<otherwise>
+ 				AND A.CATE_IDX1 = #{SCHCATEIDX}
+ 			</otherwise>
+		</choose>
+		<if test="SCH3DEPTHCATEIDX != '' and SCH3DEPTHCATEIDX != 0 ">
+			AND A.CATE_IDX3 = #{SCH3DEPTHCATEIDX}
+		</if>		 
+	</select>
+	
+	<!--  통합카테고리 상품 리스트 -->
+	<select id="getTotalProductList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+		FROM VW_GOODS_TOTAL_LIST A
+		WHERE 1=1
+		<choose>
+			<when test="SCH2DEPTHCATEIDX != '' and SCH2DEPTHCATEIDX != 0 ">
+ 				AND A.CATE_IDX1 = #{SCH2DEPTHCATEIDX}
+				AND A.CATE_IDX2 = #{SCHCATEIDX}		 			
+			</when>
+ 			<otherwise>
+ 				AND A.CATE_IDX1 = #{SCHCATEIDX}
+ 			</otherwise>
+		</choose>
+		<if test="SCH3DEPTHCATEIDX != '' and SCH3DEPTHCATEIDX != 0 ">
+			AND A.CATE_IDX3 = #{SCH3DEPTHCATEIDX}
+		</if>		 
+		ORDER BY 1=1
+		<choose>
+			<when test="SCHORDERGUBUN eq '1'.toString() or SCHORDERGUBUN eq '' ">
+				,A.GOODS_ORDER_CNT DESC, A.REG_DT DESC, A.GOODS_TITLE         
+			</when>
+			<when test="SCHORDERGUBUN eq '2'.toString() ">
+				, A.NEW_YN DESC, A.REG_DT DESC
+			</when>
+			<when test="SCHORDERGUBUN eq '3'.toString() ">
+				, A.DISCOUNT_RATE DESC, A.REG_DT DESC
+			</when>
+			<when test="SCHORDERGUBUN eq '4'.toString() ">
+				, A.DISCOUNT_PRICE DESC, A.REG_DT DESC
+			</when>
+			<when test="SCHORDERGUBUN eq '5'.toString() ">
+				, A.DISCOUNT_PRICE ASC, A.REG_DT DESC
+			</when>
+		</choose>
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!--  통합 상품 리스트 총 건수 -->
+	<select id="getTotalProductListCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM VW_GOODS_TOTAL_LIST A
+		WHERE 1=1
+		<choose>
+			<when test="SCH2DEPTHCATEIDX != '' and SCH2DEPTHCATEIDX != 0 ">
+ 				AND A.CATE_IDX1 = #{SCH2DEPTHCATEIDX}
+				AND A.CATE_IDX2 = #{SCHCATEIDX}		 			
+			</when>
+ 			<otherwise>
+ 				AND A.CATE_IDX1 = #{SCHCATEIDX}
+ 			</otherwise>
+		</choose>		
+		<if test="SCH3DEPTHCATEIDX != '' and SCH3DEPTHCATEIDX != 0 ">
+			AND A.CATE_IDX3 = #{SCH3DEPTHCATEIDX}
+		</if>		 
+	</select>
+	
+	<!-- 상품 네비게이션 -->
+	<select id="getCategoryNavi" parameterType="hashmap" resultType="sqlMap">
+	SELECT AA.*, F.BRAND_IDX, F.BRAND_NM, E.FILE_NM, E.M_FILE_NM
+		, CASE WHEN F.BRAND_IDX = 1 THEN 'gatsby' 
+	    WHEN F.BRAND_IDX = 3 THEN 'bifesta' 
+	    WHEN F.BRAND_IDX = 4 THEN 'lucidol' 
+	    WHEN F.BRAND_IDX = 6 THEN 'mamabutter' 
+	    WHEN F.BRAND_IDX = 7 THEN 'dentalpro' 
+	    WHEN F.BRAND_IDX = 8 THEN 'charley'    
+	    WHEN F.BRAND_IDX = 9 THEN 'barrier'    
+	    WHEN F.BRAND_IDX = 10 THEN 'gpcreate'
+	    WHEN F.BRAND_IDX = 13 THEN 'lucido'
+	    ELSE 'gatsby'     
+	    END  AS LAYOUT_TYPE
+	FROM
+	(		
+	        SELECT A.CATE_IDX , A.CATE_NM , A.DEPTH_LV , A.UPPER_CATE_IDX , A.USE_YN , A.CATE_DESC , A.SET_FLAG ,
+		       			CASE WHEN A.DEPTH_LV = 1 THEN A.CATE_NM
+	                        WHEN A.DEPTH_LV = 2 THEN CONCAT( B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM) 
+	                        WHEN A.DEPTH_LV = 3 THEN CONCAT( C.CATE_NM, ' <![CDATA[>]]> ', B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM)  
+	                        WHEN A.DEPTH_LV = 3 THEN CONCAT( D.CATE_NM, ' <![CDATA[>]]> ', C.CATE_NM, ' <![CDATA[>]]> ', B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM) END CATE_NAVI
+	                    ,CASE WHEN A.DEPTH_LV = 1 THEN A.CATE_IDX
+			      				   					ELSE CASE WHEN A.DEPTH_LV = 2 THEN B.CATE_IDX
+		  						    			   						WHEN A.DEPTH_LV = 3 THEN C.CATE_IDX
+			                				   							WHEN A.DEPTH_LV = 4 THEN D.CATE_IDX
+			                 						END
+			  							END AS FIRST_IDX    
+		  	FROM TP_BRAND_CATE A 
+	        LEFT OUTER JOIN TP_BRAND_CATE B ON B.CATE_IDX = A.UPPER_CATE_IDX
+		  	LEFT OUTER JOIN TP_BRAND_CATE C ON C.CATE_IDX = B.UPPER_CATE_IDX
+		  	LEFT OUTER JOIN TP_BRAND_CATE D ON D.CATE_IDX = C.UPPER_CATE_IDX	 
+		  	WHERE A.USE_YN = 'Y'
+			<choose>
+			<when test="SCH3DEPTHCATEIDX != '' and SCH3DEPTHCATEIDX != 0 ">
+				AND A.CATE_IDX = #{SCH3DEPTHCATEIDX}
+				AND A.UPPER_CATE_IDX = #{SCHCATEIDX}
+			</when>
+			<otherwise>
+				AND A.CATE_IDX = #{SCHCATEIDX}
+			</otherwise>
+		</choose>
+	) AA
+	LEFT OUTER JOIN TP_BRAND_CATE E ON E.CATE_IDX = AA.FIRST_IDX           
+	 LEFT OUTER JOIN TP_BRAND F
+			  ON F.BRAND_IDX = E.BRAND_IDX
+			  
+	</select>
+	
+	<!-- 상품 통합 네비게이션 -->
+	 <select id="getTotalCategoryNavi" parameterType="hashmap" resultType="sqlMap">
+	 SELECT AA.*, G.FILE_NM, G.M_FILE_NM
+		, CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_IDX ELSE F.BRAND_IDX END BRAND_IDX
+        , CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_NM ELSE F.BRAND_NM END BRAND_NM
+		, CASE WHEN  CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_IDX ELSE F.BRAND_IDX END  = 1 THEN 'gatsby' 
+	    WHEN  CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_IDX ELSE F.BRAND_IDX END  = 3 THEN 'bifesta' 
+	    WHEN  CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_IDX ELSE F.BRAND_IDX END  = 4 THEN 'lucidol' 
+	    WHEN  CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_IDX ELSE F.BRAND_IDX END  = 6 THEN 'mamabutter' 
+	    WHEN  CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_IDX ELSE F.BRAND_IDX END  = 7 THEN 'dentalpro' 
+	    WHEN  CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_IDX ELSE F.BRAND_IDX END  = 8 THEN 'charley'    
+  	    WHEN  CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_IDX ELSE F.BRAND_IDX END  = 9 THEN 'barrier'
+  	    WHEN  CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_IDX ELSE F.BRAND_IDX END  = 10 THEN 'gpcreate'
+  	    WHEN  CASE WHEN AA.DEPTH_LV = 1 THEN B1.BRAND_IDX ELSE F.BRAND_IDX END  = 11 THEN 'lucido'    
+	    ELSE 'gatsby'     
+	    END  AS LAYOUT_TYPE
+	FROM
+	(		
+	        SELECT A.CATE_IDX , A.CATE_NM , A.DEPTH_LV , A.UPPER_CATE_IDX , A.USE_YN , A.CATE_DESC , A.SET_FLAG ,
+		       			CASE WHEN A.DEPTH_LV = 1 THEN A.CATE_NM
+	                        WHEN A.DEPTH_LV = 2 THEN CONCAT( B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM) 
+	                        WHEN A.DEPTH_LV = 3 THEN CONCAT( C.CATE_NM, ' <![CDATA[>]]> ', B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM)  
+	                        WHEN A.DEPTH_LV = 3 THEN CONCAT( D.CATE_NM, ' <![CDATA[>]]> ', C.CATE_NM, ' <![CDATA[>]]> ', B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM) END CATE_NAVI
+	                    ,CASE
+					                        WHEN A.DEPTH_LV = 1
+					                        THEN NULL
+					                        ELSE
+					                                CASE
+					                                        WHEN A.DEPTH_LV = 2
+					                                        THEN A.CATE_IDX
+					                                        WHEN A.DEPTH_LV = 3
+					                                        THEN B.CATE_IDX
+					                                        WHEN A.DEPTH_LV = 4
+					                                        THEN C.CATE_IDX
+					                                END
+					                END AS SECOND_IDX 		
+						,CASE WHEN A.DEPTH_LV = 1 THEN A.CATE_IDX
+     				   					ELSE CASE WHEN A.DEPTH_LV = 2 THEN B.CATE_IDX
+						    			   						WHEN A.DEPTH_LV = 3 THEN C.CATE_IDX
+               				   							WHEN A.DEPTH_LV = 4 THEN D.CATE_IDX
+                						END
+ 							END AS FIRST_IDX          					                				 					                
+		  	FROM TP_TOTAL_CATE A 
+	        LEFT OUTER JOIN TP_TOTAL_CATE B ON B.CATE_IDX = A.UPPER_CATE_IDX
+		  	LEFT OUTER JOIN TP_TOTAL_CATE C ON C.CATE_IDX = B.UPPER_CATE_IDX
+		  	LEFT OUTER JOIN TP_TOTAL_CATE D ON D.CATE_IDX = C.UPPER_CATE_IDX	 
+		  	WHERE A.USE_YN = 'Y'
+		<choose>
+			<when test="SCH3DEPTHCATEIDX != '' and SCH3DEPTHCATEIDX != 0 ">
+				AND A.CATE_IDX = #{SCH3DEPTHCATEIDX}
+				AND A.UPPER_CATE_IDX = #{SCHCATEIDX}
+			</when>
+			<otherwise>
+				AND A.CATE_IDX = #{SCHCATEIDX}
+			</otherwise>
+		</choose>		
+	) AA
+	LEFT OUTER JOIN TP_TOTAL_CATE G ON G.CATE_IDX = AA.FIRST_IDX
+    LEFT OUTER JOIN TP_BRAND B1 ON B1.BRAND_IDX = G.BRAND_IDX
+	LEFT OUTER JOIN TP_TOTAL_CATE E ON E.CATE_IDX = AA.SECOND_IDX           
+	 LEFT OUTER JOIN TP_BRAND F ON F.BRAND_IDX = E.BRAND_IDX
+	 
+	</select> 
+	
+	<!-- 해시태그 리스트 (상품 상세) -->
+	<select id="getProductHashList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.HASHTAG_IDX, A.HASHTAG_NM, B.GOODS_IDX
+		FROM TP_HASHTAG A
+		LEFT OUTER JOIN TP_HASHTAG_GOODS B
+		ON A.HASHTAG_IDX = B.HASHTAG_IDX
+		WHERE A.USE_YN = 'Y'
+		AND B.GOODS_IDX = #{GOODSIDX}
+	</select>
+	
+	<!-- 상품 상세 -->
+	<select id="getProductDetail" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*, CASE WHEN A.TIMESALE_IDX IS NOT NULL 
+										 THEN TIME_FORMAT(TIMEDIFF(DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i:%s'),DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s')),'%H:%i:%s') 
+          								 ELSE NULL END  AS TIME_SALE
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">
+				, CASE WHEN W.WISH_IDX IS NULL THEN 'N' ELSE 'Y' END AS IS_WISH				
+				, CP.DISCOUNT_TYPE, CP.DISCOUNT, IFNULL(CP.MAX_DISCOUNT,0) AS MAX_DISCOUNT
+ 	       	 	, CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(A.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END AS COUPON_DISCOUNT_PRICE  
+			</when>
+			<otherwise>
+           	 	, 0 AS COUPON_DISCOUNT_PRICE
+			</otherwise>
+		</choose>
+		FROM VW_GOODS_LIST A
+		LEFT OUTER JOIN TE_TIMESALE B
+		ON A.TIMESALE_IDX = B.TIMESALE_IDX
+		<if test="MEMBERIDX != null and MEMBERIDX != '' ">
+			LEFT OUTER JOIN TO_WISH W 
+			ON W.MEMBER_IDX = #{MEMBERIDX} 
+			AND A.GOODS_IDX = W.GOODS_IDX	
+	        LEFT OUTER JOIN (
+							                SELECT VG.GOODS_IDX
+							                , SUBSTRING_INDEX ( GROUP_CONCAT(
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                					ORDER BY
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                                    DESC), ',', 1) AS COUPON_DISCOUNT_PRICE
+							                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.COUPON_NM
+							                					ORDER BY
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                					DESC SEPARATOR '^'), '^', 1) AS COUPON_NM
+							                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.DISCOUNT_TYPE
+							                					ORDER BY
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                					DESC), ',', 1) AS DISCOUNT_TYPE
+							                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.DISCOUNT
+							                					ORDER BY
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                					DESC), ',', 1) AS DISCOUNT
+							                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.MAX_DISCOUNT
+							                					ORDER BY
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                					DESC), ',', 1) AS MAX_DISCOUNT
+							                FROM VW_GOODS VG, TO_COUPON CP
+							                WHERE  CP.GUBUN = 'G'	
+							            	AND CP.METHOD = 'A'
+							            	AND CP.USE_YN = 'Y'
+											AND (CP.DEVICE = 'A' OR CP.DEVICE = 'P')
+											AND (CURDATE() <![CDATA[>=]]> DATE(CP.DOWN_START_DT) OR CP.DOWN_START_DT IS NULL)	
+											AND (CURDATE() <![CDATA[<=]]> DATE(CP.DOWN_END_DT) OR CP.DOWN_END_DT IS NULL) 		
+											AND (CP.USE_DATE_LIMIT_YN IN ('N','P') OR (CP.USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(CP.USE_START_DT) OR CP.USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(CP.USE_END_DT) OR CP.USE_END_DT IS NULL)))	
+											AND (CP.TARGET_MEMBER = 'A'
+														OR (CP.TARGET_MEMBER = 'G' AND CP.TARGET_GRADE = #{MEMBERGRADE})
+														OR (CP.TARGET_MEMBER = 'M' AND
+																EXISTS ( 
+																				SELECT COUPON_IDX
+																				FROM TO_COUPON_TARGET_MEMBER
+																				WHERE COUPON_IDX = CP.COUPON_IDX
+																				AND MEMBER_IDX = #{MEMBERIDX}
+																			)
+															)
+												  )
+											AND (CP.TARGET_GOODS = 'A'
+														OR (CP.TARGET_GOODS = 'G' AND
+																EXISTS ( 
+																				SELECT COUPON_IDX
+																				FROM TO_COUPON_TARGET_GOODS
+																				WHERE COUPON_IDX = CP.COUPON_IDX
+																				AND GOODS_IDX = VG.GOODS_IDX
+																			)
+															)
+														OR (CP.TARGET_GOODS = 'C' AND
+																EXISTS ( 
+																				SELECT COUPON_IDX
+																				FROM TO_COUPON_TARGET_CATEGORY
+																				WHERE COUPON_IDX = CP.COUPON_IDX
+																				AND CATE_IDX IN (SELECT CATE_IDX FROM TP_GOODS_BRAND_CATE WHERE GOODS_IDX = VG.GOODS_IDX)
+																			)
+															)
+												  )
+											AND (CP.ISSUE_CNT_LIMIT_YN = 'N' OR (CP.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(CP.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(CP.MAX_ISSUE_CNT,0) > 0 AND IFNULL(CP.MAX_ISSUE_CNT,0) > (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = CP.COUPON_IDX)))))	
+											GROUP BY VG.GOODS_IDX
+										) CP 
+			ON A.GOODS_IDX = CP.GOODS_IDX
+		</if>
+		WHERE A.GOODS_CD = #{GOODSCD}
+			AND A.CATE_TOP_YN = 'Y'
+		LIMIT 1
+	</select>
+	
+	<!--  베스트 상품 리스트 -->
+	<select id="getBestProductList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.TOTAL_SCORE, B.*
+		FROM TP_BEST_GOODS A
+		JOIN VW_GOODS B
+		ON A.GOODS_IDX = B.GOODS_IDX
+		WHERE A.BRAND_IDX = #{BRANDIDX}
+		ORDER BY A.TOTAL_SCORE DESC
+		<if test="BRANDIDX eq 1">
+			LIMIT 25
+		</if>
+		<if test="BRANDIDX eq 3">
+			LIMIT 7
+		</if>
+		<if test="BRANDIDX eq 4">
+			LIMIT 3
+		</if>
+		<if test="BRANDIDX eq 6">
+			LIMIT 3
+		</if>
+		<if test="BRANDIDX eq 7">
+			LIMIT 3
+		</if>
+		<if test="BRANDIDX eq 8">
+			LIMIT 3
+		</if>
+		<if test="BRANDIDX eq 9">
+			LIMIT 3
+		</if>
+		<if test="BRANDIDX eq 10">
+			LIMIT 3
+		</if>
+	</select>
+	
+	<!--  best (상품 상세)  -->
+	<select id="getCategoryBestProduct" parameterType="hashmap" resultType="sqlMap">
+<!-- 		SELECT A.CATE_IDX, B.GOODS_IDX, B.GOODS_CD, B.GOODS_NM, B.GOODS_TITLE,  B.PRICE, B.DISCOUNT_RATE, B.DISCOUNT_PRICE, B.MAIN_FILE, B.MAIN_REAL_FILE, B.CATE_IDX1 AS BEST_CATE_IDX 				
+		FROM TP_CATE_RECOMMEND_GOODS A, VW_GOODS B
+		WHERE A.GOODS_IDX = B.GOODS_IDX
+		AND A.CATE_IDX = #{SCHCATEIDX}
+		ORDER BY RAND() -->
+		SELECT A.CATE_IDX, B.GOODS_IDX, B.GOODS_CD, B.GOODS_NM, B.GOODS_TITLE,  B.PRICE, B.DISCOUNT_RATE, B.DISCOUNT_PRICE, B.MAIN_FILE, B.MAIN_REAL_FILE, B.CATE_IDX1 AS BEST_CATE_IDX 				
+		FROM tp_goods_brand_cate A, VW_GOODS B
+		WHERE A.CATE_IDX = B.CHOICE_CATE_IDX and A.GOODS_IDX = B.GOODS_IDX
+        AND A.CATE_IDX = (select CHOICE_CATE_IDX from vw_goods where goods_idx =  #{GOODSIDX})
+		AND B.goods_idx != #{GOODSIDX}
+		ORDER BY RAND() limit 2 
+         
+	</select>
+	
+	<!--  wish (상품 상세)  -->
+	<select id="getWishProduct" parameterType="hashmap" resultType="sqlMap">
+ 		SELECT A.GOODS_IDX, A.GOODS_CD, A.GOODS_NM, A.GOODS_TITLE,  A.PRICE, A.DISCOUNT_RATE, A.DISCOUNT_PRICE, A.MAIN_FILE, A.MAIN_REAL_FILE, A.CATE_IDX1		
+		FROM VW_GOODS A
+		JOIN (
+			        SELECT A.GOODS_IDX, A.RECOMMEND_GOODS_IDX
+			        FROM TP_RECOMMEND_GOODS A
+			        WHERE A.GOODS_IDX = #{GOODSIDX}
+			      ) B
+		ON A.GOODS_IDX = B.RECOMMEND_GOODS_IDX 
+    	ORDER BY RAND()
+    	LIMIT 1
+	</select>
+	
+	<!--  recommend (상품 상세)    -->
+	<select id="getRecommendProduct" parameterType="hashmap" resultType="sqlMap">
+			SELECT  A.GUBUN, A.MAIN_GUBUN, B.GOODS_IDX, B.GOODS_CD, B.GOODS_NM, B.GOODS_TITLE,  B.PRICE, B.DISCOUNT_RATE, B.DISCOUNT_PRICE, B.MAIN_FILE, B.MAIN_REAL_FILE, B.CATE_IDX1		
+		FROM TS_MAIN A, VW_GOODS B
+		WHERE A.GUBUN_IDX = B.GOODS_IDX
+		AND A.GUBUN = 'sale'
+      	<choose>
+			<when test="BRANDIDX eq 1">
+				AND A.MAIN_GUBUN = 'GB' 
+			</when>
+			<when test="BRANDIDX eq 3">
+				AND A.MAIN_GUBUN = 'BF' 
+			</when>
+			<when test="BRANDIDX eq 4">
+				AND A.MAIN_GUBUN = 'LD' 
+			</when>
+			<when test="BRANDIDX eq 6">
+				AND A.MAIN_GUBUN = 'MM' 
+			</when>
+			<when test="BRANDIDX eq 7">
+				AND A.MAIN_GUBUN = 'DP' 
+			</when>
+			<when test="BRANDIDX eq 8">
+				AND A.MAIN_GUBUN = 'CL' 
+			</when>			
+			<when test="BRANDIDX eq 9">
+				AND A.MAIN_GUBUN = 'BR' 
+			</when>			
+			<when test="BRANDIDX eq 10">
+				AND A.MAIN_GUBUN = 'GP' 
+			</when>			
+            <otherwise>
+				AND A.MAIN_GUBUN = 'GB' 
+			</otherwise>
+		</choose>	
+		ORDER BY RAND()
+	</select>
+	
+	<!--	set (상품 상세)  -->
+	<select id="getSetProduct" parameterType="hashmap" resultType="sqlMap">
+	    SELECT A.GOODS_IDX, A.GOODS_CD, A.GOODS_NM, A.GOODS_TITLE,  A.PRICE, A.DISCOUNT_RATE, A.DISCOUNT_PRICE, A.MAIN_FILE, A.MAIN_REAL_FILE, A.CATE_IDX1, C.SUM_ORDER_CNT	
+		FROM VW_GOODS A
+		JOIN (
+			        SELECT A.GOODS_IDX
+			        FROM TP_GOODS_SET A
+			        WHERE A.SET_GOODS_IDX =#{GOODSIDX}
+			      ) B
+		ON A.GOODS_IDX = B.GOODS_IDX
+   	    LEFT OUTER JOIN (
+						                   SELECT OD.GOODS_IDX, SUM(OD.ORDER_CNT) SUM_ORDER_CNT
+						                   FROM TO_ORDER O INNER JOIN TO_ORDER_DETAIL OD 
+						                   ON O.ORDER_IDX = OD.ORDER_IDX 
+						                   AND OD.ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','690','700','750','800','900')
+						                   AND OD.SET_FLAG = 'Y'
+						                   GROUP BY OD.GOODS_IDX
+						        		) C 
+        ON C.GOODS_IDX = A.GOODS_IDX   
+		WHERE A.SET_FLAG = 'Y'
+		ORDER BY C.SUM_ORDER_CNT DESC	
+		LIMIT 1
+	</select>
+	
+	<!--  옵션 상품 리스트 -->
+	<select id="getOptionProductList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.GOODS_IDX, A.GOODS_CD, A.GOODS_NM, A.GOODS_TITLE, A.CATE_NAVI, A.SHORT_INFO, A.GOODS_UNIT, A.PRICE, A.CATE_IDX1	
+		       		, A.DISCOUNT_RATE, A.DISCOUNT_PRICE, A.SETTING, A.BURNISH, FN_COMMON_NM(A.HAIRSTYLE) AS HAIRSTYLE, A.P_GOODS_DESC, A.M_GOODS_DESC
+		       		, A.MAIN_FILE, A.MAIN_REAL_FILE, A.SOLDOUT_YN, A.BEST_YN, B.OPTION_GOODS_IDX
+       <choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">
+				, CP.COUPON_NM, CP.DISCOUNT_TYPE, CP.DISCOUNT, CP.MAX_DISCOUNT
+ 	       	 	, CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(A.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END AS COUPON_DISCOUNT_PRICE
+			</when>
+			<otherwise>
+				, NULL AS COUPON_NM
+           	 	, 0 AS COUPON_DISCOUNT_PRICE
+			</otherwise>
+		</choose>		
+		FROM VW_GOODS A
+		LEFT OUTER JOIN TP_OPTION_GOODS B
+		ON A.GOODS_IDX = B.OPTION_GOODS_IDX
+		<if test="MEMBERIDX != null and MEMBERIDX != '' ">
+	        LEFT OUTER JOIN (
+							                SELECT VG.GOODS_IDX
+							                , SUBSTRING_INDEX ( GROUP_CONCAT(
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                					ORDER BY
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                                    DESC), ',', 1) AS COUPON_DISCOUNT_PRICE
+							                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.COUPON_NM
+							                					ORDER BY
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                					DESC SEPARATOR '^'), '^', 1) AS COUPON_NM
+							                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.DISCOUNT_TYPE
+							                					ORDER BY
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                					DESC), ',', 1) AS DISCOUNT_TYPE
+							                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.DISCOUNT
+							                					ORDER BY
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                					DESC), ',', 1) AS DISCOUNT
+							                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.MAX_DISCOUNT
+							                					ORDER BY
+																	CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		
+							                					DESC), ',', 1) AS MAX_DISCOUNT
+							                FROM VW_GOODS VG, TO_COUPON CP
+							                WHERE  CP.GUBUN = 'G'	
+							            	AND CP.METHOD = 'A'
+							            	AND CP.USE_YN = 'Y'
+											AND (CP.DEVICE = 'A' OR CP.DEVICE = 'P')
+											AND (CURDATE() <![CDATA[>=]]> DATE(CP.DOWN_START_DT) OR CP.DOWN_START_DT IS NULL)	
+											AND (CURDATE() <![CDATA[<=]]> DATE(CP.DOWN_END_DT) OR CP.DOWN_END_DT IS NULL) 		
+											AND (CP.USE_DATE_LIMIT_YN IN ('N','P') OR (CP.USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(CP.USE_START_DT) OR CP.USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(CP.USE_END_DT) OR CP.USE_END_DT IS NULL)))	
+											AND (CP.TARGET_MEMBER = 'A'
+														OR (CP.TARGET_MEMBER = 'G' AND CP.TARGET_GRADE = #{MEMBERGRADE})
+														OR (CP.TARGET_MEMBER = 'M' AND
+																EXISTS ( 
+																				SELECT COUPON_IDX
+																				FROM TO_COUPON_TARGET_MEMBER
+																				WHERE COUPON_IDX = CP.COUPON_IDX
+																				AND MEMBER_IDX = #{MEMBERIDX}
+																			)
+															)
+												  )
+											AND (CP.TARGET_GOODS = 'A'
+														OR (CP.TARGET_GOODS = 'G' AND
+																EXISTS ( 
+																				SELECT COUPON_IDX
+																				FROM TO_COUPON_TARGET_GOODS
+																				WHERE COUPON_IDX = CP.COUPON_IDX
+																				AND GOODS_IDX = VG.GOODS_IDX
+																			)
+															)
+														OR (CP.TARGET_GOODS = 'C' AND
+																EXISTS ( 
+																				SELECT COUPON_IDX
+																				FROM TO_COUPON_TARGET_CATEGORY
+																				WHERE COUPON_IDX = CP.COUPON_IDX
+																				AND CATE_IDX IN (SELECT CATE_IDX FROM TP_GOODS_BRAND_CATE WHERE GOODS_IDX = VG.GOODS_IDX)
+																			)
+															)
+												  )
+											AND (CP.ISSUE_CNT_LIMIT_YN = 'N' OR (CP.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(CP.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(CP.MAX_ISSUE_CNT,0) > 0 AND IFNULL(CP.MAX_ISSUE_CNT,0) > (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = CP.COUPON_IDX)))))	
+											GROUP BY VG.GOODS_IDX
+										) CP 
+			ON A.GOODS_IDX = CP.GOODS_IDX
+		</if>
+		WHERE B.GOODS_IDX = #{GOODSIDX}
+		ORDER BY B.REG_DT 
+	</select>
+	
+	<!-- 상품 이미지 리스트 -->
+	<select id="getProductImgList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+		FROM TP_GOODS_FILE A
+		WHERE A.GOODS_IDX = #{GOODSIDX}
+		ORDER BY A.MAIN_FLAG, A.IMG_FILE
+	</select>
+	
+	<!-- 상품 기획전 리스트 -->
+	<select id="getProductExhibitionList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.EXHIBITION_IDX, A.TITLE, A.P_EXHIBITION_IMG, A.P_EXHIBITION_DESC, B.GOODS_IDX
+		FROM TE_EXHIBITION A, TE_EXHIBITION_GOODS B
+		WHERE A.EXHIBITION_IDX = B.EXHIBITION_IDX
+		AND DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')
+		AND A.USE_YN = 'Y'          
+		AND A.DISP_YN = 'Y'
+		AND B.GOODS_IDX = #{GOODSIDX}
+	</select>
+	
+	<!--  상품 조회 수 업데이트 -->
+	<update id="productViewCntUpdate" parameterType="hashmap">
+		UPDATE TP_GOODS
+      	SET	GOODS_VIEW_CNT = GOODS_VIEW_CNT + 1
+		WHERE GOODS_CD = #{GOODSCD}
+	</update>
+	
+	<!-- 스타일링 무비, 매거진 건수, HOW TO USE, 리뷰 건수 , 리뷰 평균  -->
+	<select id="getProductSubInfo" parameterType="hashmap" resultType="sqlMap">
+		SELECT(
+					    SELECT COUNT(*)
+                		FROM TA_STYLE_TIP A LEFT JOIN TA_TIP_GOODS TG ON A.TIP_IDX = TG.TIP_IDX
+                		WHERE TG.GOODS_IDX = #{GOODSIDX}
+                		AND A.TIP_GUBUN = 'V'
+                		AND A.DISP_YN = 'Y'
+    				   ) AS STYLE_MOVIE_CNT,
+               		(
+				    	SELECT COUNT(*)
+                		FROM TA_MAGAZINE_GOODS A
+                		WHERE A.GOODS_IDX = #{GOODSIDX}
+   				   	) AS MAGAZINE_CNT,
+   				   	(
+               			SELECT A.HOWTOUSE_IDX
+		                FROM TA_HOWTOUSE_DETAIL A
+		                WHERE A.GOODS_IDX = #{GOODSIDX}
+		                ORDER BY A.REG_DT DESC
+		                LIMIT 1
+		              ) AS HOWTOUSE_IDX,
+		             (
+               			SELECT COUNT(*)
+                  		FROM TP_REVIEW A
+                    	WHERE A.GOODS_IDX = #{GOODSIDX}
+		              ) AS REVIEW_CNT,
+		              (
+               			SELECT IFNULL(ROUND(AVG(A.RATING),0),0) AS REVIEW_AVG 
+						FROM TP_REVIEW A 
+                    	WHERE A.GOODS_IDX = #{GOODSIDX}
+		              ) AS REVIEW_AVG
+        FROM DUAL
+	</select>
+	
+	<!-- 상품 후기 리스트 -->
+	<select id="getProductReviewList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.REVIEW_IDX, A.MEMBER_IDX, A.RATING, FN_COMMON_NM(A.HAIR_STYLE) AS HAIR_STYLE, FN_COMMON_NM(A.HAIR_TYPE) AS HAIR_TYPE
+		   		 	 , A.TITLE, A.REVIEW_DESC, A.IMG1, A.IMG2, A.IMG3
+		       		 , FN_MASK_NM(B.MEMBER_NM) AS MEMBER_NM
+		FROM TP_REVIEW A
+		LEFT OUTER JOIN TM_MEMBER_DETAIL B
+		ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+		WHERE A.APPROVAL_YN = 'Y'
+		AND A.GOODS_IDX = #{GOODSIDX}
+		<if test="REVIEWTYPE eq 'PHOTO'.toString() ">
+			AND A.IMG1 IS NOT NULL
+		</if>
+	</select>
+	
+	<!-- 상품 후기 총 건수 -->
+	<select id="getProductReviewCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) AS REVIEW_CNT
+		FROM TP_REVIEW A
+		WHERE A.APPROVAL_YN = 'Y'
+		AND A.GOODS_IDX = #{GOODSIDX}
+	</select>
+	
+	<!-- 상품 포토 총 건수 -->
+	<select id="getProductPhotoCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) AS PHOTO_CNT
+		FROM TP_REVIEW A
+		WHERE A.APPROVAL_YN = 'Y'
+		AND A.GOODS_IDX = #{GOODSIDX}
+		AND A.IMG1 IS NOT NULL
+	</select>
+	
+	<!-- 스타일링 정보 -->
+	<select id="getStyleInfo" parameterType="hashmap" resultType="sqlMap">
+  		SELECT A.TIP_IDX, A.GOODS_IDX 
+                   	, CONCAT('http://img.youtube.com/vi/',A.VIDEO_URL,'/1.jpg') AS VIDEO_IMG
+				    , CONCAT('https://www.youtube.com/embed/',A.VIDEO_URL) AS VIDEO_URL
+   		FROM TA_STYLE_TIP A LEFT JOIN TA_TIP_GOODS TG ON A.TIP_IDX = TG.TIP_IDX
+   		WHERE TG.GOODS_IDX = #{GOODSIDX}
+  		AND A.TIP_GUBUN = 'V'
+  		AND A.DISP_YN = 'Y'
+  		ORDER BY A.REG_DT DESC
+        LIMIT 1
+	</select>
+	
+	<!-- 스타일링 정보 -->
+	<select id="getMagazineInfo" parameterType="hashmap" resultType="sqlMap">
+  		SELECT A.MAGAZINE_IDX, A.TITLE, A.MAGAZINE_NM, A.MAGAZINE_IMG, A.MAGAZINE_REAL_IMG
+		FROM TA_MAGAZINE A
+		LEFT OUTER JOIN TA_MAGAZINE_GOODS B
+		ON A.MAGAZINE_IDX = B.MAGAZINE_IDX
+		WHERE B.GOODS_IDX = #{GOODSIDX}
+		ORDER BY B.REG_DT DESC
+		LIMIT 1
+	</select>
+	
+	<!-- 블로그 리스트 -->
+	<select id="getBlogList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.BLOG_IDX, A.TITLE, A.BLOG_DESC, A.BLOG_IMG, A.BLOG_REAL_IMG, A.BLOG_LINK
+		FROM TP_BLOG A
+	</select>
+	
+	<!-- 헤어스타일링 메인 상품 리스트 -->
+	<select id="getHairStylingProductList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.GOODS_IDX, A.GOODS_CD, A.GOODS_TITLE, A.SHORT_INFO, A.DISCOUNT_RATE, CAST(A.DISCOUNT_PRICE AS INT) AS DISCOUNT_PRICE
+					, A.SETTING, A.BURNISH, A.HAIRSTYLE, A.MAIN_FILE, A.CATE_IDX2, A.CATE_IDX3
+		FROM VW_GOODS A
+		WHERE A.CATE_IDX1 = '2'
+		AND A.SET_FLAG = 'N'
+		AND A.GOODS_TITLE NOT LIKE '%핸디%'
+		AND A.GOODS_TITLE NOT LIKE '%세트%'
+		AND A.GOODS_TITLE NOT LIKE '%기획팩%'
+		ORDER BY A.GOODS_ORDER_CNT DESC, A.REG_DT DESC, A.GOODS_TITLE 
+	</select>
+	
+	<!-- 헤어스타일링 메인 왁스(핸디 X) 리스트 -->
+	<select id="getHairStylingNoWaxtList" parameterType="hashmap" resultType="sqlMap">
+    	SELECT A.GOODS_IDX, A.GOODS_NM, A.GOODS_CD, A.GOODS_TITLE, A.SHORT_INFO, A.DISCOUNT_RATE, CAST(A.DISCOUNT_PRICE AS INT) AS DISCOUNT_PRICE
+					, A.SETTING, A.BURNISH, A.HAIRSTYLE, A.MAIN_FILE, A.CATE_IDX2, A.CATE_IDX3
+		FROM VW_GOODS A
+		WHERE A.CATE_IDX1 = '2'
+		AND A.SET_FLAG = 'N'
+    	AND A.GOODS_TITLE NOT LIKE '%핸디%'
+    	ORDER BY A.GOODS_ORDER_CNT DESC, A.REG_DT DESC, A.GOODS_TITLE 
+	</select>
+	
+	<!-- 헤어스타일링 메인 왁스(핸디 O) 리스트 -->
+	<select id="getHairStylingWaxtList" parameterType="hashmap" resultType="sqlMap">
+    	SELECT A.GOODS_IDX, A.GOODS_NM, A.GOODS_CD, A.GOODS_TITLE, A.SHORT_INFO, A.DISCOUNT_RATE, CAST(A.DISCOUNT_PRICE AS INT) AS DISCOUNT_PRICE
+					, A.SETTING, A.BURNISH, A.HAIRSTYLE, A.MAIN_FILE, A.CATE_IDX2, A.CATE_IDX3
+		FROM VW_GOODS A
+		WHERE A.CATE_IDX1 = '2'
+		AND A.SET_FLAG = 'N'
+    	AND A.GOODS_TITLE LIKE '%핸디%'
+    	ORDER BY A.GOODS_ORDER_CNT DESC, A.REG_DT DESC, A.GOODS_TITLE 
+	</select>
+	
+	 <!-- 베스트 상품관리 조회 점수 저장 -->
+	 <insert id="productBestViewInsert" parameterType="hashmap">
+	 		INSERT INTO TP_GOODS_VIEW (
+	 			VIEW_DATE, GOODS_IDX, SRC_PATH, SRC_INFO, ADFROM, SESSIONID, DEVICE, MEMBER_IDX
+	 		)
+			VALUES (
+				NOW(),
+				#{GOODSIDX},
+				#{SRCPATH},
+				#{SRCINFO},
+				#{ADFROM},
+				#{SESSIONID},
+				#{DEVICE},
+				#{MEMBERIDX}
+			)
+	 </insert>
+	 
+	 <!-- 상품 목록 오버시 이미지 리스트 -->
+	 <select id="getProductSubImgList" parameterType="hashmap" resultType="sqlMap">
+  		SELECT A.* 
+		FROM (
+				      SELECT A.*
+				      FROM TP_GOODS_FILE A      
+				      WHERE A.MAIN_FLAG = 'N'
+				      ORDER BY A.IMG_FILE
+				      LIMIT 9999999999
+					) AS A
+		GROUP BY A.GOODS_IDX
+	 </select>
+	
+	
+	<!-- 상품 상세 (npay용)-->
+	<select id="getProductOriginDetail" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*, CASE WHEN A.TIMESALE_IDX IS NOT NULL 
+										 THEN TIME_FORMAT(TIMEDIFF(DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i:%s'),DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s')),'%H:%i:%s') 
+          								 ELSE NULL END  AS TIME_SALE
+			FROM VW_GOODS_ORIGIN  A
+		LEFT OUTER JOIN TE_TIMESALE B
+		ON A.TIMESALE_IDX = B.TIMESALE_IDX
+		WHERE A.GOODS_CD = #{GOODSCD}
+		LIMIT 1
+	</select>
+	
+	<!-- 상품 판매중인 상품 상세 (npay용)-->
+	<select id="getProductSalesDetail" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+			FROM VW_GOODS  A
+		WHERE A.GOODS_IDX = #{GOODSIDX}
+		LIMIT 1
+	</select>
+	
+    <!-- 옵션상품리스트 -->
+    <select id="retrieveGoodsOptionList" parameterType="java.util.HashMap" resultType="sqlMap">
+        /* productDAO.retrieveGoodsOptionList */
+        SELECT OPTION_IDX, GOODS_IDX, OPTION_NAME, MANDATORY_YN
+          FROM TP_GOODS_OPTION 
+         WHERE GOODS_IDX = #{GOODSIDX}
+         ORDER BY OPTION_IDX ASC
+    </select>
+    
+    <!-- 옵션상품리스트 -->
+    <select id="retrieveGoodsOptionItemList" parameterType="java.util.HashMap" resultType="sqlMap">
+        /* productDAO.retrieveGoodsOptionItemList */
+        SELECT OPTION_ITEM_IDX, GOODS_IDX, OPTION_IDX, OPTION_ITEM_NAME, OPTION_ITEM_PRICE
+               ,OPTION_ITEM_LIMIT_YN, OPTION_ITEM_STOCK, OPTION_ITEM_STATUS
+          FROM TP_GOODS_OPTION_ITEM 
+         WHERE GOODS_IDX = #{GOODSIDX}
+           AND OPTION_IDX  = #{OPTIONIDX}
+         ORDER BY OPTION_ITEM_IDX ASC
+    </select>
+	
+</mapper>

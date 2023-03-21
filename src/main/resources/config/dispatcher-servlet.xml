@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"	
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+                				  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+                				  http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+                				  http://www.springframework.org/schema/util 
+								  http://www.springframework.org/schema/util/spring-util-4.3.xsd
+								  http://www.springframework.org/schema/tx
+       							  http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+                				  
+	<!-- Controller 스캔 -->
+	<context:component-scan base-package="com.gxenSoft">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+	<mvc:annotation-driven />
+	<mvc:resources mapping="/resources/**" location="/resources/" />
+	<mvc:default-servlet-handler />
+	<!-- Controller 스캔 END-->
+	
+	<!-- 인터셉터 처리 부분 -->
+	<mvc:interceptors>
+		<!-- 공통 interceptor -->
+		<mvc:interceptor> 
+			<mvc:mapping path="/**" />
+			<mvc:exclude-mapping path="/order/paycoBankReturn.do"/>
+			<mvc:exclude-mapping path="/ajax/**"/>	
+			<mvc:exclude-mapping path="/images/**"/>
+			<mvc:exclude-mapping path="/js/**"/>
+			<mvc:exclude-mapping path="/css/**"/>
+			<mvc:exclude-mapping path="/fonts/**"/>
+			<bean class="com.gxenSoft.util.interceptor.CommonInterceptor"/>
+		</mvc:interceptor>
+		
+		<!-- 기본 Interceptor -->
+		<mvc:interceptor> 
+			<mvc:mapping path="/mypage/**/*" /> 
+			<mvc:exclude-mapping path="/ajax/**"/>
+			<mvc:exclude-mapping path="/images/**"/>
+			<mvc:exclude-mapping path="/js/**"/>
+			<mvc:exclude-mapping path="/css/**"/>
+			<mvc:exclude-mapping path="/fonts/**"/>			
+			<bean class="com.gxenSoft.util.interceptor.DefaultInterceptor"/>
+		</mvc:interceptor>
+		
+	</mvc:interceptors>   
+	<!-- 인터셉터 처리 부분 END-->    
+	
+	<!-- message properties 설정 -->         				    
+	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="defaultEncoding" value="UTF-8"/> 
+		<property name="basenames">
+			<list>
+				<value>classpath:/message/message-common</value> 			
+				<value>classpath:/message/message-setting-${spring.profiles.active}</value>
+				<value>classpath:/property/db</value>										<!-- DB 설정 프로퍼티 -->
+                <value>classpath:/message/message-smilepay</value>
+			</list>
+		</property>
+    	<property name="fallbackToSystemLocale" value="false"/>
+		<property name="cacheSeconds">
+			<value>60</value>
+		</property>
+	</bean> 
+	              				
+	<bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver">
+    	<property name="defaultLocale" value="ko" />
+  	</bean>
+  	
+  	<bean id="messageSourceAccessor" class="org.springframework.context.support.MessageSourceAccessor">
+		<constructor-arg ref="messageSource"/>
+    </bean>
+  	
+  	<bean id="message" class="com.gxenSoft.message.SpringMessage">			<!-- gxenModule_1.0.jar 필요 -->
+        <property name="messageSourceAccessor" ref="messageSourceAccessor"/>
+    </bean>
+  	
+  	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:/message/message-setting-${spring.profiles.active}.properties</value>
+                <value>classpath:/message/message-smilepay.properties</value>
+            </list>
+        </property>
+    </bean>
+    
+ 	<util:properties id="config" location="classpath:message/message-setting-${spring.profiles.active}.properties" />
+  	<!-- message properties 설정 END-->
+  	
+  	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver"	p:prefix="/WEB-INF/jsp/" p:suffix=".jsp" />
+  	
+  	<!-- 첨부파일 용량체크 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding" value="UTF-8" />
+		<!-- <property name="maxUploadSize" value="10485760" />	 --> 				<!-- 첨부파일 용량 10M -->
+		<property name="maxUploadSize" value="1073741274" />	 				<!-- 첨부파일 용량 1GB -->
+	</bean>
+	
+	<!-- 트랜잭션 설정 -->
+	<tx:annotation-driven transaction-manager="transactionManager"/> 
+	
+  	
+</beans>
+
+  	

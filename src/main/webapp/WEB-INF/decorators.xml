@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<decorators defaultdir="/WEB-INF/jsp/common">
+    <excludes>
+        <pattern>/exclude.jsp</pattern>
+        <pattern>/exclude/*</pattern>
+    </excludes>
+    
+    <!-- ================ PC Web ================ -->
+    <!-- 맨담 메인 -->
+    <!-- <decorator name="default.main" page="decorator/w/mandom_main.jsp"/>
+    <decorator name="default.gnb" page="layout/w/mandom_header.jsp"/> -->
+    <decorator name="default.main" page="decorator/w/gatsby_main.jsp"/>
+    <decorator name="default.gnb" page="layout/w/default_header.jsp"/>
+    <!-- 갸스비 메인 -->
+    <decorator name="gatsby.main" page="decorator/w/gatsby_main.jsp"/>
+    <!-- 비페스타 메인 -->
+    <decorator name="bifesta.main" page="decorator/w/bifesta_main.jsp"/>
+    <!-- 루시도엘 메인 -->
+    <decorator name="lucidol.main" page="decorator/w/lucidol_main.jsp"/>
+    <!-- 루시도 메인 -->
+    <decorator name="lucido.main" page="decorator/w/lucido_main.jsp"/>
+    <!-- 마마버터 메인 -->
+    <decorator name="mamabutter.main" page="decorator/w/mama_main.jsp"/>
+    <!-- 덴탈프로 메인 -->
+    <decorator name="dentalpro.main" page="decorator/w/dental_main.jsp"/>
+    <!-- 찰리 메인 -->
+    <decorator name="charley.main" page="decorator/w/charley_main.jsp"/>
+    <!-- 베리어리페어 메인 -->
+    <decorator name="barrier.main" page="decorator/w/barrier_main.jsp"/>
+    <!-- GPCreate 메인 -->
+    <decorator name="gpcreate.main" page="decorator/w/gpcreate_main.jsp"/>
+    
+    <decorator name="default.footer" page="layout/w/common_footer.jsp"/>
+    <decorator name="default.wing" page="layout/w/common_wing.jsp"/>
+    <decorator name="join.main" page="decorator/join_main.jsp"/>
+    <decorator name="default.stylemenu" page="layout/w/common_stylemenu.jsp"/>
+    <decorator name="default.eventmenu" page="layout/w/common_eventmenu.jsp"/>
+    <decorator name="default.csmenu" page="layout/w/common_csmenu.jsp"/>
+    <decorator name="default.brandmenu" page="layout/w/common_brandmenu.jsp"/>
+    <decorator name="mypage.main" page="decorator/w/mypage_main.jsp"/>
+    <decorator name="mypage.footer" page="layout/w/mypage_footer.jsp"/>
+    
+    <!--  ================ Mobile Web  ================ -->
+   	<decorator name="mobile.main" page="decorator/m/default_main.jsp"/>
+    <decorator name="mobile.gnb" page="layout/m/common_header.jsp"/>
+    <decorator name="mobile.footer" page="layout/m/common_footer.jsp"/>
+    <decorator name="mobile.eventmenu" page="layout/m/common_eventmenu.jsp"/>
+    <decorator name="mobile.brandmenu" page="layout/m/common_brandmenu.jsp"/>
+    <decorator name="mobile.stylemenu" page="layout/m/common_stylemenu.jsp"/>
+    <decorator name="mobile.mypage.main" page="decorator/m/mypage_main.jsp"/>
+    <decorator name="mobile.csmenu" page="layout/m/common_csmenu.jsp"/>
+    
+</decorators>

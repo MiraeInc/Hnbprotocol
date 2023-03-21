@@ -1,0 +1,1151 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="commonDAO">
+
+	<!-- 로그인 체크 -->
+	<select id="loginCheck" parameterType="hashmap" resultType="sqlMap">
+		/** common.loginCheck */
+		SELECT(
+						SELECT COUNT(*)
+						FROM TM_MEMBER A
+ 						WHERE A.MEMBER_ID = #{MEMBERID} 
+        				AND A.MEMBER_TYPE = 'M'
+    				) AS USER_CNT,
+      				(
+ 			 		 	SELECT CASE WHEN COUNT(*) = 0 THEN 'N' ELSE 'Y' END 
+   		 			 	FROM TM_MEMBER A 
+   		  				WHERE A.MEMBER_ID = #{MEMBERID}
+	  				 	AND A.MEMBER_TYPE = 'M'
+   		  				<choose>
+   		  					<when test="JOINTYPE eq '0'.toString() ">
+				 				AND A.MEMBER_PW = #{MEMBERPWD}
+				 			</when>
+				 			<otherwise>
+				 				AND A.MEMBER_PW = PASSWORD(#{MEMBERPWD})
+				 			</otherwise>
+				 		</choose>
+  					) AS VALID_YN,
+  					(
+		 		 	  	SELECT CASE WHEN COUNT(*) = 0 THEN 'N' ELSE 'Y' END 
+ 		 				FROM TM_MEMBER A, TM_MEMBER_DETAIL B
+              			WHERE A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+              			AND A.MEMBER_TYPE = 'M'
+ 		  				AND A.MEMBER_ID = #{MEMBERID} 
+		 				AND A.MEMBER_PW = PASSWORD(#{MEMBERPWD})
+              			AND TIMESTAMPDIFF(MONTH, DATE_FORMAT(B.CHANGE_PWD_DT,'%Y-%m-%d'), NOW()) >= 6
+  					) AS CHANGE_PWD_YN,
+  					(
+		 		 	  	SELECT CASE WHEN COUNT(*) = 0 THEN 'N' ELSE 'Y' END 
+ 		 				FROM TM_MEMBER A, TM_MEMBER_DETAIL B
+              			WHERE A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+              			AND A.MEMBER_TYPE = 'M'
+ 		  				AND A.MEMBER_ID = #{MEMBERID} 
+		 				AND A.MEMBER_PW = PASSWORD(#{MEMBERPWD})
+              			AND B.MEMBER_STATE = '500'
+  					) AS DORMANCY_YN
+	</select>
+	
+	<!-- 비로그인 체크 -->
+	<select id="noLoginCheck" parameterType="hashmap" resultType="sqlMap">
+		SELECT ORDER_CD , SENDER_NM , FN_DECRYPT(SENDER_PHONE_NO) SENDER_PHONE_NO
+  		  FROM TO_ORDER
+        WHERE MEMBER_ORDER_YN = 'N'
+   			AND ORDER_CD = #{ORDERCD} AND SENDER_NM = #{SENDERNM} AND SENDER_PHONE_NO = FN_ENCRYPT(#{SENDERPHONENO})
+	</select>
+	
+	<!-- 회원 정보 -->
+	<select id="getMemberInfo" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MEMBER_IDX , A.MEMBER_ID , A.MEMBER_TYPE , 
+       				B.MEMBER_NM , FN_DECRYPT(B.EMAIL) EMAIL, FN_DECRYPT(B.TEL_NO) TEL_NO, FN_DECRYPT(B.PHONE_NO) PHONE_NO, FN_DECRYPT(B.ADDR) ADDR, FN_DECRYPT(B.ADDR_DETAIL) ADDR_DETAIL, B.MEMBER_STATE,
+       				CASE WHEN B.MEMBER_STATE = 500 THEN 'Y' else 'N' END AS INACTIVE_STATE,
+       				B.ZIP_CD , FN_DECRYPT(B.OLD_ADDR) OLD_ADDR, B.OLD_ZIP_CD , B.CONNINFO , B.BIRTH_DATE, B.GENDER , 
+       				B.RECOMMENDER , B.SUBSCRIBE_TYPE , B.SUBSCRIBE , B.MEMBER_STATE , C.GRADE_NM , C.POINT_RATE , C.LOW_BUY_CNT , C.LOW_BUY_PRICE ,
+       				B.JOIN_TYPE , B.EMAIL_YN , B.SMS_YN , B.MARKETING_YN , B.INDIVIDUAL_INFO_YN , HTTP_USER_AGENT, B.LEVEL_IDX, D.SNS_TYPE
+ 		  FROM TM_MEMBER A LEFT OUTER JOIN TM_MEMBER_DETAIL B  ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+  			LEFT OUTER JOIN TM_MEMBER_GRADE C ON B.LEVEL_IDX = C.MEMBER_GRADE_IDX 
+  			LEFT OUTER JOIN TM_MEMBER_SNS D
+        	ON A.MEMBER_IDX = D.MEMBER_IDX
+        	AND B.JOIN_TYPE = '1'
+ 		WHERE A.MEMBER_ID = #{MEMBERID}
+ 		AND A.MEMBER_TYPE = 'M'
+	</select>
+	
+	<!-- 아이디 찾기 결과 -->
+	<select id="findMemberId" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MEMBER_IDX , A.MEMBER_ID , DATE_FORMAT(A.REG_DT,'%Y-%m-%d') AS JOIN_DATE
+					, FN_COMMON_NM(C.SNS_TYPE) AS SNS_TYPE_NM, FN_DECRYPT(B.EMAIL) EMAIL, B.JOIN_TYPE, B.MEMBER_NM
+	  	FROM TM_MEMBER A 
+	  	LEFT OUTER JOIN TM_MEMBER_DETAIL B 
+	  	ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+	  	LEFT OUTER JOIN TM_MEMBER_SNS C
+	  	ON A.MEMBER_IDX = C.MEMBER_IDX
+        WHERE B.MEMBER_NM = #{MEMBERNM} 
+        AND B.EMAIL = FN_ENCRYPT(#{EMAIL})
+        LIMIT 1
+	</select>
+	
+	<!-- 비릴번호 찾기 -->
+	<select id="findMemberPwd" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MEMBER_IDX , A.MEMBER_ID , B.MEMBER_NM , FN_DECRYPT(B.EMAIL) EMAIL, FN_DECRYPT(B.PHONE_NO) PHONE_NO,  DATE_FORMAT(A.REG_DT,'%Y-%m-%d') AS JOIN_DATE
+  		  FROM TM_MEMBER A LEFT OUTER JOIN TM_MEMBER_DETAIL B ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+        WHERE A.MEMBER_ID = #{MEMBERID} AND B.EMAIL = FN_ENCRYPT(#{EMAIL})
+	</select>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="changeMemberPwd" parameterType="hashmap">
+		UPDATE TM_MEMBER
+		      SET MEMBER_PW = PASSWORD(#{MEMBERPWD}) ,
+		      		 EDIT_DT = NOW()
+		 WHERE MEMBER_ID = #{MEMBERID}
+	</update>
+	
+	
+	<!--공통 코드(하위) 리스트 -->
+	<select id="getCodeList" parameterType="java.util.HashMap" resultType="sqlMap">
+	 	SELECT COMMON_CD , CD_NM , CD_INFO 
+		FROM TS_COMMON_CD
+ 		WHERE UPPER_COMMON_CD = #{COMMONCD} AND USE_YN = 'Y'
+ 		ORDER BY ORD_SEQ
+	 </select>
+	 
+	<!--  1Depth 카테고리 리스트 (select 박스용) -->
+	<select id="getCate1DepthList" parameterType="java.util.HashMap" resultType="sqlMap">
+	 	SELECT CATE_IDX 
+	 				,  CATE_NM
+	 				, SET_FLAG, BRAND_IDX
+  		  FROM TP_BRAND_CATE 
+        WHERE DEPTH_LV=1 AND USE_YN='Y'
+        	AND BRAND_IDX = #{BRANDIDX}
+        ORDER BY ORD_SEQ ASC
+	 </select>
+	 
+	 <!--  2Depth 카테고리 리스트 (select 박스용) -->
+	 <select id="getCate2DepthList" parameterType="java.util.HashMap" resultType="sqlMap">
+	 	SELECT A.*, CASE WHEN B.CATE_IDX <![CDATA[<>]]> '' THEN 'Y' ELSE 'N' END AS DEPTH_FLAG
+		FROM TP_BRAND_CATE A
+		LEFT OUTER JOIN TP_BRAND_CATE B
+		ON A.CATE_IDX = B.UPPER_CATE_IDX
+		WHERE A.USE_YN = 'Y'
+		AND A.DEPTH_LV = '2'
+		<choose>
+			<when test="SCH2DEPTHCATEIDX != '' and SCH2DEPTHCATEIDX != '0' and SCH2DEPTHCATEIDX != null">
+				AND A.UPPER_CATE_IDX = #{SCH2DEPTHCATEIDX}
+			</when>
+			<otherwise>
+				AND A.UPPER_CATE_IDX = #{SCHCATEIDX}
+			</otherwise>
+		</choose>
+		GROUP BY A.CATE_IDX
+		ORDER BY A.ORD_SEQ ASC
+	 </select>
+	 
+	 <!--  3Depth 카테고리 리스트 (select 박스용) -->
+	  <select id="getCate3DepthList" parameterType="java.util.HashMap" resultType="sqlMap">
+	  	SELECT A.*
+		FROM TP_BRAND_CATE A
+		WHERE A.USE_YN = 'Y'
+		AND A.DEPTH_LV = 3
+		AND A.UPPER_CATE_IDX = #{SCHCATEIDX}
+		ORDER BY A.ORD_SEQ
+	  </select>
+	 
+	 <!--  1Depth 카테고리 리스트 (select 박스용) -->
+	<select id="getTotalCate1DepthList" parameterType="java.util.HashMap" resultType="sqlMap">
+	 	SELECT CATE_IDX 
+	 				,  CATE_NM
+	 				, SET_FLAG
+	 				, BRAND_IDX
+  		  FROM TP_TOTAL_CATE 
+        WHERE DEPTH_LV=1 AND USE_YN='Y'
+        ORDER BY ORD_SEQ ASC
+	 </select>
+	 
+	 <!--  2Depth 카테고리 리스트 (select 박스용) -->
+	 <select id="getTotalCate2DepthList" parameterType="java.util.HashMap" resultType="sqlMap">
+	 	SELECT A.*, CASE WHEN B.CATE_IDX <![CDATA[<>]]> '' THEN 'Y' ELSE 'N' END AS DEPTH_FLAG
+		FROM TP_TOTAL_CATE A
+		LEFT OUTER JOIN TP_TOTAL_CATE B
+		ON A.CATE_IDX = B.UPPER_CATE_IDX
+		WHERE A.USE_YN = 'Y'
+		AND A.DEPTH_LV = '2'
+		<choose>
+			<when test="SCH2DEPTHCATEIDX != '' and SCH2DEPTHCATEIDX != '0' and SCH2DEPTHCATEIDX != null">
+				AND A.UPPER_CATE_IDX = #{SCH2DEPTHCATEIDX}
+			</when>
+			<otherwise>
+				AND A.UPPER_CATE_IDX = #{SCHCATEIDX}
+			</otherwise>
+		</choose>
+		GROUP BY A.CATE_IDX
+		ORDER BY A.ORD_SEQ ASC
+	 </select>
+	 
+	 <!--  3Depth 카테고리 리스트 (select 박스용) -->
+	  <select id="getTotalCate3DepthList" parameterType="java.util.HashMap" resultType="sqlMap">
+	  	SELECT A.*
+		FROM TP_TOTAL_CATE A
+		WHERE A.USE_YN = 'Y'
+		AND A.DEPTH_LV = 3
+		AND A.UPPER_CATE_IDX = #{SCHCATEIDX}
+		ORDER BY A.ORD_SEQ
+	  </select>
+	  
+	 <select id="getBrandList" parameterType="java.util.HashMap" resultType="sqlMap">
+	 	SELECT BRAND_IDX , BRAND_NM
+  		  FROM TP_BRAND 
+        WHERE  USE_YN='Y'
+        ORDER BY REG_DT DESC
+	 </select>
+	 
+ 	<!--  휴면 해제 회원 상세 업데이트 -->
+	<update id="dormancyUpdate" parameterType="hashmap">
+	   UPDATE TM_MEMBER_DETAIL A
+       LEFT JOIN
+       (
+	       SELECT A.MEMBER_DORMANCY_IDX, A.MEMBER_NM, A.EMAIL, A.TEL_NO, A.PHONE_NO, A.ADDR, A.ADDR_DETAIL
+						, A.ZIP_CD, A.OLD_ADDR, A.OLD_ZIP_CD, A.DUPINFO, A.CONNINFO, A.BIRTH_DATE, A.GENDER, A.RECOMMENDER
+						, A.RECOMMENDER_IDX, A.SUBSCRIBE_TYPE, A.SUBSCRIBE, A.MEMBER_STATE, A.DEVICE, A.LEVEL_IDX, A.JOIN_TYPE
+						, A.EMAIL_YN, A.SMS_YN, A.MARKETING_YN, A.INDIVIDUAL_INFO_YN, A.HTTP_USER_AGENT, A.WITHDRAW_REQ_DT
+						, A.WITHDRAW_APPROVE_DT, A.INACTIVE_DT, A.ACTIVE_DT, A.CHANGE_PWD_DT, A.ADFROM
+						, A.REG_IDX, A.REG_DT, A.EDIT_IDX, A.EDIT_DT
+	       FROM TM_MEMBER_DORMANCY A 
+	       WHERE MEMBER_DORMANCY_IDX = #{MEMBERIDX}   
+	       ) B ON A.MEMBER_DETAIL_IDX = B.MEMBER_DORMANCY_IDX 
+		SET    
+			A.MEMBER_NM = B.MEMBER_NM,
+			A.EMAIL = B.EMAIL,
+			A.TEL_NO = B.TEL_NO,
+			A.PHONE_NO = B.PHONE_NO,
+			A.ADDR = B.ADDR,
+			A.ADDR_DETAIL = B.ADDR_DETAIL,
+			A.ZIP_CD = B.ZIP_CD, 
+			A.OLD_ADDR = B.OLD_ADDR, 
+			A.OLD_ZIP_CD = B.OLD_ZIP_CD, 
+			A.DUPINFO = B.DUPINFO, 
+			A.CONNINFO = B.CONNINFO, 
+			A.BIRTH_DATE = B.BIRTH_DATE, 
+			A.GENDER = B.GENDER, 
+			A.RECOMMENDER = B.RECOMMENDER,
+			A.RECOMMENDER_IDX = B.RECOMMENDER_IDX, 
+			A.SUBSCRIBE_TYPE = B.SUBSCRIBE_TYPE, 
+			A.SUBSCRIBE = B.SUBSCRIBE, 
+			A.MEMBER_STATE = '100',
+			A.DEVICE = B.DEVICE, 
+			A.LEVEL_IDX = B.LEVEL_IDX, 
+			A.JOIN_TYPE = B.JOIN_TYPE,
+			A.EMAIL_YN = B.EMAIL_YN, 
+			A.SMS_YN = B.SMS_YN, 
+			A.MARKETING_YN = B.MARKETING_YN, 
+			A.INDIVIDUAL_INFO_YN = B.INDIVIDUAL_INFO_YN, 
+			A.HTTP_USER_AGENT = B.HTTP_USER_AGENT, 
+			A.WITHDRAW_REQ_DT = B.WITHDRAW_REQ_DT,
+			A.WITHDRAW_APPROVE_DT = B.WITHDRAW_APPROVE_DT,
+			A.INACTIVE_DT = B.INACTIVE_DT, 
+			A.ACTIVE_DT = NOW(), 
+			A.CHANGE_PWD_DT = B.CHANGE_PWD_DT,
+			A.AGREE_DT = NOW(),
+			A.ADFROM = B.ADFROM,
+			A.REG_IDX = B.REG_IDX,
+			A.REG_DT = B.REG_DT, 
+			A.EDIT_IDX = #{MEMBERIDX},
+			A.EDIT_DT = NOW()
+		WHERE A.MEMBER_DETAIL_IDX = B.MEMBER_DORMANCY_IDX
+		AND A.MEMBER_DETAIL_IDX = #{MEMBERIDX}
+		AND A.MEMBER_STATE = '500'
+	</update>
+	
+	<!--  로그인 이력 -->
+	<insert id="memberLogInsert" parameterType="hashmap">
+		INSERT INTO TM_MEMBER_LOG (
+			MEMBER_IDX, DEVICE, SNS_TYPE, LOGIN_IP, LOGIN_DT
+		)
+		VALUES (
+				#{MEMBERIDX},
+				#{DEVICE},
+				#{SNSTYPE},
+				#{IP},
+				NOW()
+		)			
+	</insert>
+	
+	<!--  회원정보 업데이트 -->
+	<update id="memberInfoUpdate" parameterType="hashmap">
+		UPDATE TM_MEMBER_INFO
+      	SET	VISIT_CNT = VISIT_CNT + 1,
+      			VISIT_IP = #{IP},
+		      	VISIT_DT = NOW()
+		WHERE MEMBER_INFO_IDX = #{MEMBERIDX}
+	</update>
+	
+	<!--  비밀번호 다음에 변경 -->
+	<update id="nextChangePwd" parameterType="hashmap">
+		UPDATE TM_MEMBER_DETAIL
+      	SET CHANGE_PWD_DT = NOW()
+		WHERE MEMBER_DETAIL_IDX = #{MEMBERIDX}
+	</update>
+	
+	<!--  비밀번호 체크 -->
+	<select id="checkPwd" parameterType="hashmap" resultType="int">
+	 	SELECT CASE WHEN PASSWORD(#{MEMBERPWD}) = MEMBER_PW THEN 1 ELSE 0 END AS CHECK_PWD
+		FROM TM_MEMBER
+		WHERE MEMBER_IDX = #{MEMBERIDX}
+	 </select>
+	 
+	 <!--  GNB 카테고리 -->
+	 <select id="getCategoryList" resultType="sqlMap">
+	 	SELECT A.CATE_IDX , A.CATE_NM , A.DEPTH_LV , A.UPPER_CATE_IDX , A.USE_YN , A.CATE_DESC , A.BRAND_IDX, A.SET_FLAG,
+	       			CASE WHEN A.DEPTH_LV = 1 THEN A.CATE_NM
+		            		   WHEN A.DEPTH_LV = 2 THEN CONCAT( B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM)  
+				        	   WHEN A.DEPTH_LV = 3 THEN CONCAT( C.CATE_NM, ' <![CDATA[>]]> ', B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM)  
+		            		  WHEN A.DEPTH_LV = 3 THEN CONCAT( D.CATE_NM, ' <![CDATA[>]]> ', C.CATE_NM, ' <![CDATA[>]]> ', B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM) END CATE_NAVI ,
+		            CASE WHEN A.UPPER_CATE_IDX = 0 THEN CONCAT(LPAD(A.ORD_SEQ,3,0) ,LPAD(A.CATE_IDX,25,0))
+            				   ELSE CASE WHEN A.DEPTH_LV =2 THEN CONCAT(LPAD(B.ORD_SEQ,3,0),LPAD(B.CATE_IDX,4,0) ,LPAD(A.ORD_SEQ,3,0) , LPAD(A.CATE_IDX,18,0) )
+       							    			  WHEN A.DEPTH_LV =3 THEN CONCAT(LPAD(C.ORD_SEQ,3,0) , LPAD(C.CATE_IDX,4,0),LPAD(B.ORD_SEQ,3,0),LPAD(B.CATE_IDX,4,0),LPAD(A.ORD_SEQ,3,0),LPAD(A.CATE_IDX,11,0))
+                      							  WHEN A.DEPTH_LV =4 THEN CONCAT(LPAD(D.ORD_SEQ,3,0),LPAD(D.CATE_IDX,4,0),LPAD(C.ORD_SEQ,3,0),LPAD(C.CATE_IDX,4,0),LPAD(B.ORD_SEQ,3,0),LPAD(B.CATE_IDX,4,0),LPAD(A.ORD_SEQ,3,0),LPAD(A.CATE_IDX,4,0)) END
+            					END AS ORDER_NO,
+            	   E.GOODS_IDX, E.GOODS_CD, E.GOODS_NM, E.MAIN_FILE, E.MAIN_REAL_FILE
+            	   ,(SELECT COUNT(*) CNT FROM TP_BRAND_CATE WHERE UPPER_CATE_IDX = A.CATE_IDX) CHILD_CNT			 
+	  	FROM TP_BRAND_CATE A LEFT OUTER JOIN TP_BRAND_CATE B ON B.CATE_IDX = A.UPPER_CATE_IDX
+	  	LEFT OUTER JOIN TP_BRAND_CATE C ON C.CATE_IDX = B.UPPER_CATE_IDX
+	  	LEFT OUTER JOIN TP_BRAND_CATE D ON D.CATE_IDX = C.UPPER_CATE_IDX
+	    LEFT OUTER JOIN (
+							              SELECT A.CATE_IDX, B.GOODS_IDX, B.GOODS_CD, B.GOODS_NM, B.MAIN_FILE, B.MAIN_REAL_FILE
+							              FROM TP_CATE_RECOMMEND_GOODS A, VW_GOODS B
+							              WHERE A.GOODS_IDX = B.GOODS_IDX
+							              GROUP BY A.CATE_IDX 
+							            ) E
+     	ON A.CATE_IDX = E.CATE_IDX
+     	WHERE A.USE_YN = 'Y'
+	 	ORDER BY (CASE WHEN A.UPPER_CATE_IDX = 0 THEN CONCAT(LPAD(A.ORD_SEQ,3,0) ,LPAD(A.CATE_IDX,25,0))
+            				   		   ELSE CASE WHEN A.DEPTH_LV =2 THEN CONCAT(LPAD(B.ORD_SEQ,3,0),LPAD(B.CATE_IDX,4,0) ,LPAD(A.ORD_SEQ,3,0) , LPAD(A.CATE_IDX,18,0) )
+       							    				       WHEN A.DEPTH_LV =3 THEN CONCAT(LPAD(C.ORD_SEQ,3,0) , LPAD(C.CATE_IDX,4,0),LPAD(B.ORD_SEQ,3,0),LPAD(B.CATE_IDX,4,0),LPAD(A.ORD_SEQ,3,0),LPAD(A.CATE_IDX,11,0))
+                      								       WHEN A.DEPTH_LV =4 THEN CONCAT(LPAD(D.ORD_SEQ,3,0),LPAD(D.CATE_IDX,4,0),LPAD(C.ORD_SEQ,3,0),LPAD(C.CATE_IDX,4,0),LPAD(B.ORD_SEQ,3,0),LPAD(B.CATE_IDX,4,0),LPAD(A.ORD_SEQ,3,0),LPAD(A.CATE_IDX,4,0)) END
+            						   END) ASC
+	 </select>
+	 
+ 	<!--  GBN 3DEPTH 카테고리 리스트 -->
+	<select id="getCategory3DepthList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+		FROM TP_BRAND_CATE A
+		WHERE A.USE_YN = 'Y'
+		AND A.DEPTH_LV = 3
+		ORDER BY A.ORD_SEQ
+	</select>
+	 
+	 	 
+ 	<!--  통합 3DEPTH 카테고리 리스트 -->
+	<select id="getTotalCategory3DepthList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+		FROM TP_TOTAL_CATE A
+		WHERE A.USE_YN = 'Y'
+		AND A.DEPTH_LV = 3
+		ORDER BY A.ORD_SEQ
+	</select>
+	
+	 
+	 <!--  통합 카테고리 -->
+	 <select id="getTotalCateList" resultType="sqlMap">
+	 	SELECT A.CATE_IDX , A.CATE_NM , A.DEPTH_LV , A.UPPER_CATE_IDX , A.USE_YN , A.CATE_DESC , A.BRAND_IDX, A.SET_FLAG,
+	       			CASE WHEN A.DEPTH_LV = 1 THEN A.CATE_NM
+		            		   WHEN A.DEPTH_LV = 2 THEN CONCAT( B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM)  
+				        	   WHEN A.DEPTH_LV = 3 THEN CONCAT( C.CATE_NM, ' <![CDATA[>]]> ', B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM)  
+		            		  WHEN A.DEPTH_LV = 3 THEN CONCAT( D.CATE_NM, ' <![CDATA[>]]> ', C.CATE_NM, ' <![CDATA[>]]> ', B.CATE_NM, ' <![CDATA[>]]> ', A.CATE_NM) END CATE_NAVI ,
+		            CASE WHEN A.UPPER_CATE_IDX = 0 THEN CONCAT(LPAD(A.ORD_SEQ,3,0) ,LPAD(0,25,0))
+   				   								ELSE CASE WHEN A.DEPTH_LV = 2 THEN CONCAT(LPAD(B.ORD_SEQ,3,0),LPAD(0,4,0) ,LPAD(A.ORD_SEQ,3,0) , LPAD(0,18,0) )
+		  						    			   					WHEN A.DEPTH_LV = 3 THEN CONCAT(LPAD(C.ORD_SEQ,3,0) , LPAD(0,4,0),LPAD(B.ORD_SEQ,3,0),LPAD(0,4,0),LPAD(A.ORD_SEQ,3,0),LPAD(0,11,0))
+		            							 					WHEN A.DEPTH_LV = 4 THEN CONCAT(LPAD(D.ORD_SEQ,3,0),LPAD(0,4,0),LPAD(C.ORD_SEQ,3,0),LPAD(0,4,0),LPAD(B.ORD_SEQ,3,0),LPAD(0,4,0),LPAD(A.ORD_SEQ,3,0),LPAD(0,4,0)) END
+		      						END AS ORDER_NO 
+            	   ,(SELECT COUNT(*) CNT FROM TP_TOTAL_CATE WHERE UPPER_CATE_IDX = A.CATE_IDX) CHILD_CNT			 
+	  	FROM TP_TOTAL_CATE A LEFT OUTER JOIN TP_TOTAL_CATE B ON B.CATE_IDX = A.UPPER_CATE_IDX
+	  	LEFT OUTER JOIN TP_TOTAL_CATE C ON C.CATE_IDX = B.UPPER_CATE_IDX
+	  	LEFT OUTER JOIN TP_TOTAL_CATE D ON D.CATE_IDX = C.UPPER_CATE_IDX
+	    WHERE A.USE_YN = 'Y'
+	 	ORDER BY (CASE WHEN A.UPPER_CATE_IDX = 0 THEN CONCAT(LPAD(A.ORD_SEQ,3,0) ,LPAD(0,25,0))
+   				   								ELSE CASE WHEN A.DEPTH_LV = 2 THEN CONCAT(LPAD(B.ORD_SEQ,3,0),LPAD(0,4,0) ,LPAD(A.ORD_SEQ,3,0) , LPAD(0,18,0) )
+		  						    			   					WHEN A.DEPTH_LV = 3 THEN CONCAT(LPAD(C.ORD_SEQ,3,0) , LPAD(0,4,0),LPAD(B.ORD_SEQ,3,0),LPAD(0,4,0),LPAD(A.ORD_SEQ,3,0),LPAD(0,11,0))
+		            							 					WHEN A.DEPTH_LV = 4 THEN CONCAT(LPAD(D.ORD_SEQ,3,0),LPAD(0,4,0),LPAD(C.ORD_SEQ,3,0),LPAD(0,4,0),LPAD(B.ORD_SEQ,3,0),LPAD(0,4,0),LPAD(A.ORD_SEQ,3,0),LPAD(0,4,0)) END
+		      						END) ASC
+	 </select>
+	 
+	<!-- 이벤트 배너  -->
+	<select id="eventBanner" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+		FROM TS_BANNER A
+		WHERE A.USE_YN = 'Y'
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')  <![CDATA[>=]]> A.BANNER_START_DATE 
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')  <![CDATA[<=]]> A.BANNER_END_DATE
+		AND A.BANNER_POS = #{BANNERPOS}
+		ORDER BY A.BANNER_END_DATE DESC
+		LIMIT 1
+	</select>
+	
+	<!--  HTML 정보관리 리스트 -->
+	<select id="getHtmlinfoList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+		FROM TS_HTMLINFO A
+		WHERE 1=1
+		<if test="HTMLINFOGUBUN != null and HTMLINFOGUBUN !='' ">
+			AND A.HTMLINFO_GUBUN = #{HTMLINFOGUBUN}
+		</if>		 	
+	</select>
+	
+	<!--  HTML 정보관리 -->
+	<select id="getHtmlinfo" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+		FROM TS_HTMLINFO A
+		WHERE A.HTMLINFO_GUBUN = #{HTMLINFOGUBUN}
+	</select>
+	
+	<!-- 검색 결과 상품 검색 자동완성 -->
+	<select id="autoCompletProductResult" parameterType="hashmap" resultType="sqlMap">
+		select GOODS_IDX, GOODS_CD, GOODS_NM, GOODS_TITLE, SHORT_INFO, MAIN_FILE, SEARCH_KEYWORD   
+		from vw_goods g
+		where g.GOODS_TITLE like '%${QUERY}%'
+	</select>
+	
+	<!-- 검색 결과 hashtag 검색 자동완성 -->
+	<select id="autoCompletHashtagResult" parameterType="hashmap" resultType="sqlMap">
+		select   h.HASHTAG_IDX,
+         h.HASHTAG_NM,
+         h.RELATED_SEARCH,
+         V.GOODS_IDX,
+         V.GOODS_CD,
+         V.GOODS_NM,
+         V.GOODS_TITLE,
+         V.SHORT_INFO,
+         V.MAIN_FILE,
+         V.SEARCH_KEYWORD
+		from     tp_hashtag h
+         left join tp_hashtag_goods hg
+         on       h.HASHTAG_IDX = hg.HASHTAG_IDX
+         left join vw_goods v
+         on       V.GOODS_IDX = hg.GOODS_IDX
+		where h.USE_YN = 'Y'
+		and h.HASHTAG_NM like '%${QUERY}%'
+		group by h.HASHTAG_IDX
+	</select>
+	
+	<!-- WING - 최근 구매 상품 1개 -->
+	<select id="getLastestOrderedGoods" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getLastestOrderedGoods **/
+		SELECT
+			G.GOODS_IDX,
+			G.GOODS_CD,
+			G.GOODS_NM,
+			G.GOODS_TITLE,
+			G.PRICE,
+			G.DISCOUNT_RATE,
+			G.DISCOUNT_PRICE,
+			G.MAIN_FILE
+		FROM TO_ORDER O
+		JOIN TO_ORDER_DETAIL OD ON O.ORDER_IDX = OD.ORDER_IDX
+		JOIN VW_GOODS G ON OD.GOODS_IDX = G.GOODS_IDX
+		WHERE O.ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','670','690','700','750','770','800','900')
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				AND O.MEMBER_IDX = #{MEMBERIDX}
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				AND O.SESSION_ID = #{SESSIONID}
+				AND O.MEMBER_IDX IS NULL
+			</otherwise>
+		</choose>
+		ORDER BY O.ORDER_IDX DESC, OD.DISCOUNT_PRICE DESC
+		LIMIT 1
+	</select>
+	
+	<!-- 메인 배너 리스트 -->
+	<select id="getMainBannerList" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getMainBannerList **/
+		SELECT A.BANNER_IDX,				/* 배너 일련번호 */
+				   A.DEVICE_GUBUN,			/* 디바이스 구분 */
+				   A.BANNER_NM,				/* 배너 명 */
+				   A.BANNER_IMG,				/* 배너 이미지 */
+				   A.BANNER_REAL_IMG,	/* 배너 실제 이미지 */
+				   A.LINK_YN,						/* 링크 여부 */
+				   A.LINK_URL,					/* 링크 URL */
+				   A.LINK_FLAG,					/* 링크 창 */
+				   A.MO_BANNER_IMG,			/* MO 배너 이미지 */
+				   A.MO_BANNER_REAL_IMG,	/* MO 배너 실제 이미지 */
+				   A.MO_LINK_YN,					/* MO 링크 여부 */
+				   A.MO_LINK_URL,				/* MO 링크 URL */
+				   A.MO_LINK_FLAG,				/* MO 링크 창 */
+				   A.BANNER_INFO				/* 배너 정보 */
+		FROM TS_BANNER A
+		WHERE A.USE_YN = 'Y'
+			AND ( DATE_FORMAT(A.BANNER_START_DATE,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.BANNER_END_DATE,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+			AND A.BANNER_POS = #{BANNERPOS}
+		ORDER BY A.ORD_SEQ, A.REG_DT DESC
+	</select>
+	
+	<!-- PC 중간배너 -->
+	<select id="getPcMidBanner" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getPcMidBanner **/
+		SELECT A.*
+		FROM TS_BANNER A
+		WHERE A.USE_YN = 'Y'
+		AND A.BANNER_POS = #{BANNERPOS}
+		AND A.DEVICE_GUBUN IN ('P', 'A')
+		AND ( DATE_FORMAT(A.BANNER_START_DATE,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.BANNER_END_DATE,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+		ORDER BY A.ORD_SEQ, A.REG_DT DESC
+		LIMIT 1
+	</select>
+	
+	<!-- MO 중간배너 -->
+	<select id="getMoMidBanner" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getMoMidBanner **/
+		SELECT A.*
+		FROM TS_BANNER A
+		WHERE A.USE_YN = 'Y'
+		AND A.BANNER_POS = #{BANNERPOS}
+		AND A.DEVICE_GUBUN IN ('M', 'A')
+		AND ( DATE_FORMAT(A.BANNER_START_DATE,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.BANNER_END_DATE,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+		ORDER BY A.ORD_SEQ, A.REG_DT DESC	
+		LIMIT 1
+	</select>
+	
+	<!-- 세트, 베스트 리스트 -->
+	<select id="getMainGoodsList" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getMainGoodsList **/
+		SELECT A.DETAIL_IDX,				/* 일련번호 */
+					A.GUBUN,						/* 구분 */
+					A.ORDER_IDX,				/* 노출순서 */
+					A.GUBUN_IDX,				/* 상품일련번호 */
+				   A.GUBUN_CODE,				/* 상품코드 */
+				   A.TAB_GUBUN,				/* 탭 구분 */
+				   A.MAIN_GUBUN,				/* 메인 구분 */
+				   B.PRICE,							/* 판매가 */
+				   B.DISCOUNT_RATE,			/* 할인율 */
+				   B.DISCOUNT_PRICE,		/* 할인가 */
+				   B.POINT_FLAG,				/* 포인트 여부 */
+				   B.POINT_RATE,				/* 포인트율 */
+				   B.BRAND_IDX, B.BRAND_NM, B.CHOICE_CATE_IDX, B.GOODS_IDX, B.GOODS_CD , B.GOODS_NM, B.MAIN_FILE , B.MAIN_REAL_FILE, B.SOLDOUT_YN,
+                   B.STOCK_FLAG, B.STOCK_CNT, B.SHORT_INFO, B.GOODS_TITLE, B.OPO_YN, B.TPO_YN, B.POINTICON_YN, B.SALEICON_YN, B.BEST_YN, B.NEW_YN,
+                   B.ONLINE_YN, B.AUTO_COUPON_YN, B.SALE_STATUS, B.DISPLAY_FLAG, B.USE_YN, B.BRAND_IDX
+		FROM TS_MAIN_DISPLAY_DETAIL A INNER JOIN VW_GOODS B ON A.GUBUN_IDX = B.GOODS_IDX
+		WHERE A.GUBUN = #{GUBUN}
+			AND A.MAIN_GUBUN = #{MAINGUBUN}
+			<if test="GUBUN eq 'best'.toString() and DEVICE eq 'm'.toString() and MAINGUBUN eq 0">
+				AND A.TAB_GUBUN = 0
+			</if>
+		ORDER BY A.ORDER_IDX, A.REG_DT DESC
+	</select>
+	
+	<!-- TIPS 리스트 -->
+	<select id="getTipsList" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getTipsList **/
+		SELECT B.TIP_IDX, 		/* 팁 일련번호 */
+					B.TIP_TITLE, 		/* 팁 제목 */
+					B.TIP_INFO, 		/* 팁 설명 */
+					B.TIP_GUBUN, 	/* 팁 구분 */
+					B.VIDEO_URL, 	/* 동영상 URL */
+					B.VIDEO_IMG,	/* 동영상 썸네일 이미지 */
+					B.TIP_IMG,		/* 팁 이미지 */
+					B.LINK_YN,		/* PC 링크 여부 */
+					B.LINK_URL,		/* PC 링크 URL */
+					B.MO_LINK_URL,	/* MO 링크 URL */
+				    C.GOODS_IDX, 	/* 상품 일련번호 */
+				    C.GOODS_CD, 	/* 상품 코드 */
+				    C.GOODS_NM	/* 상품명 */
+        FROM TS_MAIN_DISPLAY_DETAIL A INNER JOIN TA_STYLE_TIP B ON A.GUBUN_IDX = B.TIP_IDX AND B.DISP_YN = 'Y'
+        												 LEFT OUTER JOIN VW_GOODS C ON B.GOODS_IDX = C.GOODS_IDX
+        WHERE A.GUBUN = 'tip'
+        AND A.MAIN_GUBUN = #{MAINGUBUN}
+        ORDER BY A.ORDER_IDX, A.REG_DT DESC
+	</select>
+	
+	<!-- 후기 리스트 -->
+	<select id="getReviewList" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getReviewList **/
+		SELECT B.REVIEW_IDX, B.ORDER_DETAIL_IDX, B.WINNER_IDX, B.RATING, B.REVIEW_DESC, B.IMG1, B.IMG2, B.IMG3,
+				   FN_COMMON_NM(B.HAIR_STYLE) AS HAIR_STYLE_NM, FN_COMMON_NM(B.HAIR_TYPE) AS HAIR_TYPE_NM, FN_MASK_NM(D.MEMBER_NM) AS MEMBER_NM, 
+				   C.GOODS_IDX, C.GOODS_CD , C.GOODS_NM, C.MAIN_FILE, C.MAIN_REAL_FILE, C.SOLDOUT_YN,
+                   C.STOCK_FLAG, C.STOCK_CNT, C.SHORT_INFO, C.GOODS_TITLE, C.OPO_YN, C.TPO_YN, C.POINTICON_YN, C.SALEICON_YN, C.BEST_YN,
+                   C.ONLINE_YN, C.AUTO_COUPON_YN, C.SALE_STATUS, C.DISPLAY_FLAG, C.USE_YN, C.BRAND_IDX
+		FROM TS_MAIN_DISPLAY_DETAIL A INNER JOIN TP_REVIEW B ON A.GUBUN_IDX = B.REVIEW_IDX
+														 INNER JOIN VW_GOODS_ORIGIN C ON B.GOODS_IDX = C.GOODS_IDX
+														 INNER JOIN TM_MEMBER_DETAIL D ON B.MEMBER_IDX = D.MEMBER_DETAIL_IDX
+		WHERE A.GUBUN = 'review'
+			AND A.MAIN_GUBUN = #{MAINGUBUN}
+		ORDER BY A.ORDER_IDX, A.REG_DT DESC
+		LIMIT 4
+	</select>
+	
+	<!-- 이벤트 리스트 -->
+	<select id="getEventList" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getEventList **/
+		SELECT AA.GUBUN,
+				   AA.EVENT_IDX,
+				   AA.TITLE,
+				   AA.DEVICE,
+				   AA.EVENT_IMG,
+				   AA.M_EVENT_IMG,
+				   AA.LINK_YN,
+				   AA.LINK_URL,
+				   AA.LINK_WINDOW,
+				   AA.START_DT,
+				   AA.END_DT
+		FROM 
+			(
+				SELECT A.GUBUN,
+						   A.ORDER_IDX,
+						   A.REG_DT,
+						   B.EVENT_IDX AS EVENT_IDX,
+						   B.TITLE,
+						   B.P_EVENT_IMG AS EVENT_IMG,
+						   B.M_EVENT_IMG AS M_EVENT_IMG,
+						   B.DEVICE,
+						   B.LINK_YN,
+						   B.LINK_URL,
+						   B.LINK_WINDOW,
+						   DATE_FORMAT(B.START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				   		   DATE_FORMAT(B.END_DT,'%m.%d') AS END_DT				/* 종료일 */
+				FROM TS_MAIN_DISPLAY_DETAIL A INNER JOIN TE_EVENT B ON A.GUBUN_IDX = B.EVENT_IDX
+				WHERE A.GUBUN = 'event'
+					AND A.MAIN_GUBUN = 0
+					AND B.DISP_YN = 'Y'
+					AND ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+					AND (B.DEVICE = 'A' OR B.DEVICE = #{DEVICE})
+				
+				UNION ALL
+				
+				SELECT A.GUBUN,
+						   A.ORDER_IDX,
+						   A.REG_DT,
+						   B.EXHIBITION_IDX AS EVENT_IDX,
+						   B.TITLE,
+						   B.P_EXHIBITION_IMG AS EVENT_IMG,
+						   B.M_EXHIBITION_IMG AS M_EVENT_IMG,
+						   B.DEVICE,
+						   NULL AS LINK_YN,
+						   NULL AS LINK_URL,
+						   NULL AS LINK_WINDOW,
+						   DATE_FORMAT(B.START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				  	 	   DATE_FORMAT(B.END_DT,'%m.%d') AS END_DT				/* 종료일 */
+				FROM TS_MAIN_DISPLAY_DETAIL A INNER JOIN TE_EXHIBITION B ON A.GUBUN_IDX = B.EXHIBITION_IDX
+				WHERE A.GUBUN = 'exhibition'
+					AND A.MAIN_GUBUN = 0
+					AND B.DISP_YN = 'Y'
+					AND ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+					AND (B.DEVICE = 'A' OR B.DEVICE = #{DEVICE})
+			) AA
+		ORDER BY AA.ORDER_IDX, AA.REG_DT DESC
+		LIMIT 2
+	</select>
+	
+	<!-- 제품 소개 -->
+	<select id="getSourceBanner" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getSourceBanner **/
+		SELECT 
+			MAIN_IDX, 
+			MAIN_GUBUN,
+			GOODS_DESC,
+			M_GOODS_DESC
+		FROM TS_MAIN_DISPLAY
+		WHERE MAIN_GUBUN = #{MAINGUBUN}
+	</select>
+
+	
+	<!-- 장바구니 업데이트 목록 -->
+	<select id="getCartUpdateList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.CART_IDX, A.MEMBER_IDX, A.SESSION_ID, A.OVERLAP
+		FROM (
+				      SELECT A.CART_IDX, A.MEMBER_IDX, A.SESSION_ID, COUNT(*) AS OVERLAP
+				      FROM TO_CART A
+				      WHERE (A.MEMBER_IDX = #{MEMBERIDX} OR A.SESSION_ID = #{SESSIONID})
+				      GROUP BY A.GOODS_IDX
+				     ) A
+		WHERE A.OVERLAP = 1
+		AND A.MEMBER_IDX IS NULL
+	</select>	
+	
+	<!-- 장바구니 삭제 목록 -->
+	<select id="getCartDeleteList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.CART_IDX, A.GOODS_IDX, A.MEMBER_IDX, A.SESSION_ID
+		FROM TO_CART A
+		WHERE A.GOODS_IDX IN (
+									                      SELECT A.GOODS_IDX
+									                      FROM TO_CART A
+									                      WHERE (A.MEMBER_IDX = #{MEMBERIDX} OR A.SESSION_ID = #{SESSIONID})
+									                      GROUP BY A.GOODS_IDX
+									                      HAVING COUNT(*) <![CDATA[>]]> 1
+									                     )
+		AND (A.MEMBER_IDX = #{MEMBERIDX} OR A.SESSION_ID = #{SESSIONID})
+		AND A.MEMBER_IDX IS NULL
+	</select>
+	
+	<!-- 장바구니 업데이트 -->
+	<update id="cartUpdate" parameterType="hashmap">
+		UPDATE TO_CART
+      	SET MEMBER_IDX = #{MEMBERIDX},
+      		    SESSION_ID = NULL
+	 	WHERE CART_IDX = #{CARTIDX}
+	</update>
+	
+	<!-- 장바구니 삭제 -->
+	<delete id="cartDelete" parameterType="hashmap">
+		DELETE FROM TO_CART  WHERE CART_IDX = #{CARTIDX}
+	</delete>
+	
+	<!-- 윙 메뉴 쿠폰 리스트 -->
+	<select id="getWingCouponList" parameterType="hashmap" resultType="sqlMap">
+	select AA.COUPON_MEMBER_IDX, AA.GUBUN, AA.DISCOUNT, AA.DISCOUNT_TYPE
+	 from (
+				SELECT A.COUPON_MEMBER_IDX,
+					       A.GUBUN, 
+					       A.DISCOUNT, 
+					       A.DISCOUNT_TYPE,				    
+					       A.DOWN_DT,   
+					       DATEDIFF(NOW(),A.REAL_USE_END_DT) AS  DIFF_DAY  
+					  FROM TO_COUPON_MEMBER A
+					  WHERE A.USE_YN = 'N' AND A.ORDER_IDX IS NULL AND A.ORDER_DETAIL_IDX IS NULL
+					  AND A.METHOD IN ('D','S')
+					  AND (A.USE_DATE_LIMIT_YN = 'N' OR ( A.USE_DATE_LIMIT_YN IN ('Y', 'P') AND  DATE(A.REAL_USE_START_DT) <![CDATA[<=]]> CURDATE() AND DATE(A.REAL_USE_END_DT) <![CDATA[>=]]> CURDATE() ))
+					 AND A.MEMBER_IDX = #{MEMBERIDX} 
+			UNION ALL
+			SELECT  0 AS COUPON_MEMBER_IDX,
+					        A.GUBUN, 
+					       A.DISCOUNT, 
+					       A.DISCOUNT_TYPE,
+					       NOW() AS DOWN_DT,
+					       DATEDIFF(NOW(),CASE WHEN A.USE_DATE_LIMIT_YN = 'P' AND IFNULL(A.USABLE_DAYS,0) <![CDATA[>]]> 0 THEN DATE_ADD(CURDATE(), INTERVAL IFNULL(A.USABLE_DAYS,0) DAY) ELSE A.USE_END_DT END) AS  DIFF_DAY
+					FROM TO_COUPON A
+					WHERE A.USE_YN = 'Y'   
+			        AND A.METHOD = 'A'       	 
+						AND (CURDATE() <![CDATA[>=]]> DATE(DOWN_START_DT) OR DOWN_START_DT IS NULL)	/* 다운로드 시작일 */
+						AND (CURDATE() <![CDATA[<=]]> DATE(DOWN_END_DT) OR DOWN_END_DT IS NULL) 		/* 다운로드 종료일 */
+						AND (A.USE_DATE_LIMIT_YN IN ('N','P') OR (USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(USE_START_DT) OR USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(USE_END_DT) OR USE_END_DT IS NULL)))	/* 사용기한 제한여부 */
+						AND (A.TARGET_MEMBER = 'A' 
+									OR (A.TARGET_MEMBER = 'G' AND A.TARGET_GRADE = (select LEVEL_IDX from tm_member_detail d where d.MEMBER_DETAIL_IDX = #{MEMBERIDX}  ) ) 
+									OR (A.TARGET_MEMBER = 'M' AND 
+											EXISTS ( /* 대상 회원에 포함되어 있는지 */
+														SELECT COUPON_IDX 
+														FROM TO_COUPON_TARGET_MEMBER
+														WHERE COUPON_IDX = A.COUPON_IDX
+														AND MEMBER_IDX = #{MEMBERIDX} 
+														)
+										)
+							  )
+						AND (A.ISSUE_CNT_LIMIT_YN = 'N' OR (A.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(A.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(A.MAX_ISSUE_CNT,0) > 0 AND IFNULL(A.MAX_ISSUE_CNT,0) > (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = A.COUPON_IDX)))))	/* 최대 발급수량 조건 */
+			) AA
+		 order by AA.diff_day DESC, AA.down_dt DESC  
+		LIMIT 2
+	</select>
+	
+	<!-- 세트, 베스트 리스트 총 개수 -->
+	<select id="getMainGoodsListCnt" parameterType="hashmap" resultType="int">
+		/** commonDAO.getMainGoodsListCnt **/
+		SELECT 
+			COUNT(*)
+		FROM TS_MAIN_DISPLAY_DETAIL A INNER JOIN VW_GOODS B ON A.GUBUN_IDX = B.GOODS_IDX
+		WHERE A.GUBUN = #{GUBUN}
+			AND A.MAIN_GUBUN = #{MAINGUBUN}
+		ORDER BY A.ORDER_IDX, A.REG_DT DESC
+	</select>
+	
+	<!-- 윙 배너 리스트  -->
+	<select id="getBannerWing" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getBannerWing **/
+		SELECT A.*
+		FROM TS_BANNER A
+		WHERE A.USE_YN = 'Y'
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')  <![CDATA[>=]]> A.BANNER_START_DATE 
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')  <![CDATA[<=]]> A.BANNER_END_DATE
+		AND A.BANNER_POS = #{BANNERPOS}
+		ORDER BY A.ORD_SEQ, A.BANNER_END_DATE DESC
+	</select>
+	
+	<!-- 팝업 리스트 (레이어 팝업)  -->
+	<select id="getPopupList" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getPopupList **/
+		SELECT A.*
+		FROM TS_POPUP A
+		WHERE A.USE_YN = 'Y'
+		AND DEVICE_GUBUN IN (#{DEVICE}, #{DEVICE2})
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d')  <![CDATA[>=]]> A.POP_START_DATE 
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d')  <![CDATA[<=]]> A.POP_END_DATE
+		AND A.POP_GUBUN = 'POPUP_GUBUN20'
+		ORDER BY REG_DT DESC
+		<if test="DEVICE eq 'M'.toString() ">
+		LIMIT 1
+		</if>
+	</select>
+	
+	<!-- 띠 배너  -->
+	<select id="getBannerHeader" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getBannerHeader **/
+		SELECT A.*
+		FROM TS_BANNER A
+		WHERE A.USE_YN = 'Y'
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')  <![CDATA[>=]]> A.BANNER_START_DATE 
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')  <![CDATA[<=]]> A.BANNER_END_DATE
+		AND A.BANNER_POS = #{BANNERPOS}
+		AND DEVICE_GUBUN IN (#{DEVICEGUBUN}, #{DEVICEGUBUN2})
+		ORDER BY A.ORD_SEQ, A.BANNER_END_DATE DESC
+		LIMIT 1
+	</select>
+	
+	
+	<!-- 1뎁스 카테고리 세트 리스트 -->
+	<select id="getCate1DepthSetList" parameterType="hashmap" resultType="sqlMap">
+	    SELECT A.*
+	    FROM TP_BRAND_CATE A
+	    WHERE A.DEPTH_LV = 1
+	    AND A.SET_FLAG = 'Y'
+	    AND A.USE_YN = 'Y'
+	    ORDER BY A.ORD_SEQ
+	</select>
+	
+	<!-- 2뎁스 카테고리 세트 리스트 -->
+	<select id="getCate2DepthSetList" parameterType="hashmap" resultType="sqlMap">
+ 		SELECT A.*
+		FROM TP_BRAND_CATE A
+		WHERE A.USE_YN = 'Y'
+		AND A.DEPTH_LV = 2
+		ORDER BY A.ORD_SEQ
+	</select>
+	
+	<!-- 메인 해시태그 리스트 -->
+	<select id="getMainHashtagList" parameterType="hashmap" resultType="sqlMap">
+		SELECT
+			A.DETAIL_IDX,				/* 일련번호 */
+			A.ORDER_IDX,				/* 정렬순서 */
+			A.GUBUN_IDX,				/* 해시태그 일련번호 */
+			A.MAIN_GUBUN,			/* 메인구분 */
+			B.HASHTAG_NM,			/* 해시태그 명 */
+			B.RELATED_SEARCH,		/* 연관 검색어 */
+			B.HASHTAG_IMG			/*	해시태그 이미지 */
+		FROM TS_MAIN_DISPLAY_DETAIL A INNER JOIN TP_HASHTAG B ON A.GUBUN_IDX = B.HASHTAG_IDX
+		WHERE A.GUBUN = 'hashtag'
+		AND A.MAIN_GUBUN = #{MAINGUBUN}
+		ORDER BY A.ORDER_IDX ASC
+		LIMIT 5
+	</select>
+	
+	<!-- 메인 공지사항 리스트 -->
+	<select id="getNoticeList" parameterType="hashmap" resultType="sqlMap">
+		SELECT
+			NOTICE_IDX,		/* 공지사항 일련번호 */
+			NOTICE_TYPE,	/* 공지사항 타입 */
+			FN_COMMON_NM(NOTICE_TYPE) AS NOTICE_TYPE_NM,	/* 공지사항 타입명 */
+			TITLE,				/* 제목 */
+			DATE_FORMAT(REG_DT,'%Y-%m-%d') AS REG_DT			/* 등록일자 */
+		FROM TA_NOTICE
+		WHERE DISP_YN = 'Y'
+		ORDER BY REG_DT DESC
+		LIMIT 4
+	</select>
+	
+	<!-- 유입 경로 프로시저 저장 및 반환값 -->
+	<update id="callSrcPathProcedure" parameterType="hashmap" statementType="CALLABLE">
+        { CALL SP_ADFROM_HISTORY(#{SESSIONID, mode=IN,jdbcType=VARCHAR}, #{ADFROM, mode=IN, jdbcType=VARCHAR}, #{DEVICE, mode=IN, jdbcType=VARCHAR}, #{RESULT, mode=OUT, jdbcType=VARCHAR}) }
+   </update>
+   
+   	<!--  상품 뷰 테이블 업데이트 (유입경로) -->
+	<update id="goodsViewUpdate" parameterType="hashmap">
+		UPDATE TP_GOODS_VIEW
+      	SET	MEMBER_IDX = #{MEMBERIDX} 
+		WHERE SESSIONID = #{SRCPATHSESSIONID}
+	</update>
+	
+	<!-- 보노보노 노출 여부 -->
+	<select id="callSpBonoLoading" parameterType="hashmap" statementType="CALLABLE" resultType="sqlMap">
+        { CALL SP_BONO_LOADING(#{URL, mode=IN,jdbcType=VARCHAR}, #{DEVICE, mode=IN, jdbcType=VARCHAR}, #{MEMBERIDX, mode=IN, jdbcType=INTEGER}, #{RESULT, mode=OUT, jdbcType=INTEGER}, #{BONO_NO, mode=OUT, jdbcType=INTEGER}, #{BONO_TOP, mode=OUT, jdbcType=INTEGER}, #{BONO_LEFT, mode=OUT, jdbcType=INTEGER}) }
+   </select>
+   
+   <!-- 보노보노 클릭 -->
+	<select id="callSpBonoClick" parameterType="hashmap" statementType="CALLABLE" resultType="sqlMap">
+        { CALL SP_BONO_CLICK(#{MEMBERIDX, mode=IN, jdbcType=INTEGER}, #{RESULT, mode=OUT, jdbcType=INTEGER}, #{MSG, mode=OUT, jdbcType=VARCHAR}, #{BONO_POINT, mode=OUT, jdbcType=INTEGER}) }
+   </select>
+   
+   <!-- 회원 포인트 정보 -->
+	<select id="getMemberPoint" parameterType="hashmap" resultType="sqlMap">
+ 		SELECT
+ 			A.POINT_PRICE
+ 		FROM TM_MEMBER_INFO A
+ 		WHERE A.MEMBER_INFO_IDX = #{MEMBERIDX}
+	</select>
+	
+	<!-- 회원정보 보유 포인트 업데이트 -->
+	<update id="memberPointUpdate" parameterType="hashmap">
+		UPDATE TM_MEMBER_INFO
+      	SET POINT_PRICE = #{POINTPRICE}
+		WHERE MEMBER_INFO_IDX = #{MEMBERIDX}
+	</update>
+	
+	
+	<!-- ***************** 2018 리뉴얼 메인 ***************** -->
+	
+	
+	<!-- 배너 1개만 가져오기  -->
+	<select id="getBannerOne" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getBannerOne **/
+		SELECT A.*
+		FROM TS_BANNER A
+		WHERE A.USE_YN = 'Y'
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')  <![CDATA[>=]]> A.BANNER_START_DATE 
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')  <![CDATA[<=]]> A.BANNER_END_DATE
+		AND A.BANNER_POS = #{BANNERPOS}
+		AND DEVICE_GUBUN IN (#{DEVICEGUBUN}, #{DEVICEGUBUN2})
+		ORDER BY A.ORD_SEQ, A.REG_DT DESC
+		LIMIT 1
+	</select>
+	
+	<!-- 메인 상품 리스트 -->
+	<select id="getMainProductList" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getMainProductList **/
+		SELECT 
+			A.IDX,							/* 일련번호 */
+			A.GUBUN,						/* 구분 */
+			A.ORDER_IDX,				/* 노출순서 */
+			A.GUBUN_IDX,				/* 상품일련번호 */
+			A.MAIN_GUBUN,			/* 메인 구분 */
+			B.GOODS_CD,				/* 상품 코드 */
+			B.PRICE,						/* 판매가 */
+			B.DISCOUNT_RATE,		/* 할인율 */
+			B.DISCOUNT_PRICE,		/* 할인가 */
+			B.POINT_FLAG,				/* 포인트 여부 */
+			B.POINT_RATE,				/* 포인트율 */
+			B.BRAND_IDX, B.BRAND_NM, B.CHOICE_CATE_IDX, B.GOODS_IDX, B.GOODS_CD , B.GOODS_NM, B.MAIN_FILE , B.MAIN_REAL_FILE, 
+			(SELECT GF.IMG_FILE FROM TP_GOODS_FILE GF WHERE GF.GOODS_IDX = A.GUBUN_IDX AND GF.IMG_FILE LIKE '%_3.%' LIMIT 1) AS IMG_FILE2,
+			B.SOLDOUT_YN, B.STOCK_FLAG, B.STOCK_CNT, B.SHORT_INFO, B.GOODS_TITLE, B.OPO_YN, B.TPO_YN, B.POINTICON_YN, B.SALEICON_YN, B.BEST_YN, B.NEW_YN,
+            B.ONLINE_YN, B.AUTO_COUPON_YN, B.SALE_STATUS, B.DISPLAY_FLAG, B.USE_YN, B.BRAND_IDX
+		FROM TS_MAIN A INNER JOIN VW_GOODS B ON A.GUBUN_IDX = B.GOODS_IDX
+		WHERE A.GUBUN = #{GUBUN}
+		AND A.MAIN_GUBUN = #{MAINGUBUN}
+		ORDER BY A.ORDER_IDX, A.REG_DT DESC
+	</select>
+	
+	<!-- 메인 HTML -->
+	<select id="getMainHtml" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** commonDAO.getMainHtml **/
+		SELECT 
+			A.IDX,					/* 일련번호 */
+			A.MAIN_GUBUN,	/* 메인구분 */
+			A.GUBUN,				/* 컨텐츠구분 */
+			A.P_HTML,				/* PC HTML */
+			A.M_HTML				/* MO HTML */
+		FROM TS_MAIN A
+		WHERE 1 = 1
+		AND A.MAIN_GUBUN = #{MAINGUBUN}
+		AND A.GUBUN = #{GUBUN}
+	</select>
+	
+	<!-- 메인 후기 리스트 -->
+	<select id="getMainReviewList" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getMainReviewList **/
+		SELECT B.REVIEW_IDX, B.ORDER_DETAIL_IDX, B.WINNER_IDX, B.RATING, B.REVIEW_DESC, B.IMG1, B.IMG2, B.IMG3,
+				   FN_COMMON_NM(B.HAIR_STYLE) AS HAIR_STYLE_NM, FN_COMMON_NM(B.HAIR_TYPE) AS HAIR_TYPE_NM, FN_MASK_NM(D.MEMBER_NM) AS MEMBER_NM, 
+				   C.GOODS_IDX, C.GOODS_CD , C.GOODS_NM, C.MAIN_FILE, C.MAIN_REAL_FILE, C.SOLDOUT_YN,
+                   C.STOCK_FLAG, C.STOCK_CNT, C.SHORT_INFO, C.GOODS_TITLE, C.OPO_YN, C.TPO_YN, C.POINTICON_YN, C.SALEICON_YN, C.BEST_YN,
+                   C.ONLINE_YN, C.AUTO_COUPON_YN, C.SALE_STATUS, C.DISPLAY_FLAG, C.USE_YN, C.BRAND_IDX
+		FROM TS_MAIN A INNER JOIN TP_REVIEW B ON A.GUBUN_IDX = B.REVIEW_IDX
+								   INNER JOIN VW_GOODS_ORIGIN C ON B.GOODS_IDX = C.GOODS_IDX
+								   INNER JOIN TM_MEMBER_DETAIL D ON B.MEMBER_IDX = D.MEMBER_DETAIL_IDX
+		WHERE A.MAIN_GUBUN = #{MAINGUBUN}
+		AND A.GUBUN = #{GUBUN}
+		
+		ORDER BY A.ORDER_IDX, A.REG_DT DESC
+		LIMIT 5
+	</select>
+	
+	<!-- 메인 SNS 리스트 -->
+	<select id="getMainSnsList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** commonDAO.getMainSnsList **/
+		SELECT 
+			A.IDX,						/* 일련번호 */
+			A.MAIN_GUBUN,		/* 메인구분 */
+			A.SNS_TITLE,			/* SNS 제목 */
+			A.SNS_HASHTAG,		/* SNS 해시태그 */
+			A.CONTENTS_TYPE,	/* 컨텐츠 구분 */
+			A.P_IMG,					/* PC 이미지 */
+			A.M_IMG,					/* MO 이미지 */
+			A.P_URL,					/* PC URL */
+			A.M_URL,					/* MO URL */
+			A.SNS_TYPE,				/* SNS 구분 */
+			A.ORDER_IDX			/* 노출순서 */
+		FROM TS_MAIN_SNS A
+		WHERE A.MAIN_GUBUN = #{MAINGUBUN}
+		AND A.USE_YN = 'Y'
+		
+		ORDER BY A.ORDER_IDX
+	</select>
+	
+	<!-- 메인 Tip 리스트 -->
+	<select id="getMainTipList" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getMainTipList **/
+		SELECT 
+			B.TIP_IDX, 				/* 팁 일련번호 */
+			B.TIP_TITLE, 				/* 팁 제목 */
+			B.TIP_INFO, 				/* 팁 설명 */
+			B.TIP_GUBUN, 			/* 팁 구분 */
+			B.VIDEO_URL, 			/* 동영상 URL */
+			B.VIDEO_IMG,			/* 동영상 썸네일 이미지 */
+			B.TIP_IMG,				/* 팁 이미지 */
+			B.LINK_YN,				/* PC 링크 여부 */
+			B.LINK_URL,				/* PC 링크 URL */
+			B.MO_LINK_URL,		/* MO 링크 URL */
+			C.GOODS_IDX, 			/* 상품 일련번호 */
+			C.GOODS_CD, 			/* 상품 코드 */
+			C.GOODS_NM,			/* 상품명 */
+			C.PRICE,					/* 원가 */
+			C.DISCOUNT_RATE,	/* 할인율 */
+			C.DISCOUNT_PRICE,	/* 할인가 */
+			C.MAIN_FILE,				/* 상품 이미지 */
+			C.MAIN_REAL_FILE	/* 상품 실제 이미지 */
+        FROM TS_MAIN A INNER JOIN TA_STYLE_TIP B ON A.GUBUN_IDX = B.TIP_IDX AND B.DISP_YN = 'Y'
+        						   LEFT OUTER JOIN VW_GOODS C ON B.GOODS_IDX = C.GOODS_IDX
+        WHERE A.MAIN_GUBUN = #{MAINGUBUN}
+        AND A.GUBUN = #{GUBUN}
+        
+        ORDER BY A.ORDER_IDX, A.REG_DT DESC
+	</select>
+	
+	<!-- 메인 이벤트 리스트 -->
+	<select id="getMainEventList" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getMainEventList **/
+		SELECT 
+			AA.GUBUN,
+			AA.EVENT_IDX,
+			AA.TITLE,
+			AA.DEVICE,
+			AA.EVENT_IMG,
+			AA.M_EVENT_IMG,
+			AA.LINK_YN,
+			AA.LINK_URL,
+			AA.LINK_WINDOW,
+			AA.STATUS,
+			AA.START_DT,
+			AA.END_DT
+		FROM 
+			(
+				SELECT 
+					A.GUBUN,
+					A.ORDER_IDX,
+					A.REG_DT,
+					B.EVENT_IDX AS EVENT_IDX,
+					B.TITLE,
+					B.P_EVENT_IMG AS EVENT_IMG,
+					B.M_EVENT_IMG AS M_EVENT_IMG,
+					B.DEVICE,
+					B.LINK_YN,
+					B.LINK_URL,
+					B.LINK_WINDOW,
+					CASE
+						WHEN ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'I'
+						WHEN ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[>]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'P'
+						WHEN ( DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[<]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'E'
+					END AS STATUS,					/* 상태 */
+					DATE_FORMAT(B.START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				   	DATE_FORMAT(B.END_DT,'%m.%d') AS END_DT				/* 종료일 */
+				FROM TS_MAIN A INNER JOIN TE_EVENT B ON A.GUBUN_IDX = B.EVENT_IDX
+				WHERE A.GUBUN = 'event'
+				AND A.MAIN_GUBUN = #{MAINGUBUN}
+				AND B.DISP_YN = 'Y'
+				AND ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+				AND (B.DEVICE = 'A' OR B.DEVICE = #{DEVICE})
+				
+				UNION ALL
+				
+				SELECT 
+					A.GUBUN,
+					A.ORDER_IDX,
+					A.REG_DT,
+					B.EXHIBITION_IDX AS EVENT_IDX,
+					B.TITLE,
+					B.P_EXHIBITION_IMG AS EVENT_IMG,
+					B.M_EXHIBITION_IMG AS M_EVENT_IMG,
+					B.DEVICE,
+					NULL AS LINK_YN,
+					NULL AS LINK_URL,
+					NULL AS LINK_WINDOW,
+					CASE
+						WHEN ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'I'
+						WHEN ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[>]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'P'
+						WHEN ( DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[<]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'E'
+					END AS STATUS,					/* 상태 */
+					DATE_FORMAT(B.START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				  	DATE_FORMAT(B.END_DT,'%m.%d') AS END_DT				/* 종료일 */
+				FROM TS_MAIN A INNER JOIN TE_EXHIBITION B ON A.GUBUN_IDX = B.EXHIBITION_IDX
+				WHERE A.GUBUN = 'exhibition'
+				AND A.MAIN_GUBUN = #{MAINGUBUN}
+				AND B.DISP_YN = 'Y'
+				AND ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+				AND (B.DEVICE = 'A' OR B.DEVICE = #{DEVICE})
+				
+				UNION ALL
+				
+				SELECT 
+					A.GUBUN,
+					A.ORDER_IDX,
+					A.REG_DT,
+					B.SAMPLE_IDX AS EVENT_IDX,
+					B.SAMPLE_TITLE AS TITLE,
+					B.ING_BANNER AS EVENT_IMG,
+					B.END_BANNER AS M_EVENT_IMG,
+					'A' AS DEVICE,
+					NULL AS LINK_YN,
+					NULL AS LINK_URL,
+					NULL AS LINK_WINDOW,
+					CASE
+						WHEN ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'I'
+						WHEN ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[>]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'P'
+						WHEN ( DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[<]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'E'
+					END AS STATUS,					/* 상태 */
+					DATE_FORMAT(B.START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				  	DATE_FORMAT(B.END_DT,'%m.%d') AS END_DT				/* 종료일 */
+				FROM TS_MAIN A INNER JOIN TA_SAMPLE B ON A.GUBUN_IDX = B.SAMPLE_IDX
+				WHERE A.GUBUN = 'sample'
+				AND A.MAIN_GUBUN = #{MAINGUBUN}
+				AND B.DISP_YN = 'Y'
+				AND ( DATE_FORMAT(B.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(B.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+			) AA
+			
+		ORDER BY AA.ORDER_IDX, AA.REG_DT DESC
+		
+		LIMIT 2
+	</select>
+	
+	<!-- 휴대폰 임시비밀번호 발송 -->
+	<select id="callSpSmsSend" parameterType="hashmap" statementType="CALLABLE">
+		{ CALL SP_SMS_SEND(#{MEMBERCODE, mode=IN,jdbcType=VARCHAR}, #{MEMBERIDX, mode=IN, jdbcType=INTEGER},0,#{PWD, mode=IN,jdbcType=VARCHAR},'','') }
+	</select>
+	
+	<!-- 팝업 1개만 가져오기  -->
+	<select id="getFloatPopup" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getFloatPopup **/
+		SELECT A.*
+		FROM TS_POPUP A
+		WHERE A.USE_YN = 'Y'
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')  <![CDATA[>=]]> A.POP_START_DATE 
+		AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')  <![CDATA[<=]]> A.POP_END_DATE
+		AND A.POP_GUBUN = #{POPGUBUN}
+		ORDER BY A.POPUP_IDX DESC, A.REG_DT DESC
+		LIMIT 1
+	</select>
+	
+	<!-- 휴면 삭제 -->
+	<delete id="dormancyDelete" parameterType="hashmap">
+		DELETE FROM TM_MEMBER_DORMANCY  
+		WHERE MEMBER_DORMANCY_IDX = #{MEMBERIDX}   
+	</delete>
+	
+	
+	<!-- 파일다운로드시 파일정보 가지고 오기  -->
+	<select id="getFileInfo" parameterType="hashmap" resultType="sqlMap">
+		/** commonDAO.getFileInfo **/
+		SELECT
+			 TABLE_IDX					/* 공지사항 일련번호 */
+		     ,CSCENTER_FILE_IDX 		/* 일련번호 */
+		     ,CSCENTER_FILE				/* 파일명 */
+			 ,REAL_CSCENTER_FILE		/* 실제 파일 명 */
+		FROM 
+			TA_CSCENTER_FILE 
+		WHERE 
+			TABLE_IDX = #{TABLEIDX}
+		AND 
+			CSCENTER_FILE_IDX = #{CSCENTERFILEIDX}
+	</select>
+   
+</mapper>

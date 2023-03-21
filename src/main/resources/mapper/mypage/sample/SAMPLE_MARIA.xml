@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sampleDAO">
+
+	<!-- 샘플 리스트 총 개수 -->
+	<select id="getSampleListCnt" parameterType="hashmap" resultType="int">
+		/** sampleDAO.getSampleListCnt **/
+		SELECT COUNT(*)
+		FROM TA_SAMPLE
+	</select>
+
+	<!-- 샘플 리스트 -->
+	<select id="getSampleList" parameterType="hashmap" resultType="sqlMap">
+		/** sampleDAO.getSampleList **/
+		SELECT	A.SAMPLE_IDX, 		/* 샘플 일련번호 */
+					A.GOODS_IDX, 		/* 상품 일련번호 */
+					A.SAMPLE_TITLE,	/* 정품신청 명 */
+					DATE_FORMAT(A.START_DT, '%Y.%m') AS SAMPLE_DT, /* 해당월 */
+					B.GOODS_CD,			/* 상품 코드 */
+					B.GOODS_NM,			/* 상품 명 */
+					GF.IMG_FILE AS MAIN_FILE,		/* 상품 이미지 */
+					E.GOODS_IDX AS W_GOODS_IDX,
+                    (SELECT P1.GOODS_NM FROM TP_GOODS P1 WHERE E.GOODS_IDX = P1.GOODS_IDX) AS W_GOODS_NM,
+                    (SELECT P2.IMG_FILE FROM TP_GOODS_FILE P2 WHERE E.GOODS_IDX = P2.GOODS_IDX AND P2.MAIN_FLAG='Y') AS W_MAIN_FILE,
+					CASE
+		    			WHEN ( DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'ING'
+		     			WHEN ( DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[<]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) THEN 'END'
+		     		END AS STATUS,		/* 샘플 진행 여부 */
+					CASE
+						WHEN C.GUBUN_IDX IS NOT NULL THEN 'Y'
+						WHEN C.GUBUN_IDX IS NULL THEN 'N'
+					END AS WINNER_YN,	/* 당첨자 발표 여부 */
+					E.WINNER_IDX,		/* 당첨 일련번호 */
+					C.NOTICE_IDX,		/* 공지사항 일련번호 */
+					VG.BRAND_IDX,
+		            VG.SOLDOUT_YN,
+		            VG.BEST_YN,
+		            VG.NEW_YN,
+		            VG.OPO_YN,
+		            VG.TPO_YN,
+		            VG.POINTICON_YN,
+		            VG.SALEICON_YN,
+					(SELECT WINNER_IDX FROM TP_REVIEW RE WHERE E.WINNER_IDX = RE.WINNER_IDX AND RE.MEMBER_IDX = #{REGIDX}) AS REVIEW_WINNER_IDX
+		FROM TA_SAMPLE A LEFT OUTER JOIN TP_GOODS B ON A.GOODS_IDX = B.GOODS_IDX
+									LEFT OUTER JOIN TP_GOODS_FILE GF ON A.GOODS_IDX = GF.GOODS_IDX AND GF.MAIN_FLAG = 'Y'
+									LEFT OUTER JOIN TA_NOTICE C ON A.SAMPLE_IDX = C.GUBUN_IDX AND C.WINNER_GUBUN = 'STYLE'
+									LEFT OUTER JOIN TA_SAMPLE_REPLY D ON A.SAMPLE_IDX = D.SAMPLE_IDX AND D.REG_IDX = #{REGIDX}
+									LEFT OUTER JOIN TA_SAMPLE_WINNER E ON A.SAMPLE_IDX = E.SAMPLE_IDX AND E.MEMBER_IDX = #{REGIDX}
+									INNER JOIN VW_GOODS VG ON A.GOODS_IDX = VG.GOODS_IDX
+		WHERE ( DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+		OR ( DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[<]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND D.REG_IDX = #{REGIDX} )
+		ORDER BY DATE_FORMAT(A.REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 샘플 댓글 리스트 -->
+	<select id="getSampleReplyList" parameterType="hashmap" resultType="sqlMap">
+		/** sampleDAO.getSampleReplyList **/
+		SELECT	A.SAMPLE_IDX,	/* 샘플 일련번호 */
+					A.REG_IDX			/* 등록자 일련번호 */
+		FROM TA_SAMPLE_REPLY A
+		WHERE A.REG_IDX = #{REGIDX}
+	</select>
+	
+</mapper>

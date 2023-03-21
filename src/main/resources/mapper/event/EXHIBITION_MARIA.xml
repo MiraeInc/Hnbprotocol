@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="exhibitionDAO">
+	
+	<!-- 기획전 배너 리스트 -->
+	<select id="getExhibitionBannerList"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** exhibitionDAO.getExhibitionBannerList **/
+		SELECT BANNER_IDX,		/* 일련번호 */
+				   DEVICE_GUBUN,		/* 디바이스 */
+				   BANNER_NM,			/* 배너 명 */
+				   BANNER_POS,		/* 배너 타입 */
+				   BANNER_IMG,			/* 배너 이미지 */
+				   LINK_YN,				/* 링크 여부 */
+				   LINK_FLAG,			/* 링크 창 */
+				   LINK_URL,				/* 링크 URL */
+				   MO_BANNER_IMG,				/* MO 배너 이미지 */
+				   MO_BANNER_REAL_IMG,		/* MO 배너 실제 이미지 */
+				   MO_LINK_YN,						/* MO 링크 여부 */
+				   MO_LINK_URL,					/* MO 링크 URL */
+				   MO_LINK_FLAG					/* MO 링크 창 */
+		FROM TS_BANNER 
+		WHERE BANNER_POS = 'BANNER_EXHIBITION' 
+		AND USE_YN = 'Y'
+		AND ( DATE_FORMAT(BANNER_START_DATE,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(BANNER_END_DATE,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') ) 
+		ORDER BY ORD_SEQ
+	</select>
+	
+	<!-- 기획전 리스트 -->
+	<select id="getExhibitionList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** exhibitionDAO.getExhibitionList **/
+		SELECT A.EXHIBITION_IDX,					/* 일련번호 */
+				   A.TITLE,									/* 제목 */
+				   A.EXHIBITION_INFO, 					/* 부가 설명 */
+				   A.DISCOUNT_RATE,					/* 할인율 */
+				   DATE_FORMAT(A.START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				   DATE_FORMAT(A.END_DT,'%m.%d') AS END_DT,				/* 종료일 */
+				   A.P_EXHIBITION_IMG,				/* PC 이미지 */
+				   A.P_EXHIBITION_REAL_IMG,		/* PC 실제 이미지 */
+				   A.M_EXHIBITION_IMG,				/* MOBILE 이미지 */
+				   A.M_EXHIBITION_REAL_IMG,		/* MOBILE 실제 이미지 */
+				   A.DEVICE,									/* 디바이스 [A:전체, P:PC, M:MOBILE] */
+				   A.SEARCH_KEYWORD,				/* 검색 키워드 */
+				   A.READ_CNT								/* 조회 수 */
+		FROM TE_EXHIBITION A  
+		<if test="BRANDIDX != null and BRANDIDX != '' and BRANDIDX != '0' ">
+			INNER JOIN TS_BRAND_MAPPING B ON A.EXHIBITION_IDX = B.GUBUN_IDX AND B.GUBUN = 'exhibit' 			
+		</if>
+		WHERE A.DISP_YN = 'Y' 
+		AND A.USE_YN = 'Y'
+		AND ( DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i')  AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i')  )
+		<if test="BRANDIDX != null and BRANDIDX != '' and BRANDIDX != '0' ">
+			AND B.BRAND_IDX = #{BRANDIDX}
+		</if>
+		<choose>
+			<when test="DEVICE eq 'w'.toString()">
+				AND A.DEVICE != 'M'
+			</when>
+			<when test="DEVICE eq 'm'.toString()">
+				AND A.DEVICE != 'P'
+			</when>
+		</choose>
+		
+		ORDER BY A.REG_DT DESC
+	</select>
+	
+	<!-- 기획전 상세 -->
+	<select id="getExhibitionDetail" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** exhibitionDAO.getExhibitionDetail **/
+		SELECT EXHIBITION_IDX,			/* 기획전 일련번호 */
+				   EXHIBITION_TYPE,		/* 기획전 타입 [default:기본, opo:1+1, tpo: 2+1, sale:할인, point:포인트] */
+				   DISPLAY_TYPE,			/* 상품전시타입 [A:그룹 없음, B:그룹 있음] */
+				   TITLE,							/* 제목 */
+				   P_EXHIBITION_IMG,		/* PC 리스트 이미지 */
+				   M_EXHIBITION_IMG,		/* MOBILE 리스트 이미지 */
+				   P_EXHIBITION_DESC,	/* PC 내용 */
+				   M_EXHIBITION_DESC,	/* MOBILE 내용 */
+				   DATE_FORMAT(START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				   DATE_FORMAT(END_DT,'%m.%d') AS END_DT,		/* 종료일 */
+				   DISCOUNT_RATE,			/* 할인율 */
+				   EXHIBITION_INFO,		/* 부가설명 */
+				   READ_CNT					/* 조회수 */
+		FROM TE_EXHIBITION
+		WHERE EXHIBITION_IDX = #{EXHIBITIONIDX}
+		AND DISP_YN = 'Y' 
+		AND USE_YN = 'Y'
+		AND ( DATE_FORMAT(START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i') AND DATE_FORMAT(END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i') )
+	</select>
+	
+	<!-- 기획전 조회 수 증가 -->
+	<update id="addExhibitionReadCnt" parameterType="java.util.HashMap">
+		/** exhibitionDAO.addExhibitionReadCnt **/
+		UPDATE TE_EXHIBITION
+		SET READ_CNT = READ_CNT+1
+		WHERE EXHIBITION_IDX = #{EXHIBITIONIDX}
+	</update>
+	
+	<!-- 기획전 해시태그 리스트 -->
+	<select id="getHashtagList"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** exhibitionDAO.getHashtagList **/
+		SELECT A.EXHIBITION_HASHTAG_IDX,	/* 기획전 해시태그 일련번호 */
+				   A.HASHTAG_IDX, 						/* 해시태그 일련번호 */
+				   A.EXHIBITION_IDX, 					/* 기획전 일련번호 */
+				   B.HASHTAG_NM 						/* 해시태그 명 */
+  		  FROM TE_EXHIBITION_HASHTAG A LEFT OUTER JOIN TP_HASHTAG B ON A.HASHTAG_IDX = B.HASHTAG_IDX
+ 		WHERE A.EXHIBITION_IDX = #{EXHIBITIONIDX} 
+	</select>
+	
+	<!-- 베스트 기획전 리스트 [PC] -->
+	<select id="getBestList"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** exhibitionDAO.getBestList **/
+		SELECT EXHIBITION_IDX,		/* 기획전 일련번호 */
+				   DEVICE,					/* 디바이스 */
+				   P_EXHIBITION_IMG,	/* 기획전 이미지 */
+				   TITLE						/* 제목 */
+			FROM TE_EXHIBITION 
+ 		WHERE EXHIBITION_IDX != #{EXHIBITIONIDX} 
+ 		AND DISP_YN = 'Y'
+ 		AND USE_YN = 'Y'
+ 		AND DEVICE != 'M'
+		AND ( DATE_FORMAT(START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i') AND DATE_FORMAT(END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i') )
+ 		ORDER BY READ_CNT DESC
+ 		LIMIT 2
+	</select>
+	
+	<!-- 기획전 상품 리스트 -->
+	<select id="getExhibitionGoodsList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** exhibitionDAO.getExhibitionGoodsList **/
+		SELECT M.EXHIBITION_GOODS_IDX, 	/* 프로모션 상품 일련번호 */
+				   M.EXHIBITION_IDX, 				/* 기획전 일련번호 */
+				   M.GOODS_IDX AS EXH_GOODS_IDX,					/* 상품 일련번호 */
+				   M.GROUP_IDX,						/* 그룹 일련번호 */ 
+				   E.EXHIBITION_TYPE,				/* 기획전 타입 */
+				   V.PRICE,						/* 판매가 */
+				   V.DISCOUNT_RATE,		/* 할인율 */
+				   V.DISCOUNT_PRICE,		/* 할인가 */
+				   V.POINT_FLAG,			/* 포인트 여부 */
+				   V.POINT_RATE,			/* 포인트율 */
+				   V.BRAND_IDX, 
+				   V.BRAND_NM, 
+				   V.CHOICE_CATE_IDX, 
+				   V.GOODS_IDX,
+				   V.GOODS_CD , 
+                   V.GOODS_NM,  
+			       V.MAIN_FILE , 
+                   V.MAIN_REAL_FILE,  
+                   V.SOLDOUT_YN,
+                   V.STOCK_FLAG, 
+                   V.STOCK_CNT,
+                   V.SHORT_INFO,
+                   V.GOODS_TITLE,
+                   V.OPO_YN,
+                   V.TPO_YN,
+                   V.POINTICON_YN,
+                   V.SALEICON_YN,
+                   V.BEST_YN,
+                   V.ONLINE_YN,
+                   V.NEW_YN,
+                   V.AUTO_COUPON_YN,
+                   V.SALE_STATUS,			/* 판매상태 */
+                   V.DISPLAY_FLAG,
+			       V.USE_YN					/* 노출여부 */
+		FROM TE_EXHIBITION_GOODS M INNER JOIN VW_GOODS V ON V.GOODS_IDX = M.GOODS_IDX
+             										  LEFT OUTER JOIN TE_EXHIBITION  E ON E.EXHIBITION_IDX = M.EXHIBITION_IDX
+		WHERE M.EXHIBITION_IDX = #{EXHIBITIONIDX}			
+		ORDER BY M.ORDER_IDX IS NOT NULL DESC, M.ORDER_IDX ASC, V.GOODS_IDX DESC
+	</select>
+	
+	<!-- 기획전 그룹 리스트 -->
+	<select id="getExhibitionGroupList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** exhibitionDAO.getExhibitionGroupList **/
+		SELECT 
+			A.GROUP_IDX,				/* 그룹 일련번호 */
+			A.EXHIBITION_IDX,			/* 기획전 일련번호 */
+			A.GROUP_TITLE,				/* 그룹 명 */
+			A.GROUP_ORDER_IDX,		/* 그룹 노출순서 */
+			COUNT(B.GROUP_IDX) AS GROUP_CNT	/* 그룹 별 상품 개수 */
+		FROM TE_EXHIBITION_GOODS_GROUP A LEFT OUTER JOIN TE_EXHIBITION_GOODS B ON A.GROUP_IDX = B.GROUP_IDX
+		WHERE A.EXHIBITION_IDX = #{EXHIBITIONIDX}
+		GROUP BY A.GROUP_IDX
+		ORDER BY A.GROUP_ORDER_IDX
+	</select>
+	
+</mapper>

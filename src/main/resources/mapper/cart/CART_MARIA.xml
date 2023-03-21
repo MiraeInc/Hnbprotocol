@@ -1,0 +1,676 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cartDAO">
+
+	<!-- 회원 포인트 정보 -->
+	<select id="getMemberPoint" parameterType="hashmap" resultType="sqlMap">
+		/** cartDAO.getMemberPoint **/
+		SELECT 
+			M.MEMBER_IDX,
+			M.MEMBER_ID,
+			MI.POINT_PRICE
+		FROM TM_MEMBER M
+		JOIN TM_MEMBER_INFO MI ON M.MEMBER_IDX = MI.MEMBER_INFO_IDX
+		WHERE M.MEMBER_TYPE = 'M'
+			AND M.MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+	<!-- 회원 쿠폰 갯수 -->
+	<select id="getMemberCouponCnt" parameterType="hashmap" resultType="int">
+		/** cartDAO.getMemberCouponCnt **/
+		select COUNT(*) from (
+				SELECT 
+					       A.COUPON_IDX
+					  FROM TO_COUPON_MEMBER A
+					  WHERE A.USE_YN = 'N' AND A.ORDER_IDX IS NULL AND A.ORDER_DETAIL_IDX IS NULL
+					  AND A.METHOD IN ('D','S')
+					  AND (A.USE_DATE_LIMIT_YN = 'N' OR ( A.USE_DATE_LIMIT_YN IN ('Y', 'P') AND  DATE(A.REAL_USE_START_DT) <![CDATA[<=]]> CURDATE() AND DATE(A.REAL_USE_END_DT) <![CDATA[>=]]> CURDATE() ))
+					 AND A.MEMBER_IDX = #{MEMBERIDX} 
+			UNION ALL
+			SELECT   A.COUPON_IDX  
+					FROM TO_COUPON A
+					WHERE A.USE_YN = 'Y'   
+			        AND A.METHOD = 'A'       	 
+						AND (CURDATE() <![CDATA[>=]]> DATE(DOWN_START_DT) OR DOWN_START_DT IS NULL)	/* 다운로드 시작일 */
+						AND (CURDATE() <![CDATA[<=]]> DATE(DOWN_END_DT) OR DOWN_END_DT IS NULL) 		/* 다운로드 종료일 */
+						AND (A.USE_DATE_LIMIT_YN IN ('N','P') OR (USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(USE_START_DT) OR USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(USE_END_DT) OR USE_END_DT IS NULL)))	/* 사용기한 제한여부 */
+						AND (A.TARGET_MEMBER = 'A' 
+									OR (A.TARGET_MEMBER = 'G' AND A.TARGET_GRADE = (select LEVEL_IDX from tm_member_detail d where d.MEMBER_DETAIL_IDX = #{MEMBERIDX}  ) ) 
+									OR (A.TARGET_MEMBER = 'M' AND 
+											EXISTS ( 
+														SELECT COUPON_IDX 
+														FROM TO_COUPON_TARGET_MEMBER
+														WHERE COUPON_IDX = A.COUPON_IDX
+														AND MEMBER_IDX = #{MEMBERIDX} 
+														)
+										)
+							  )
+						AND (A.ISSUE_CNT_LIMIT_YN = 'N' OR (A.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(A.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(A.MAX_ISSUE_CNT,0) <![CDATA[>]]> 0 AND IFNULL(A.MAX_ISSUE_CNT,0) <![CDATA[>]]> (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = A.COUPON_IDX)))))	/* 최대 발급수량 조건 */
+			) AA
+					  
+	</select>
+	
+	<!-- 장바구니에 담긴 해당 상품 갯수 -->
+	<select id="getGoodsCartCnt" parameterType="hashmap" resultType="int">
+		/** cartDAO.getGoodsCartCnt **/
+		SELECT COUNT(*) AS CNT
+		FROM TO_CART
+		WHERE GOODS_IDX = #{GOODSIDX}
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				AND MEMBER_IDX = #{MEMBERIDX}
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				AND SESSION_ID = #{SESSIONID}
+				AND MEMBER_IDX IS NULL
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 장바구니에 상품 추가 -->
+	<insert id="insertCart" parameterType="hashmap">
+		/** cartDAO.insertCart **/
+		INSERT INTO TO_CART
+		(
+			MEMBER_IDX,
+			SESSION_ID,
+			GOODS_IDX,
+			GOODS_CNT,
+			COUPON_IDX,
+			DEVICE,
+			CATE_IDX,
+			PARTNER_IDX,
+			REG_IDX,
+			REG_HTTP_USER_AGENT,
+			REG_IP,
+			REG_DT
+		)
+		VALUES
+		(
+			#{MEMBERIDX},
+			#{SESSIONID},
+			#{GOODSIDX},
+			#{GOODSCNT},
+			#{COUPONIDX},
+			#{DEVICE},
+			#{CATEIDX},
+			#{PARTNERIDX},
+			#{REGIDX},
+			#{REGHTTPUSERAGENT},
+			#{REGIP},
+			NOW()
+		)
+	</insert>
+
+	<!-- 장바구니 리스트 -->
+	<select id="getCartList" parameterType="hashmap" resultType="sqlMap">
+		/** cartDAO.getCartList **/
+		/* 일반상품 */
+		SELECT
+			C.CART_IDX, 							/* 장바구니 일련번호 */
+			C.MEMBER_IDX, 						/* 회원 일련번호 ( TM_MEMBER 일련번호 ) */
+			C.SESSION_ID, 						/* 세션ID ( 비회원일때만 사용됨 ) */
+			G.SET_FLAG, 							/* 세트상품 구분 ( Y : 세트 상품 N : 일반상품 ) */
+			NULL AS SET_GOODS_IDX,		/* 세트 구성 상품 일련번호 */
+			C.GOODS_IDX,						/* 상품 일련번호 ( TP_GOODS 일련번호 ) */
+			C.GOODS_CNT,						/* 상품 개수 */
+			C.COUPON_IDX, 						/* 자동 적용 쿠폰 일련번호 ( 회원일때만 사용 ) */
+			C.DEVICE, 								/* 디바이스 ( P : PC, M : MOBILE, A : APP ) */
+			C.CATE_IDX, 							/* 카테고리 일련번호 ( TP_CATEGORY 일련번호 ) */
+			C.PARTNER_IDX, 					/* 파트너 데이타 일련번호 ( TO_PARTNER_DATA 일련번호 ) */
+			G.GOODS_CD, 						/* 상품코드 ( FRONT표기되는 상품코드 ) */
+			G.GOODS_NM, 						/* 상품명 ( 상품명 ) */
+			G.BRAND_IDX,						/* 브랜드 일련번호 */
+			G.BRAND_NM,							/* 브랜드명 */
+			G.DISPLAY_DATE, 					/* 상품노출일자 ( 상품 FRONT 전시되는 일자 YYYYMMDD 형태 ) */
+			G.SALE_FLAG, 						/* 판매기간 옵션구분 ( Y: 시작일/종료일  N: 기간없음 ) */
+			G.SALE_START_DATE, 				/* 판매시작일자 ( YYYYMMDD 형태 ) */
+			G.SALE_END_DATE, 					/* 판매종료일자 ( YYYYMMDD 형태 ) */
+			G.SALE_STATUS, 						/* 판매상태 ( P:판매전, Y:판매중, R:일시품절, S:판매중단 ) */
+			G.STOCK_FLAG, 						/* 재고 설정구분 ( Y: 재고수량에 따름  N: 무제한 ) */
+			G.STOCK_CNT, 						/* 재고 수량 ( 재고 설정이 무제한인 경우 수량 0 ) */
+			G.SAFE_STOCK_RATE, 				/* 안전재고율 ( 실재고는 재고수량%안전재고율  안전재고율 0%는 안전재고 미적용 ) */
+			G.BUY_LIMIT_FLAG, 				/* 구매제한 설정구분 ( Y: 수량별 구매제한 N: 제한 없음 ) */
+			G.BUY_MAX_CNT, 					/* 최대 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			G.BUY_MIN_CNT, 					/* 최소 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			G.PRICE, 								/* 판매가 */
+			G.DISCOUNT_RATE, 				/* 할인율 */
+			G.DISCOUNT_PRICE, 				/* 할인가 */
+			G.POINT_FLAG, 						/* 포인트 적립 설정구분 ( Y: 적립 사용 N: 미적립 D: 기본포인트적립 ) */
+			G.POINT_RATE, 						/* 포인트 적립율 */
+			G.SALE_GUBUN, 						/* 매출구분(통계용) */
+			G.GOODS_BADGE, 					/* 상품유형 ( TC_COMMON_CD 테이블  GOODS_BADGE에 해당 되는 코드명 콤마 단위 구분(NEW,BEST등) ) */
+			G.SOLDOUT_YN,
+			G.BEST_YN,
+			G.NEW_YN,
+			G.ONLINE_YN,
+			G.OPO_YN,
+			G.TPO_YN,
+			G.POINTICON_YN,
+			G.SALEICON_YN,
+			G.AUTO_COUPON_YN,
+	<choose>
+		<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+			CASE WHEN W.WISH_IDX IS NULL THEN 'N' ELSE 'Y' END AS IS_WISHED,	/* 찜하기 여부 */
+            CP.COUPON_NM,						/* 자동 적용 쿠폰명 */
+			CP.DISCOUNT_TYPE,				/* 할인종류 (R : 정률할인, A : 정액할인) */
+			CP.DISCOUNT,						/* 할인액(률) (DISCOUNT_RATE(할인종류)가 R(정률)이면 할인률, A(정액)이면 할인액) */
+			CP.MAX_DISCOUNT,					/* 최대할인금액 (DISCOUNT_RATE(할인종류)가 R(정률)일때만 사용됨) */
+			CP.ORDER_AMT_LIMIT_YN,		/* 적용주문금액 제한여부 (Y : 제한적용, N : 제한없음) */
+			CP.MIN_ORDER_AMT,				/* 최소주문금액 (ORDER_AMT_LIMIT(적용주문금액)가 Y(제한적용)일때만 사용됨) */
+			CP.COUPON_DISCOUNT_PRICE,	/* 자동 적용 쿠폰 할인액(단가 - 상품 1개일때 할인액) */
+		</when>
+		<otherwise>																<!-- 비회원 -->
+			'N' AS IS_WISHED,					/* 찜하기 여부 */
+            NULL AS COUPON_NM,				/* 자동 적용 쿠폰명 */
+            0 AS COUPON_DISCOUNT_PRICE,		/* 자동 적용 쿠폰 할인액 */  
+		</otherwise>
+	</choose>
+			G.MAIN_FILE,		/* 이미지 파일 */
+			NULL AS SET_DISCOUNT_RATE,	/* 적용할인율(통계용) */
+			NULL AS SET_PRICE,				/* 적용가(통계용) */
+			NULL AS SET_SALE_GUBUN		/* 매출구분(통계용) */
+		FROM TO_CART C
+		JOIN VW_GOODS G ON C.GOODS_IDX = G.GOODS_IDX
+	<choose>
+		<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+			LEFT OUTER JOIN TO_WISH W ON W.MEMBER_IDX = #{MEMBERIDX} AND C.GOODS_IDX = W.GOODS_IDX	/* 찜하기 */
+	        LEFT OUTER JOIN (
+                SELECT CC.CART_IDX
+	                , SUBSTRING_INDEX ( GROUP_CONCAT(
+	/*                						CASE WHEN CP.DISCOUNT_TYPE = 'R' THEN VG.DISCOUNT_PRICE * CP.DISCOUNT ELSE CP.DISCOUNT END */
+	/* 합계
+	                                        CASE WHEN CP.ORDER_AMT_LIMIT_YN = 'N' OR (CP.ORDER_AMT_LIMIT_YN = 'Y' AND CP.MIN_ORDER_AMT <![CDATA[<=]]> (CC.GOODS_CNT * VG.DISCOUNT_PRICE)) THEN
+	                                                    CASE CP.DISCOUNT_TYPE WHEN 'R' THEN CASE WHEN CP.MAX_DISCOUNT IS NULL THEN (CC.GOODS_CNT * VG.DISCOUNT_PRICE) * CP.DISCOUNT / 100 ELSE CASE WHEN CP.MAX_DISCOUNT <![CDATA[<]]> (CC.GOODS_CNT * VG.DISCOUNT_PRICE) * CP.DISCOUNT / 100 THEN CP.MAX_DISCOUNT ELSE (CC.GOODS_CNT * VG.DISCOUNT_PRICE) * CP.DISCOUNT / 100 END END
+	                                                                          WHEN 'A' THEN CP.DISCOUNT
+	                                                    END
+	                                            ELSE 0
+	                                        END
+	*/
+											CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		/* 자동 적용 쿠폰 할인액(단가 - 상품 1개일때 할인액) */
+	                					ORDER BY
+	/*                                    	CASE WHEN CP.DISCOUNT_TYPE = 'R' THEN VG.DISCOUNT_PRICE * CP.DISCOUNT ELSE CP.DISCOUNT END */
+	/* 합계
+	                                        CASE WHEN CP.ORDER_AMT_LIMIT_YN = 'N' OR (CP.ORDER_AMT_LIMIT_YN = 'Y' AND CP.MIN_ORDER_AMT <![CDATA[<=]]> (CC.GOODS_CNT * VG.DISCOUNT_PRICE)) THEN
+	                                                    CASE CP.DISCOUNT_TYPE WHEN 'R' THEN CASE WHEN CP.MAX_DISCOUNT IS NULL THEN (CC.GOODS_CNT * VG.DISCOUNT_PRICE) * CP.DISCOUNT / 100 ELSE CASE WHEN CP.MAX_DISCOUNT <![CDATA[<]]> (CC.GOODS_CNT * VG.DISCOUNT_PRICE) * CP.DISCOUNT / 100 THEN CP.MAX_DISCOUNT ELSE (CC.GOODS_CNT * VG.DISCOUNT_PRICE) * CP.DISCOUNT / 100 END END
+	                                                                          WHEN 'A' THEN CP.DISCOUNT
+	                                                    END
+	                                            ELSE 0
+	                                        END
+	*/
+											CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		/* 자동 적용 쿠폰 할인액(단가 - 상품 1개일때 할인액) */
+	                                    DESC), ',', 1) AS COUPON_DISCOUNT_PRICE
+	                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.COUPON_NM
+	                					ORDER BY
+											CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		/* 자동 적용 쿠폰 할인액(단가 - 상품 1개일때 할인액) */
+	                					DESC SEPARATOR '^'), '^', 1) AS COUPON_NM
+	                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.DISCOUNT_TYPE
+	                					ORDER BY
+											CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		/* 자동 적용 쿠폰 할인액(단가 - 상품 1개일때 할인액) */
+	                					DESC), ',', 1) AS DISCOUNT_TYPE
+	                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.DISCOUNT
+	                					ORDER BY
+											CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		/* 자동 적용 쿠폰 할인액(단가 - 상품 1개일때 할인액) */
+	                					DESC), ',', 1) AS DISCOUNT
+	                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.MAX_DISCOUNT
+	                					ORDER BY
+											CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		/* 자동 적용 쿠폰 할인액(단가 - 상품 1개일때 할인액) */
+	                					DESC), ',', 1) AS MAX_DISCOUNT
+	                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.ORDER_AMT_LIMIT_YN
+	                					ORDER BY
+											CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		/* 자동 적용 쿠폰 할인액(단가 - 상품 1개일때 할인액) */
+	                					DESC), ',', 1) AS ORDER_AMT_LIMIT_YN
+	                , SUBSTRING_INDEX ( GROUP_CONCAT(CP.MIN_ORDER_AMT
+	                					ORDER BY
+											CASE CP.DISCOUNT_TYPE WHEN 'R' THEN FLOOR(VG.DISCOUNT_PRICE * CP.DISCOUNT / 100) ELSE CP.DISCOUNT END 		/* 자동 적용 쿠폰 할인액(단가 - 상품 1개일때 할인액) */
+	                					DESC), ',', 1) AS MIN_ORDER_AMT
+                FROM   TO_CART CC
+                	, VW_GOODS VG
+                    , TO_COUPON CP
+                WHERE  CC.MEMBER_IDX = #{MEMBERIDX}
+                AND CC.GOODS_IDX = VG.GOODS_IDX
+	        		AND CP.GUBUN = 'G'		/* 상품 쿠폰 중에 */ 
+	            	AND CP.METHOD = 'A'	/* 자동 발급 쿠폰 */
+	            	AND CP.USE_YN = 'Y'
+				<if test="DEVICE != null and DEVICE != '' ">
+					AND (CP.DEVICE = 'A' OR CP.DEVICE = #{DEVICE})
+				</if>
+					AND (CURDATE() <![CDATA[>=]]> DATE(CP.DOWN_START_DT) OR CP.DOWN_START_DT IS NULL)	/* 다운로드 시작일 */
+					AND (CURDATE() <![CDATA[<=]]> DATE(CP.DOWN_END_DT) OR CP.DOWN_END_DT IS NULL) 		/* 다운로드 종료일 */
+					AND (CP.USE_DATE_LIMIT_YN IN ('N','P') OR (CP.USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(CP.USE_START_DT) OR CP.USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(CP.USE_END_DT) OR CP.USE_END_DT IS NULL)))	/* 사용기한 제한여부 */
+					AND (CP.TARGET_MEMBER = 'A' 
+								OR (CP.TARGET_MEMBER = 'G' AND CP.TARGET_GRADE = #{MEMBERGRADE}) 
+								OR (CP.TARGET_MEMBER = 'M' AND 
+										EXISTS ( /* 대상 회원에 포함되어 있는지 */
+													SELECT COUPON_IDX 
+													FROM TO_COUPON_TARGET_MEMBER
+													WHERE COUPON_IDX = CP.COUPON_IDX
+													AND MEMBER_IDX = #{MEMBERIDX}
+													)
+									)
+						  )
+					AND (CP.TARGET_GOODS = 'A' 
+								OR (CP.TARGET_GOODS = 'G' AND 
+										EXISTS ( /* 대상 상품에 포함되어 있는지 */
+													SELECT COUPON_IDX 
+													FROM TO_COUPON_TARGET_GOODS
+													WHERE COUPON_IDX = CP.COUPON_IDX
+													AND GOODS_IDX = CC.GOODS_IDX
+												)
+									)
+								OR (CP.TARGET_GOODS = 'C' AND 
+										EXISTS ( /* 대상 카테고리에 포함되어 있는지 */
+													SELECT COUPON_IDX 
+													FROM TO_COUPON_TARGET_CATEGORY
+													WHERE COUPON_IDX = CP.COUPON_IDX
+													AND CATE_IDX IN (SELECT CATE_IDX FROM TP_GOODS_BRAND_CATE WHERE GOODS_IDX = CC.GOODS_IDX) 
+												)
+									)
+						  )
+					AND (CP.ISSUE_CNT_LIMIT_YN = 'N' OR (CP.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(CP.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(CP.MAX_ISSUE_CNT,0) <![CDATA[>]]> 0 AND IFNULL(CP.MAX_ISSUE_CNT,0) <![CDATA[>]]> (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = CP.COUPON_IDX)))))	/* 최대 발급수량 조건 */
+					AND (CP.ORDER_AMT_LIMIT_YN = 'N' OR (CP.ORDER_AMT_LIMIT_YN = 'Y' AND (IFNULL(CP.MIN_ORDER_AMT,0) = 0 OR (IFNULL(CP.MIN_ORDER_AMT,0) <![CDATA[>]]> 0 AND IFNULL(CP.MIN_ORDER_AMT,0) <![CDATA[<=]]> (CC.GOODS_CNT * VG.DISCOUNT_PRICE)))))	/* 최소 주문금액 조건 */
+				GROUP BY CC.CART_IDX
+			) CP ON C.CART_IDX = CP.CART_IDX 
+			WHERE C.MEMBER_IDX = #{MEMBERIDX}
+		</when>
+		<otherwise>																<!-- 비회원 -->
+			WHERE C.SESSION_ID = #{SESSIONID}
+				AND C.MEMBER_IDX IS NULL
+		</otherwise>
+	</choose>
+		ORDER BY CART_IDX DESC, GOODS_IDX, SET_SALE_GUBUN
+	</select>
+
+	<!-- 찜하기에 담긴 해당 상품 갯수 -->
+	<select id="getGoodsWishCnt" parameterType="hashmap" resultType="int">
+		/** cartDAO.getGoodsWishCnt **/
+		SELECT COUNT(*) AS CNT
+		FROM TO_WISH
+		WHERE GOODS_IDX = #{GOODSIDX}
+			AND MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+	<!-- 찜하기에 상품 추가 -->
+	<insert id="insertWish" parameterType="hashmap">
+		/** cartDAO.insertWish **/
+		INSERT INTO TO_WISH
+		(
+			MEMBER_IDX,
+			GOODS_IDX,
+			DEVICE,
+			CATE_IDX,
+			REG_IDX,
+			REG_HTTP_USER_AGENT,
+			REG_IP,
+			REG_DT
+		)
+		VALUES
+		(
+			#{MEMBERIDX},
+			#{GOODSIDX},
+			#{DEVICE},
+			#{CATEIDX},
+			#{REGIDX},
+			#{REGHTTPUSERAGENT},
+			#{REGIP},
+			NOW()
+		)
+	</insert>
+
+	<!-- 장바구니 상품 삭제 -->
+	<delete id="deleteCart" parameterType="hashmap">
+		/** cartDAO.deleteCart **/
+		DELETE FROM TO_CART
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				WHERE MEMBER_IDX = #{MEMBERIDX}		
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				WHERE SESSION_ID = #{SESSIONID}
+					AND MEMBER_IDX IS NULL
+			</otherwise>
+		</choose>
+				AND CART_IDX IN
+				<foreach collection="CARTIDXES" item="item" open="(" close=")" separator=",">
+					 #{item}
+				</foreach>
+	</delete>
+	
+	<!-- 장바구니 품절 상품 삭제 -->
+	<delete id="deleteSoldOutCart" parameterType="hashmap">
+		/** cartDAO.deleteSoldOutCart **/
+		DELETE C 
+		FROM TO_CART C
+		JOIN TP_GOODS G ON C.GOODS_IDX = G.GOODS_IDX
+		    AND (G.SALE_STATUS IN ('R') OR G.STOCK_FLAG = 'Y' AND G.STOCK_CNT = 0)	/* 일시품절이거나 재고가 0인거 */
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				WHERE C.MEMBER_IDX = #{MEMBERIDX}		
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				WHERE C.SESSION_ID = #{SESSIONID}
+					AND C.MEMBER_IDX IS NULL
+			</otherwise>
+		</choose>
+	</delete>
+	
+	<!-- 장바구니 상품 수량 변경 -->
+	<update id="changeCnt" parameterType="hashmap">
+		/** cartDAO.changeCnt **/
+		UPDATE TO_CART
+		SET GOODS_CNT = #{GOODSCNT}
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				WHERE MEMBER_IDX = #{MEMBERIDX}		
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				WHERE SESSION_ID = #{SESSIONID}
+					AND MEMBER_IDX IS NULL
+			</otherwise>
+		</choose>
+				AND CART_IDX = #{CARTIDX}
+	</update>
+	
+	<!-- 장바구니/위시리스트에 담길 상품 정보 (유효한 상품인지 보기 위해) -->
+	<select id="getGoodsInfoList" parameterType="hashmap" resultType="sqlMap">
+		/** cartDAO.getGoodsInfoList **/
+		SELECT
+			G.GOODS_IDX,
+			G.GOODS_CD,
+			G.GOODS_NM,
+			G.SALE_STATUS,	/* 판매상태 (P:판매전, Y:판매중, R:일시품절, S:판매중단) */
+			GC.CATE_IDX	/* 대표 카테고리 */
+		FROM TP_GOODS G
+		LEFT OUTER JOIN TP_GOODS_BRAND_CATE GC ON GC.TOP_YN = 'Y' AND G.GOODS_IDX = GC.GOODS_IDX
+		WHERE G.GOODS_IDX IN
+			<foreach collection="GOODSIDXES" item="item" open="(" close=")" separator=",">
+				 #{item}
+			</foreach>
+	</select>
+
+	<!-- 사은품 리스트 -->
+	<select id="getGiftList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** cartDAO.getGiftList **/
+		SELECT
+			T.TERM_IDX,				/* 사은품구간일련번호 */
+			T.FREE_YN,					/* 무료구분 */
+			T.BRAND_IDX,	  			/* 브랜드 (0이면 전체) */
+			T.TERM_NM,				/* 구간명 */
+			T.PRICE_START,			/* 구간시작금액 */
+			T.PRICE_END,				/* 구간끝금액 */
+			DATE_FORMAT(T.GIFT_START_DATE,'%Y-%m-%d') AS GIFT_START_DATE,	/* 사은품 증정 시작일자 */
+            DATE_FORMAT(T.GIFT_END_DATE,'%Y-%m-%d') AS GIFT_END_DATE,			/* 사은품 증정 종료일자 */
+			G.GIFT_IDX,				/* 일련번호 */
+			G.GIFT_NM,				/* 사은품명 */
+			G.GIFT_IMG,				/* 사은품 이미지 */
+			G.GIFT_REAL_IMG,		/* 사은품 실제 이미지 */
+			G.GIFT_FLAG				/* 사은품 구분 (P : 금액별 G : 상품별(상품별사용안함)) */			
+		FROM TP_GIFT_TERM T
+		JOIN TP_GIFT G ON T.TERM_IDX = G.TERM_IDX AND T.USE_YN = 'Y' AND G.USE_YN = 'Y'
+			AND (CURDATE() <![CDATA[>=]]> DATE(T.GIFT_START_DATE) OR T.GIFT_START_DATE IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(T.GIFT_END_DATE) OR T.GIFT_END_DATE IS NULL)
+			AND T.FREE_YN = #{FREEYN}
+			<if test="PRICE != null and PRICE != '' ">	<!-- 금액별 사은품 금액 조건 -->
+				AND ${PRICE} BETWEEN T.PRICE_START AND T.PRICE_END
+			</if>
+		LEFT OUTER JOIN (	<!-- 재고 조건 -->
+			SELECT
+				OG.GIFT_IDX, 
+				COUNT(*) AS CNT
+			FROM TO_ORDER O
+			JOIN TO_ORDER_GIFT OG ON O.ORDER_IDX = OG.ORDER_IDX
+				AND O.ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','670','690','700','750','770','800','900')
+			GROUP BY OG.GIFT_IDX
+		) OGC ON G.GIFT_IDX = OGC.GIFT_IDX
+		WHERE CONVERT(G.STOCK_CNT,SIGNED)-IFNULL(OGC.CNT,0) <![CDATA[>]]> 0
+		ORDER BY T.PRICE_START, G.GIFT_NM
+	</select>
+
+	<!-- 추천상품 리스트 -->
+	<select id="getRecommendProductList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** cartDAO.getRecommendProductList **/
+		SELECT
+			DISTINCT RECOMMEND_GOODS_IDX AS GOODS_IDX,
+			MIN(ORDER_NO) AS ORDER_NO,
+			<!--  RECOMMEND_GOODS_IDX, -->
+			GOODS_CD,
+			GOODS_NM,
+			GOODS_SUB_NM,
+			SHORT_INFO,
+			GOODS_UNIT,
+			MAIN_FILE,
+			SALE_STATUS,
+			USE_YN,
+			STOCK_FLAG,
+			STOCK_CNT,
+			PRICE,
+			DISCOUNT_RATE,
+			DISCOUNT_PRICE,
+			GOODS_BADGE,
+			SOLDOUT_YN,
+			BEST_YN,
+			NEW_YN,
+			ONLINE_YN,
+			OPO_YN,
+			TPO_YN,
+			POINTICON_YN,
+			SALEICON_YN,
+			AUTO_COUPON_YN
+		FROM (
+			/* 상품별 추천 상품 */
+			SELECT
+				1 AS ORDER_NO,
+				R.GOODS_IDX,
+				R.RECOMMEND_GOODS_IDX,
+				RG.GOODS_CD, 
+				RG.GOODS_NM, 
+				RG.GOODS_SUB_NM, 
+				RG.SHORT_INFO,
+				RG.GOODS_UNIT,
+				RG.MAIN_FILE, 
+				RG.SALE_STATUS,
+				RG.USE_YN, 
+				RG.STOCK_FLAG, 
+				RG.STOCK_CNT, 
+				RG.PRICE, 
+				RG.DISCOUNT_RATE, 
+				RG.DISCOUNT_PRICE,
+				RG.GOODS_BADGE,
+				RG.SOLDOUT_YN,
+				RG.BEST_YN,
+				RG.NEW_YN,
+				RG.ONLINE_YN,
+				RG.OPO_YN,
+				RG.TPO_YN,
+				RG.POINTICON_YN,
+				RG.SALEICON_YN,
+				RG.AUTO_COUPON_YN
+			FROM TO_CART C
+			JOIN VW_GOODS G ON C.GOODS_IDX = G.GOODS_IDX
+			JOIN TP_RECOMMEND_GOODS R ON C.GOODS_IDX = R.GOODS_IDX
+			JOIN VW_GOODS RG ON R.RECOMMEND_GOODS_IDX = RG.GOODS_IDX 
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+					WHERE C.MEMBER_IDX = #{MEMBERIDX}
+				</when>
+				<otherwise>																<!-- 비회원 -->
+					WHERE C.SESSION_ID = #{SESSIONID}
+						AND C.MEMBER_IDX IS NULL
+				</otherwise>
+			</choose>
+			
+			UNION ALL
+			
+			/* 1depth 카테고리 추천 상품 */
+			SELECT
+				2 AS ORDER_NO,
+				CR.GOODS_IDX,
+				CR.GOODS_IDX,
+				RG.GOODS_CD,
+				RG.GOODS_NM,
+				RG.GOODS_SUB_NM,
+				RG.SHORT_INFO,
+				RG.GOODS_UNIT,
+				RG.MAIN_FILE,
+				RG.SALE_STATUS,
+				RG.USE_YN,
+				RG.STOCK_FLAG,
+				RG.STOCK_CNT,
+				RG.PRICE,
+				RG.DISCOUNT_RATE,
+				RG.DISCOUNT_PRICE,
+				RG.GOODS_BADGE,
+				RG.SOLDOUT_YN,
+				RG.BEST_YN,
+				RG.NEW_YN,
+				RG.ONLINE_YN,
+				RG.OPO_YN,
+				RG.TPO_YN,
+				RG.POINTICON_YN,
+				RG.SALEICON_YN,
+				RG.AUTO_COUPON_YN
+			FROM TP_CATE_RECOMMEND_GOODS CR
+			JOIN (
+				SELECT DISTINCT FN_GET_TOP_CATE_IDX(CT.CATE_IDX) AS CATE_IDX
+				FROM TO_CART C
+				JOIN VW_GOODS G ON C.GOODS_IDX = G.GOODS_IDX 
+				JOIN TP_GOODS_BRAND_CATE CT ON C.GOODS_IDX = CT.GOODS_IDX
+				<choose>
+					<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+						WHERE C.MEMBER_IDX = #{MEMBERIDX}
+					</when>
+					<otherwise>																<!-- 비회원 -->
+						WHERE C.SESSION_ID = #{SESSIONID}
+							AND C.MEMBER_IDX IS NULL
+					</otherwise>
+				</choose>
+			) C ON CR.CATE_IDX = C.CATE_IDX
+			JOIN VW_GOODS RG ON CR.GOODS_IDX = RG.GOODS_IDX 
+		) A
+		GROUP BY 
+			GOODS_IDX,
+			<!-- RECOMMEND_GOODS_IDX, -->
+			GOODS_CD,
+			GOODS_NM,
+			GOODS_SUB_NM,
+			SHORT_INFO,
+			GOODS_UNIT,
+			MAIN_FILE,
+			SALE_STATUS,
+			USE_YN,
+			STOCK_FLAG,
+			STOCK_CNT,
+			PRICE,
+			DISCOUNT_RATE,
+			DISCOUNT_PRICE,
+			GOODS_BADGE
+		ORDER BY ORDER_NO, GOODS_NM
+	</select>
+
+	<!-- 상품 자동발급 상품 쿠폰 리스트 -->
+	<select id="getAutoIssueGoodsCouponList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** cartDAO.getAutoIssueGoodsCouponList **/
+		SELECT
+			-C.COUPON_IDX AS COUPON_IDX,	/* 자동발급쿠폰은 아직 발급된게 아니라서 주문 테이블에 저장시 앞에 - (마이너스)를 붙여서 저장하고 나중에 발급 */
+			C.DISCOUNT_TYPE,			/* 할인종류 (R : 정률할인, A : 정액할인) */
+			C.DISCOUNT,					/* 할인액(률) (DISCOUNT_RATE(할인종류)가 R(정률)이면 할인률, A(정액)이면 할인액) */
+			C.MAX_DISCOUNT,			/* 최대할인금액 (DISCOUNT_RATE(할인종류)가 R(정률)일때만 사용됨) */
+			C.ORDER_AMT_LIMIT_YN,	/* 적용주문금액 제한여부 (Y : 제한적용, N : 제한없음) */
+			C.MIN_ORDER_AMT			/* 최소주문금액 (ORDER_AMT_LIMIT(적용주문금액)가 Y(제한적용)일때만 사용됨) */
+		FROM TO_COUPON C
+		WHERE C.GUBUN = 'G'		/* 상품 쿠폰 중에 */ 
+           	AND C.METHOD = 'A'	/* 자동 발급 쿠폰 */
+           	AND C.USE_YN = 'Y'
+		<if test="DEVICE != null and DEVICE != '' ">
+			AND (C.DEVICE = 'A' OR C.DEVICE = #{DEVICE})
+		</if>
+			AND (CURDATE() <![CDATA[>=]]> DATE(DOWN_START_DT) OR DOWN_START_DT IS NULL)	/* 다운로드 시작일 */
+			AND (CURDATE() <![CDATA[<=]]> DATE(DOWN_END_DT) OR DOWN_END_DT IS NULL) 		/* 다운로드 종료일 */
+			AND (USE_DATE_LIMIT_YN IN ('N','P') OR (USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(USE_START_DT) OR USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(USE_END_DT) OR USE_END_DT IS NULL)))	/* 사용기한 제한여부 */
+			AND (C.TARGET_MEMBER = 'A' 
+						OR (C.TARGET_MEMBER = 'G' AND C.TARGET_GRADE = #{MEMBERGRADE}) 
+						OR (C.TARGET_MEMBER = 'M' AND 
+								EXISTS ( /* 대상 회원에 포함되어 있는지 */
+											SELECT COUPON_IDX 
+											FROM TO_COUPON_TARGET_MEMBER
+											WHERE COUPON_IDX = C.COUPON_IDX
+											AND MEMBER_IDX = #{MEMBERIDX}
+											)
+							)
+				  )
+			AND (C.TARGET_GOODS = 'A' 
+						OR (C.TARGET_GOODS = 'G' AND 
+								EXISTS ( /* 대상 상품에 포함되어 있는지 */
+											SELECT COUPON_IDX 
+											FROM TO_COUPON_TARGET_GOODS
+											WHERE COUPON_IDX = C.COUPON_IDX
+											AND GOODS_IDX = #{GOODSIDX}
+										)
+							)
+						OR (C.TARGET_GOODS = 'C' AND 
+								EXISTS ( /* 대상 카테고리에 포함되어 있는지 */
+											SELECT COUPON_IDX 
+											FROM TO_COUPON_TARGET_CATEGORY
+											WHERE COUPON_IDX = C.COUPON_IDX
+											AND CATE_IDX IN (SELECT CATE_IDX FROM TP_GOODS_BRAND_CATE WHERE GOODS_IDX = #{GOODSIDX})
+										)
+							)
+				  )
+			AND (C.ISSUE_CNT_LIMIT_YN = 'N' OR (C.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(C.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(C.MAX_ISSUE_CNT,0) <![CDATA[>]]> 0 AND IFNULL(C.MAX_ISSUE_CNT,0) <![CDATA[>]]> (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = C.COUPON_IDX)))))	/* 최대 발급수량 조건 */
+		ORDER BY C.DISCOUNT DESC 
+	</select>
+	
+	<!-- 위시 리스트(상품) 총 건수  -->
+	<select id="getWishTotalCnt" parameterType="hashmap" resultType="int">
+		/** cartDAO.getWishTotalCnt **/
+		SELECT COUNT(*)
+		FROM TO_WISH A
+		WHERE GOODS_IDX = #{GOODSIDX}
+	</select>
+	
+	<!-- 찜 하기 해제 -->
+	<delete id="wishDelete" parameterType="hashmap">
+		/** cartDAO.wishDelete **/
+		DELETE FROM TO_WISH WHERE MEMBER_IDX = #{MEMBERIDX} AND GOODS_IDX = #{GOODSIDX}
+	</delete>
+	
+	<!-- 배송비 리스트 -->
+	<select id="getShippingPriceList" parameterType="hashmap" resultType="sqlMap">
+		/** cartDAO.getShippingPriceList **/
+		SELECT
+			SHIPPING_PRICE_IDX,
+			MIN_PRICE,
+			MAX_PRICE, 
+			SHIPPING_PRICE
+		FROM TO_SHIPPING_PRICE
+	</select>
+	
+	<!-- 장바구니 추천상품 리스트 -->
+	<select id="getCartRecommendList" parameterType="hashmap" resultType="sqlMap">
+		/** cartDAO.getCartRecommendList **/
+		SELECT
+			VG.*
+		FROM TP_CART_RECOMMEND_GOODS CRG LEFT JOIN VW_GOODS VG ON CRG.GOODS_IDX = VG.GOODS_IDX
+		WHERE VG.SALE_STATUS = 'Y'
+		AND VG.USE_YN = 'Y'
+		AND CRG.GOODS_IDX NOT IN (
+			SELECT
+				C.GOODS_IDX
+				FROM TO_CART C
+			WHERE 1=1
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+					AND C.MEMBER_IDX = #{MEMBERIDX}				
+				</when>
+				<otherwise>	<!-- 비회원 -->
+					AND C.SESSION_ID = #{SESSIONID}
+					AND C.MEMBER_IDX IS NULL
+				</otherwise>
+			</choose>
+		)
+		
+		ORDER BY CRG.ORDER_IDX, CRG.REG_DT DESC
+		LIMIT 20
+	</select>
+
+</mapper>

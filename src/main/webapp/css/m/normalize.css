@@ -1,0 +1,61 @@
+/*=================================================================================
+* 기본세팅
+=================================================================================*/
+
+@import url('https://fonts.googleapis.com/css?family=Montserrat:400,700');
+@import url("../../fonts/NanumSquare/nanumsquare.css");
+
+
+html {font-size:14px; line-height:1.5; }
+body {color:#444;}
+* { font-family: "Montserrat", "Nanum Square", Helvetica, sans-serif; box-sizing: border-box; outline: none;}
+
+html,
+body {padding:0; margin:0;}
+h1,h2,h3,h4,h5,h6 {font-weight:normal;margin:0;}
+ul, ol {list-style:none;margin:0;padding:0;}
+fieldset {margin:0;padding:0;border:none;}
+textarea {resize:none;}
+button {cursor:pointer;padding:0;border:none;}
+a {text-decoration:none;color:#000000;}
+p {margin:0;}
+strong {font-weight:bold;}
+em {font-style:normal;}
+table {width:100%;border-collapse:collapse;border-spacing:0;}
+th {font-weight:bold;padding:0;}
+td {padding:0;}
+input {padding:0; margin:0 ;background:none; box-sizing:border-box;}
+dl, dt, dd {margin:0; padding:0;}
+figure {margin:0;}
+img {vertical-align:top;}
+hr {display:none;}
+i {font-style: normal}
+
+input {text-decoration: none; appearance: none; -moz-appearance: none; /* Firefox */ -webkit-appearance: none; /* Safari and Chrome */}
+input[type=text]::-webkit-input-placeholder {color:#999999; font-size:12px;}
+input[type=text]::-moz-placeholder {color:#999999; font-size:12px;}
+input[type=text]:-ms-input-placeholder {color:#999999; font-size:12px;}
+input[type=text]:-moz-placeholder {color:#999999; font-size:12px;}
+
+input[type=password]::-webkit-input-placeholder {color:#999999; font-size:12px;}
+input[type=password]::-moz-placeholder {color:#999999; font-size:12px;}
+input[type=password]:-ms-input-placeholder {color:#999999; font-size:12px;}
+input[type=password]:-moz-placeholder {color:#999999; font-size:12px;}
+
+textarea::-webkit-input-placeholder {color:#999999; font-size:12px;}
+textarea::-moz-placeholder {color:#999999; font-size:12px;}
+textarea:-ms-input-placeholder {color:#999999; font-size:12px;}
+textarea:-moz-placeholder {color:#999999; font-size:12px;}
+
+input, textarea, select{font-family: Helvetica, sans-serif;}
+
+
+/* 모바일 - 아이폰 5기준 */
+@media screen and (max-width : 320px) {
+  html {font-size:14px;}
+}
+
+/* 모바일 - 아이패드 기준 */
+@media screen and (min-width: 768px){
+  html {font-size:16px;}
+}

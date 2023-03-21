@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="wishDAO">
+	
+	<!-- 위시 리스트 총 개수 -->
+	<select id="getWishListCnt" parameterType="java.util.HashMap" resultType="int">
+		/** wishDAO.getWishListCnt **/
+		SELECT 
+			COUNT(*)
+		FROM TO_WISH A INNER JOIN VW_GOODS B ON A.GOODS_IDX = B.GOODS_IDX
+		WHERE MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+	<!-- 위시 리스트 -->
+	<select id="getWishList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** wishDAO.getWishList **/
+		SELECT 
+			A.WISH_IDX,				/* 위시 일련번호 */
+			A.MEMBER_IDX,			/* 회원 일련번호 */
+			A.GOODS_IDX,			/* 상품 일련번호 */
+			A.DEVICE,					/* 디바이스 */
+			A.CATE_IDX,
+			B.BRAND_IDX, 
+			B.BRAND_NM, 
+			B.CHOICE_CATE_IDX, 
+			B.GOODS_CD , 
+            B.GOODS_NM,  
+			B.BRAND_IDX,						/* 브랜드 일련번호 */
+			B.BRAND_NM,							/* 브랜드명 */
+            B.PRICE, 
+            B.DISCOUNT_RATE, 
+            B.DISCOUNT_PRICE, 
+            B.POINT_FLAG, 
+            B.POINT_RATE, 
+		    B.MAIN_FILE , 
+            B.MAIN_REAL_FILE,  
+            B.SOLDOUT_YN,
+            B.STOCK_FLAG, 
+            B.STOCK_CNT,
+            B.SHORT_INFO,
+            B.GOODS_TITLE,
+            B.OPO_YN,
+            B.TPO_YN,
+            B.POINTICON_YN,
+            B.SALEICON_YN,
+            B.BEST_YN,
+            B.ONLINE_YN,
+            B.AUTO_COUPON_YN,
+            B.SALE_STATUS,			/* 판매상태 */
+            B.DISPLAY_FLAG,
+		    B.USE_YN,					/* 노출여부 */
+			B.SOLDOUT_YN,
+			B.BEST_YN,
+			B.NEW_YN,
+			B.ONLINE_YN,
+			B.OPO_YN,
+			B.TPO_YN,
+			B.POINTICON_YN,
+			B.SALEICON_YN,
+			B.AUTO_COUPON_YN
+		FROM TO_WISH A INNER JOIN VW_GOODS B ON A.GOODS_IDX = B.GOODS_IDX
+		WHERE A.MEMBER_IDX = #{MEMBERIDX}
+  		
+		ORDER BY DATE_FORMAT(A.REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+		
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 위시 삭제 -->
+	<delete id="wishDelete" parameterType="java.util.HashMap">
+		/** wishDAO.wishDelete **/
+		DELETE FROM TO_WISH
+		WHERE WISH_IDX = #{WISHIDX}
+		AND MEMBER_IDX = #{MEMBERIDX}
+	</delete>
+	
+</mapper>

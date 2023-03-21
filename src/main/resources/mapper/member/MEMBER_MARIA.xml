@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="memberDAO">
+	
+	<!-- 아이디 중복 체크 -->
+	<select id="duplicateCheckMemberId" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) 
+	  	FROM TM_MEMBER
+		WHERE MEMBER_ID = #{MEMBERID} 
+		AND MEMBER_TYPE = 'M' 
+	</select>
+	
+	<!-- 이메일 중복 체크 -->
+	<select id="duplicateCheckEmail" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TM_MEMBER A, TM_MEMBER_DETAIL B
+		WHERE A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+		AND A.MEMBER_TYPE = 'M'
+		AND B.EMAIL = FN_ENCRYPT(#{EMAIL})
+		<if test="MEMBERIDX != null and MEMBERIDX != '' ">
+			AND A.MEMBER_IDX != #{MEMBERIDX}
+		</if>
+	</select>
+	
+	<!-- 추천인 중복 체크 -->
+	<select id="duplicateCheckRecommender" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TM_MEMBER A
+		LEFT OUTER JOIN TM_MEMBER_DETAIL B
+		ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+		WHERE B.EMAIL = FN_ENCRYPT(#{RECOMMENDER})
+		AND A.MEMBER_TYPE = 'M'
+		AND B.MEMBER_STATE = '100'
+	</select>
+	
+	<!-- 회원가입 저장 (MASTER) -->
+	<insert id="memberMasterSave" parameterType="hashmap">
+	 		INSERT INTO TM_MEMBER (
+		 		MEMBER_ID, MEMBER_PW, MEMBER_TYPE, REG_DT
+			)
+		    VALUES (
+		    	#{MEMBERID}, 
+		    	PASSWORD(#{MEMBERPWD}), 
+		    	'M', 
+		    	NOW()
+		    )
+			<selectKey keyProperty="memberIdx" resultType="int" order="AFTER">
+			    SELECT LAST_INSERT_ID()
+			</selectKey>
+	 </insert>
+	 
+	 <!-- 회원가입 저장 (DETAIL) -->
+	 <insert id="memberDetailSave" parameterType="hashmap">
+	 		INSERT INTO TM_MEMBER_DETAIL (
+	 			MEMBER_DETAIL_IDX, MEMBER_NM, EMAIL, PHONE_NO, BIRTH_DATE, GENDER, RECOMMENDER, RECOMMENDER_IDX, SUBSCRIBE_TYPE, SUBSCRIBE, MEMBER_STATE
+	 			,DEVICE, LEVEL_IDX, JOIN_TYPE, EMAIL_YN, SMS_YN, MARKETING_YN, INDIVIDUAL_INFO_YN, HTTP_USER_AGENT, CHANGE_PWD_DT, 
+	 			<if test="EMAILYN eq 'Y'.toString() or SMSYN eq 'Y'.toString()">AGREE_DT,</if>
+	 			ADFROM, REG_IDX, REG_DT
+	 		)
+			VALUES (
+				#{MEMBERIDX}, 
+				#{MEMBERNM},
+				FN_ENCRYPT(#{EMAIL}),
+				FN_ENCRYPT(#{PHONENO}),
+				#{BIRTHDATE},
+				#{GENDER},
+				#{RECOMMENDER},
+				#{RECOMMENDERIDX},
+				#{SUBSCRIBETYPE},
+				#{SUBSCRIBE},
+				#{MEMBERSTATE},
+				#{DEVICE},
+				#{LEVELIDX},
+				#{JOINTYPE},
+				#{EMAILYN},
+				#{SMSYN},
+				#{MARKETINGYN},
+				#{INDIVIDUALINFOYN},
+				#{HTTPUSERAGENT},
+				NOW(),
+				<if test="EMAILYN eq 'Y'.toString() or SMSYN eq 'Y'.toString()">NOW(),</if>
+				#{ADFROM},
+				#{MEMBERIDX},
+				NOW()
+			)
+	 </insert>
+	 
+	 <!-- 회원 포인트 지급 -->
+	 <insert id="memberPointSave" parameterType="hashmap">
+		INSERT INTO TM_POINT_INFO (
+			MEMBER_IDX, PAY_DED_TYPE, PAY_DED_REASON, PAYMENT_PRICE, PAY_DED_DT, REG_DT
+		)
+		VALUES (
+			#{MEMBERIDX},
+			'P',
+			#{PAYDEDREASON},
+			#{PAYMENTPRICE},
+			NOW(),
+			NOW()
+		)
+	</insert>
+	
+	<!-- 회원정보 저장 -->
+	 <insert id="memberInfoSave" parameterType="hashmap">
+		INSERT INTO TM_MEMBER_INFO (
+			MEMBER_INFO_IDX, POINT_PRICE
+		)
+		VALUES (
+			#{MEMBERIDX},
+			#{POINTPRICE}
+		)
+	</insert>
+
+	<!-- 회원 상세 -->
+	<select id="getMemberDetail" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MEMBER_IDX,  A.MEMBER_ID, DATE_FORMAT(A.REG_DT,'%Y-%m-%d') AS REG_DT, A.MEMBER_PW
+				      , B.JOIN_TYPE, B.MEMBER_NM, B.LEVEL_IDX, FN_DECRYPT(B.EMAIL) EMAIL, FN_DECRYPT(B.PHONE_NO) PHONE_NO, B.BIRTH_DATE, B.RECOMMENDER, B.SMS_YN, B.EMAIL_YN, B.GENDER        
+				      , C.GRADE_NM, D.SNS_TYPE, D.SNS_CD
+		FROM TM_MEMBER A
+		LEFT OUTER JOIN TM_MEMBER_DETAIL B
+		ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+		LEFT OUTER JOIN TM_MEMBER_GRADE C
+		ON B.LEVEL_IDX = C.MEMBER_GRADE_IDX
+		LEFT OUTER JOIN TM_MEMBER_SNS D
+		ON A.MEMBER_IDX = D.MEMBER_IDX
+    	AND B.JOIN_TYPE = '1'
+		WHERE A.MEMBER_ID = #{MEMBERID}
+		AND A.MEMBER_TYPE = 'M' 
+	</select>
+	
+	<!-- SNS가입 저장 -->
+	 <insert id="memberSnsSave" parameterType="hashmap">
+		INSERT INTO TM_MEMBER_SNS (
+			MEMBER_IDX, SNS_TYPE, SNS_CD, SNS_EMAIL, REG_DT
+		)
+		VALUES (
+			#{MEMBERIDX},
+			#{SNSTYPE},
+			#{SNSCD},
+			#{SNSEMAIL},
+			NOW()
+		)
+	</insert>
+	
+	<!-- 약관/개인정보 리스트 -->
+	<select id="getTermsList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.TERMS_GUBUN, A.TERMS_NM, A.P_TERMS_DESC, A.M_TERMS_DESC
+		FROM TS_TERMS A
+		WHERE A.USE_YN = 'Y'
+	</select>
+	
+	<!-- ================================ 마이페이지 ================================ -->
+
+	<!--  보유포인트, 진행중인 주문 건 -->
+	<select id="getMemberInfo" parameterType="hashmap" resultType="sqlMap">
+		SELECT (
+				        SELECT A.POINT_PRICE
+				        FROM TM_MEMBER_INFO A
+				        WHERE A.MEMBER_INFO_IDX = #{MEMBERIDX}        
+			        	) AS POINT_PRICE,
+				        (
+				          SELECT COUNT(*) AS ORDER_CNT
+				          FROM TO_ORDER A
+				          LEFT OUTER JOIN TO_ORDER_DETAIL B
+				          ON A.ORDER_IDX = B.ORDER_IDX
+				          WHERE A.MEMBER_IDX = #{MEMBERIDX}  
+				          AND B.ORDER_STATUS_CD IN('100','200','300','400','500','600','650','700','750','800')    
+				        ) AS ORDER_CNT,
+				        (
+		                  SELECT DATE_FORMAT(NOW(), "%Y년 %c월 %e일 기준") 
+		                ) AS NOW_DT
+	</select>
+	
+	<!--  회원정보(master) 변경 -->
+    <update id="memberMasterUpdate" parameterType="hashmap">
+    	UPDATE TM_MEMBER
+	 	SET MEMBER_PW = PASSWORD(#{MEMBERPWD}),
+	 			EDIT_IDX = #{MEMBERIDX},
+	 			EDIT_DT = NOW()
+		WHERE MEMBER_IDX = #{MEMBERIDX}		
+    </update>
+    
+    <!--  회원정보(detail) 변경 -->
+    <update id="memberDetailUpdate" parameterType="hashmap">
+    	UPDATE TM_MEMBER_DETAIL
+	 	SET	EMAIL = FN_ENCRYPT(#{EMAIL}),
+	 			PHONE_NO = FN_ENCRYPT(#{PHONENO}),
+	 			BIRTH_DATE = #{BIRTHDATE},
+	 			RECOMMENDER = #{RECOMMENDER},
+	 			GENDER = #{GENDER},
+	 			EMAIL_YN = #{EMAILYN},
+	 			SMS_YN = #{SMSYN},
+	 			<if test="EMAILAGREE eq 'Y'.toString() or SMSAGREE eq 'Y'.toString()">
+	 				AGREE_DT = NOW(),
+ 				</if>
+	 			EDIT_IDX = #{MEMBERIDX},
+	 			EDIT_DT = NOW()
+		WHERE MEMBER_DETAIL_IDX = #{MEMBERIDX}
+    </update>
+    
+    <!-- 회원 탈퇴 저장 -->
+	<insert id="memberWithdrawSave" parameterType="hashmap">
+		INSERT INTO TM_MEMBER_WITHDRAW (
+		 																		 MEMBER_WITHDRAW_IDX, REASON, ETC_REASON, ISAGREE, APPROVE_DT, REG_IDX, REG_DT
+																				)
+	    VALUES (
+	    					#{MEMBERIDX},
+				    		#{REASON}, 
+				    		#{ETCREASON}, 
+				    		#{ISAGREE}, 
+				    		NOW(),
+				    		#{MEMBERIDX}, 
+				    		NOW()
+				    	)
+	</insert>
+	
+	<!-- 회원 탈퇴 마스터 업데이트 -->
+    <update id="memberWithdrawMasterUpdate" parameterType="hashmap">
+    	UPDATE TM_MEMBER
+      	SET	MEMBER_PW = "", 
+		      	EDIT_IDX = #{MEMBERIDX},
+		      	EDIT_DT = NOW()
+		WHERE MEMBER_IDX = #{MEMBERIDX}
+    </update>
+    
+    <!-- 회원 탈퇴 디테일 업데이트 -->
+    <update id="memberWithdrawDetailUpdate" parameterType="hashmap">
+    	UPDATE TM_MEMBER_DETAIL
+      	SET	MEMBER_NM = "", 
+      			EMAIL = "",
+      			PHONE_NO = "",
+      			BIRTH_DATE = "",
+      			RECOMMENDER = "",
+      			MEMBER_STATE = #{MEMBERSTATE},
+      			WITHDRAW_APPROVE_DT = NOW(),
+		      	EDIT_IDX = #{MEMBERIDX},
+		      	EDIT_DT = NOW()
+		WHERE MEMBER_DETAIL_IDX = #{MEMBERIDX}
+    </update>
+    
+    <!-- 환불계좌 정보 -->
+	<select id="getMemberAccount" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MEMBER_IDX, A.BANK_CODE, A.ACCOUNT, A.DEPOSITOR
+		FROM TO_ACCOUNT A
+		WHERE A.MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+ 	<!-- 환불계좌 저장 -->
+	<insert id="memberAccountSave" parameterType="hashmap">
+	    INSERT INTO TO_ACCOUNT (
+	    													MEMBER_IDX, BANK_CODE, ACCOUNT, DEPOSITOR, REG_IDX, REG_DT
+	    												  )   
+   		VALUES (
+   						#{MEMBERIDX},
+   						#{BANKCODE},
+   						#{ACCOUNT},
+   						#{DEPOSITOR},
+   						#{MEMBERIDX},
+   						NOW() 
+   						)
+   		ON DUPLICATE KEY 
+   		UPDATE BANK_CODE = #{BANKCODE},
+		  			    ACCOUNT = #{ACCOUNT},
+				        DEPOSITOR = #{DEPOSITOR},
+				        EDIT_IDX = #{MEMBERIDX},
+				        EDIT_DT = NOW()   
+	</insert>
+	
+	<!-- 환불계좌 삭제 -->
+	<delete id="memberAccountDelete" parameterType="hashmap">
+		DELETE FROM  TO_ACCOUNT WHERE MEMBER_IDX = #{MEMBERIDX}
+	</delete>
+	
+	<!--배송지 리스트 -->
+	<select id="getMemberShippingList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.ADDRESS_IDX, A.MEMBER_IDX, A.SHIPPING_NM, A.RECEIVER_NM, FN_DECRYPT(A.ADDR) ADDR, FN_DECRYPT(A.ADDR_DETAIL) ADDR_DETAIL, A.RECEIVER_NM, A.DEFAULT_YN, FN_MAKE_PHONE(FN_DECRYPT(A.PHONE_NO)) AS PHONE_NO
+		FROM TO_ADDRESS A
+		WHERE A.MEMBER_IDX = #{MEMBERIDX}
+		ORDER BY A.DEFAULT_YN
+	</select>
+	
+	<!--배송지 상세 -->
+	<select id="getShippingDetail" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.ADDRESS_IDX, A.SHIPPING_NM, A.RECEIVER_NM, FN_DECRYPT(A.ADDR) ADDR, FN_DECRYPT(A.ADDR_DETAIL) ADDR_DETAIL, A.ZIP_CD, FN_DECRYPT(A.OLD_ADDR) OLD_ADDR, A.OLD_ZIP_CD, FN_DECRYPT(A.TEL_NO) TEL_NO , FN_DECRYPT(A.PHONE_NO) PHONE_NO, A.DEFAULT_YN
+		FROM TO_ADDRESS A
+		WHERE A.ADDRESS_IDX = #{ADDRESSIDX}
+	</select>
+	
+	<!-- 배송지 저장 -->
+	<insert id="memberShippingInsert" parameterType="hashmap">
+		INSERT INTO TO_ADDRESS (
+														 	MEMBER_IDX, SHIPPING_NM, RECEIVER_NM, ADDR, ADDR_DETAIL, ZIP_CD, OLD_ADDR, OLD_ZIP_CD, TEL_NO
+														 	, PHONE_NO, DEFAULT_YN, REG_IDX, REG_HTTP_USER_AGENT, REG_IP, REG_DT
+														)
+	    VALUES (
+				    		#{MEMBERIDX}, 
+				    		#{SHIPPINGNM},
+				    		#{RECEIVERNM},
+				    		FN_ENCRYPT(#{ADDR}),
+				    		FN_ENCRYPT(#{ADDRDETAIL}),
+				    		#{ZIPCD},
+				    		FN_ENCRYPT(#{OLDADDR}),
+				    		#{OLDZIPCD},
+				    		FN_ENCRYPT(#{TELNO}),
+				    		FN_ENCRYPT(#{PHONENO}),
+				    		#{DEFAULTYN},
+				    		#{MEMBERIDX},
+				    		#{REGHTTPUSERAGENT},
+				    		#{REGIP},
+				    		NOW()
+				    	)
+	</insert>
+	
+	<!-- 배송지 업데이트 -->
+    <update id="memberShippingUpdate" parameterType="hashmap">
+    	UPDATE TO_ADDRESS
+      	SET	SHIPPING_NM = #{SHIPPINGNM},
+      			RECEIVER_NM = #{RECEIVERNM},
+      			ADDR = FN_ENCRYPT(#{ADDR}),
+      			ADDR_DETAIL = FN_ENCRYPT(#{ADDRDETAIL}),
+      			ZIP_CD = #{ZIPCD},
+      			OLD_ADDR = FN_ENCRYPT(#{OLDADDR}),
+      			OLD_ZIP_CD = #{OLDZIPCD},
+      			TEL_NO = FN_ENCRYPT(#{TELNO}),
+      			PHONE_NO = FN_ENCRYPT(#{PHONENO}),
+      			DEFAULT_YN = #{DEFAULTYN},
+      			EDIT_HTTP_USER_AGENT = #{EDITHTTPUSERAGENT},
+      			EDIT_IP = #{EDITIP},
+		      	EDIT_IDX = #{MEMBERIDX},
+		      	EDIT_DT = NOW()
+		WHERE ADDRESS_IDX = #{ADDRESSIDX}
+    </update>
+	
+	<!-- 배송지 삭제 -->
+	<delete id="memberShippingDelete" parameterType="hashmap">
+		DELETE FROM  TO_ADDRESS WHERE ADDRESS_IDX = #{ADDRESSIDX}
+	</delete>
+	
+	<!-- 회원에 해당하는 기본배송지 N으로 전체 업데이트 -->
+    <update id="shippingAllDefalutUpdate" parameterType="hashmap">
+    	UPDATE TO_ADDRESS
+      	SET	DEFAULT_YN = 'N',
+      			EDIT_HTTP_USER_AGENT = #{EDITHTTPUSERAGENT},
+      			EDIT_IP = #{EDITIP},
+		      	EDIT_IDX = #{MEMBERIDX},
+		      	EDIT_DT = NOW()
+		WHERE MEMBER_IDX = #{MEMBERIDX}	      	
+    </update>
+    
+    <!-- 기본 배송지 설정 -->
+    <update id="shippingDefalutUpdate" parameterType="hashmap">
+    	UPDATE TO_ADDRESS
+      	SET	DEFAULT_YN = 'Y',
+      			EDIT_IP = #{EDITIP},
+		      	EDIT_IDX = #{MEMBERIDX},
+		      	EDIT_DT = NOW()
+		WHERE ADDRESS_IDX = #{ADDRESSIDX}	      	
+    </update>
+    
+    <!--  SNS 회원정보(detail) 변경 -->
+    <update id="memberSnsDetailUpdate" parameterType="hashmap">
+    	UPDATE TM_MEMBER_DETAIL
+	 	SET MEMBER_NM = #{MEMBERNM},
+	 			PHONE_NO = FN_ENCRYPT(#{PHONENO}),
+	 			GENDER = #{GENDER},
+	 			EMAIL_YN = #{EMAILYN},
+	 			SMS_YN = #{SMSYN},
+	 			<if test="EMAILAGREE eq 'Y'.toString() or SMSAGREE eq 'Y'.toString()">
+	 				AGREE_DT = NOW(),
+ 				</if>
+	 			EDIT_IDX = #{MEMBERIDX},
+	 			EDIT_DT = NOW()
+		WHERE MEMBER_DETAIL_IDX = #{MEMBERIDX}
+    </update>
+    
+    <!-- SNS 회원 탈퇴 삭제 -->
+	<delete id="memberWithdrawSnsDelete" parameterType="hashmap">
+		DELETE FROM  TM_MEMBER_SNS WHERE MEMBER_IDX = #{MEMBERIDX}
+	</delete>
+	
+	<!-- SMS 알림톡 전송 -->
+	<select id="callSendSmsProcedure" parameterType="hashmap" statementType="CALLABLE">
+		{ CALL SP_SMS_SEND(#{MEMBERCODE, mode=IN,jdbcType=VARCHAR}, #{MEMBERIDX, mode=IN, jdbcType=INTEGER},0,'','','') }
+	</select>
+	
+	<!-- 쿠폰 발급 -->
+	<select id="callMemberCouponProcedure" parameterType="hashmap" statementType="CALLABLE">
+		{ CALL SP_EVERYDAY_AGENT(#{MEMBERIDX, mode=IN,jdbcType=VARCHAR}, 'NEW_MEMBER') }
+	</select>
+	
+	<!-- 추천인 대상 내역 -->
+	<insert id="memberRecommendSave" parameterType="hashmap">
+	 		INSERT INTO TM_RECOMMENDER (
+		 		MEMBER_IDX, RECOMMENDER_IDX, DEVICE, REG_IDX, REG_DT
+			)
+		    VALUES (
+		    	#{MEMBERIDX},
+		    	#{RECOMMENDERIDX},
+		    	#{DEVICE},
+		    	#{MEMBERIDX},
+		    	NOW()
+		    )
+			<selectKey keyProperty="memberRecommenderIdx" resultType="int" order="AFTER">
+			    SELECT LAST_INSERT_ID()
+			</selectKey>
+	 </insert>
+	 
+ 	<!-- 추천인 대상 일련번호 -->
+	<select id="recommendDetail" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MEMBER_IDX
+		FROM TM_MEMBER A
+		LEFT OUTER JOIN TM_MEMBER_DETAIL B
+		ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+		WHERE B.EMAIL = FN_ENCRYPT(#{RECOMMENDER})
+		AND A.MEMBER_TYPE = 'M' 
+		LIMIT 1
+	</select>
+	
+	<!-- 회원 가입 완료 상세 -->
+	<select id="joinCompleteDetail" parameterType="hashmap" resultType="sqlMap">
+		  SELECT A.MEMBER_ID, A.MEMBER_PW, B.MEMBER_NM, B.JOIN_TYPE, C.POINT_PRICE
+		  FROM TM_MEMBER A
+		  LEFT OUTER JOIN TM_MEMBER_DETAIL B
+		  ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+		  LEFT OUTER JOIN TM_MEMBER_INFO C
+		  ON A.MEMBER_IDX = C.MEMBER_INFO_IDX
+		  WHERE A.MEMBER_TYPE = 'M'
+		  AND B.MEMBER_STATE = '100'
+		  AND A.MEMBER_ID = #{MEMBERID}
+	</select>
+	
+	<!-- 추천받은 횟수 -->
+	<select id="getMemberRecommendCnt" parameterType="java.util.HashMap" resultType="int">
+		/** memberDAO.getMemberRecommendCnt **/
+		SELECT COUNT(*)
+		FROM TM_RECOMMENDER
+		WHERE RECOMMENDER_IDX = #{RECOMMENDERIDX}
+	</select>
+	
+	<!-- SNS명 가져오기 -->
+	<select id="getSnsName" parameterType="hashmap" resultType="sqlMap">
+		SELECT * 
+		FROM TS_COMMON_CD
+		WHERE COMMON_CD = #{SNSTYPE}
+	</select>
+	
+	<!-- SMS 알림톡 전송 [수신동의 철회] -->
+	<select id="callSendSmsSmsRejectProcedure" parameterType="hashmap" statementType="CALLABLE">
+		{ CALL SP_SMS_SEND(#{MEMBERCODE, mode=IN,jdbcType=VARCHAR}, #{MEMBERIDX, mode=IN, jdbcType=INTEGER},0,#{SMSCONTS, mode=IN,jdbcType=VARCHAR},'','') }
+	</select>
+   
+</mapper>

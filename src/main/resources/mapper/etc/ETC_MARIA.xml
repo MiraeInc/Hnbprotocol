@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="etcDAO">
+	<!--  상품 리스트 -->
+	<select id="getProductList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.*
+		FROM VW_GOODS A
+		WHERE 1=1
+		<if test="KEYWORD neq ''.toString()">
+				AND (A.GOODS_TITLE like #{KEYWORD} OR A.SEARCH_KEYWORD like #{KEYWORD})
+		</if>
+		
+		<if test="HAIRSTYLE10 neq ''.toString() or HAIRSTYLE20 neq ''.toString() or HAIRSTYLE30 neq ''.toString() or HAIRSTYLE40 neq ''.toString()">
+				AND ( 1=2
+				<if test="HAIRSTYLE10 neq ''.toString()">
+					OR A.HAIRSTYLE like #{HAIRSTYLE10}	
+				</if> 
+				<if test="HAIRSTYLE20 neq ''.toString()">
+					OR A.HAIRSTYLE like #{HAIRSTYLE20}	
+				</if> 
+				<if test="HAIRSTYLE30 neq ''.toString()">
+					OR A.HAIRSTYLE like #{HAIRSTYLE30}	
+				</if> 
+				<if test="HAIRSTYLE40 neq ''.toString()">
+					OR A.HAIRSTYLE like #{HAIRSTYLE40}	
+				</if> 
+				)	
+		</if>
+		
+		<if test="WAXSTRONG neq ''.toString()">
+				AND A.SETTING in (${WAXSTRONG})
+		</if>
+		<if test="WAXGLOSSY neq ''.toString()">
+				AND A.BURNISH in (${WAXGLOSSY})
+		</if>
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT GOODS_IDX 
+								FROM TP_HASHTAG_GOODS H 
+								WHERE A.GOODS_IDX = H.GOODS_IDX 
+								AND H.HASHTAG_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		<if test="HASHTAGNAME neq ''.toString()">
+				AND  EXISTS (SELECT GOODS_IDX 
+									 FROM TP_HASHTAG_GOODS H , TP_HASHTAG HT 
+									 WHERE H.HASHTAG_IDX = HT.HASHTAG_IDX 
+									 AND  A.GOODS_IDX = H.GOODS_IDX 
+									 AND HT.HASHTAG_NM = #{HASHTAGNAME}
+						)
+		</if>
+		ORDER BY A.GOODS_ORDER_CNT DESC	, A.GOODS_TITLE ASC		
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!--  상품 리스트 총 건수 -->
+	<select id="getProductListCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM VW_GOODS A
+		WHERE 1=1
+		<if test="KEYWORD neq ''.toString()">
+				AND (A.GOODS_TITLE like #{KEYWORD} OR A.SEARCH_KEYWORD like #{KEYWORD})
+		</if>
+		
+		<if test="HAIRSTYLE10 neq ''.toString() or HAIRSTYLE20 neq ''.toString() or HAIRSTYLE30 neq ''.toString() or HAIRSTYLE40 neq ''.toString()">
+				AND ( 1=2
+				<if test="HAIRSTYLE10 neq ''.toString()">
+					OR A.HAIRSTYLE like #{HAIRSTYLE10}	
+				</if> 
+				<if test="HAIRSTYLE20 neq ''.toString()">
+					OR A.HAIRSTYLE like #{HAIRSTYLE20}	
+				</if> 
+				<if test="HAIRSTYLE30 neq ''.toString()">
+					OR A.HAIRSTYLE like #{HAIRSTYLE30}	
+				</if> 
+				<if test="HAIRSTYLE40 neq ''.toString()">
+					OR A.HAIRSTYLE like #{HAIRSTYLE40}	
+				</if> 
+				)	
+		</if>
+		<if test="WAXSTRONG neq ''.toString()">
+				AND A.SETTING in (${WAXSTRONG})
+		</if>
+		<if test="WAXGLOSSY neq ''.toString()">
+				AND A.BURNISH in (${WAXGLOSSY})
+		</if>
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT GOODS_IDX 
+								FROM TP_HASHTAG_GOODS H 
+								WHERE A.GOODS_IDX = H.GOODS_IDX 
+								AND H.HASHTAG_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		<if test="HASHTAGNAME neq ''.toString()">
+				AND  EXISTS (SELECT GOODS_IDX 
+									 FROM TP_HASHTAG_GOODS H , TP_HASHTAG HT 
+									 WHERE H.HASHTAG_IDX = HT.HASHTAG_IDX 
+									 AND  A.GOODS_IDX = H.GOODS_IDX 
+									 AND HT.HASHTAG_NM = #{HASHTAGNAME}
+						)
+		</if>
+	</select>
+	
+	<!--  검색어 로그 저장 -->
+	<insert id="insertKeywordLog" parameterType="hashmap">
+		INSERT INTO TA_SEARCH_LOG( KEYWORD,DEVICE,REG_IDX,REG_DT,HTTP_USER_AGENT, USER_IP )
+		VALUES( #{KEYWORD},#{DEVICE},#{REG_IDX},NOW(),#{HTTP_USER_AGENT} , #{USER_IP} )
+	</insert>
+	
+	<!--  main hashtag list -->
+	<select id="getMainHashtagList" parameterType="hashmap" resultType="sqlMap">
+		select a.HASHTAG_IDX,
+	       a.HASHTAG_NM,
+	       a.RELATED_SEARCH,
+	       a.HASHTAG_IMG,
+	       a.HASHTAG_REAL_IMG,
+	       a.USE_YN,
+	       a.REG_IDX,
+	       a.REG_DT,
+	       a.EDIT_IDX,
+	       a.EDIT_DT,
+	       a.MAIN_YN
+	  from tp_hashtag a
+	  WHERE main_yn = 'Y'
+	  ORDER BY a.ORDERBYNO
+	  LIMIT 10
+	</select>
+	
+	<!--  기획전 리스트 -->
+	<select id="getExhibitList" parameterType="hashmap" resultType="sqlMap">
+	SELECT DISTINCT A.EXHIBITION_IDX,					/* 일련번호 */
+				   A.TITLE,									/* 제목 */
+				   A.EXHIBITION_INFO, 				/* 부가 설명 */
+				   A.DISCOUNT_RATE,					/* 할인율 */
+				   DATE_FORMAT(A.START_DT,'%Y.%m.%d') AS START_DT,	/* 시작일 */
+				   DATE_FORMAT(A.END_DT,'%m.%d') AS END_DT,				/* 종료일 */
+				   A.P_EXHIBITION_IMG,				/* PC 이미지 */
+				   A.P_EXHIBITION_REAL_IMG,		/* PC 실제 이미지 */
+				   A.M_EXHIBITION_IMG,				/* MOBILE 이미지 */
+				   A.M_EXHIBITION_REAL_IMG,	/* MOBILE 실제 이미지 */
+				   A.DEVICE,								/* 디바이스 [A:전체, P:PC, M:MOBILE] */
+				   A.SEARCH_KEYWORD,				/* 검색 키워드 */
+				   A.READ_CNT							/* 조회 수 */
+		FROM TS_BRAND_MAPPING M INNER JOIN TE_EXHIBITION A ON A.EXHIBITION_IDX = M.GUBUN_IDX AND M.GUBUN = 'exhibit'
+		WHERE A.DISP_YN = 'Y' 
+		AND A.USE_YN = 'Y'
+		AND ( DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+		AND ( A.DEVICE = 'A' OR A.DEVICE = #{DEVICE} )
+		<if test="KEYWORD neq ''.toString()">
+				AND (A.TITLE like #{KEYWORD} OR A.SEARCH_KEYWORD like #{KEYWORD})
+		</if>
+		
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT EXHIBITION_IDX
+								FROM TE_EXHIBITION_HASHTAG H 
+								WHERE A.EXHIBITION_IDX = H.EXHIBITION_IDX 
+								AND H.HASHTAG_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		<if test="HASHTAGNAME neq ''.toString()">
+				AND  EXISTS (SELECT EXHIBITION_IDX
+									 FROM TE_EXHIBITION_HASHTAG H , TP_HASHTAG HT 
+									 WHERE H.HASHTAG_IDX = HT.HASHTAG_IDX 
+									 AND  A.EXHIBITION_IDX = H.EXHIBITION_IDX 
+									 AND HT.HASHTAG_NM = #{HASHTAGNAME}
+						)
+		</if>
+		ORDER BY DATE_FORMAT(A.REG_DT,'%Y.%m.%d %H:%i:%s') DESC		
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!--  기획전 리스트 개수 -->
+	<select id="getExhibitListCnt" parameterType="hashmap" resultType="int">
+	SELECT COUNT(DISTINCT A.EXHIBITION_IDX)
+		FROM TS_BRAND_MAPPING M INNER JOIN TE_EXHIBITION A ON A.EXHIBITION_IDX = M.GUBUN_IDX AND M.GUBUN = 'exhibit'
+		WHERE A.DISP_YN = 'Y' 
+		AND A.USE_YN = 'Y'
+		AND ( DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') )
+		AND ( A.DEVICE = 'A' OR A.DEVICE = #{DEVICE} )
+		<if test="KEYWORD neq ''.toString()">
+				AND (A.TITLE like #{KEYWORD} OR A.SEARCH_KEYWORD like #{KEYWORD})
+		</if>
+		
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT EXHIBITION_IDX 
+								FROM TE_EXHIBITION_HASHTAG H 
+								WHERE A.EXHIBITION_IDX = H.EXHIBITION_IDX 
+								AND H.HASHTAG_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		<if test="HASHTAGNAME neq ''.toString()">
+				AND  EXISTS (SELECT EXHIBITION_IDX 
+									 FROM TE_EXHIBITION_HASHTAG H , TP_HASHTAG HT 
+									 WHERE H.HASHTAG_IDX = HT.HASHTAG_IDX 
+									 AND  A.EXHIBITION_IDX = H.EXHIBITION_IDX 
+									 AND HT.HASHTAG_NM = #{HASHTAGNAME}
+						)
+		</if>
+	</select>
+	
+	<!--  스타일팁 리스트 -->
+	<select id="getTipList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.TIP_IDX, 			/* 팁 일련번호 */
+				   TG.GOODS_IDX,		/* 상품 일련번호 */
+				   B.GOODS_NM,		/* 상품 명 */
+				   A.TIP_TITLE,			/* 팁 제목 */
+				   A.TIP_INFO,			/* 팁 정보 */
+				   A.TIP_GUBUN,		/* 구분 */
+				   A.VIDEO_URL,		/* 동영상 URL */
+				   A.VIDEO_IMG,		/* 동영상 썸네일 이미지 */
+				   A.TIP_IMG,				/* 리스트 이미지 */
+				   A.TIP_REAL_IMG,	/* 리스트 실제 이미지 */
+				   A.LINK_YN,				/* PC 링크 여부 */
+				   A.LINK_URL,			/* PC 링크 URL */
+				   A.MO_LINK_URL,	/* MO 링크 URL */
+				   A.READ_CNT,			/* 조회 수 */
+				   DATE_FORMAT(A.REG_DT,'%Y.%m.%d') AS REG_DT
+		FROM  TA_STYLE_TIP A  LEFT JOIN TA_TIP_GOODS TG ON A.TIP_IDX = TG.TIP_IDX
+											LEFT JOIN VW_GOODS B ON TG.GOODS_IDX = B.GOODS_IDX 
+		WHERE A.DISP_YN = 'Y'
+		  		
+		<if test="KEYWORD neq ''.toString() and KEYWORD neq null">
+				AND (A.TIP_TITLE like #{KEYWORD} or B.GOODS_NM like #{KEYWORD} or A.SEARCH_KEYWORD like #{KEYWORD} )
+		</if>
+		
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT TIP_IDX 
+								FROM TA_STYLE_TIP_HASHTAG H 
+								WHERE A.TIP_IDX = H.TIP_IDX 
+								AND H.TIP_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		<if test="HASHTAGNAME neq ''.toString()">
+				AND  EXISTS (SELECT TIP_IDX 
+									 FROM TA_STYLE_TIP_HASHTAG H , TP_HASHTAG HT 
+									 WHERE H.HASHTAG_IDX = HT.HASHTAG_IDX 
+									 AND  A.TIP_IDX = H.TIP_IDX 
+									 AND HT.HASHTAG_NM = #{HASHTAGNAME}
+						)
+		</if>
+		
+		ORDER BY DATE_FORMAT(A.REG_DT,'%Y.%m.%d %H:%i:%s') DESC, B.GOODS_NM ASC			
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!--  스타입팁 리스트 개수 -->
+	<select id="getTipListCnt" parameterType="hashmap" resultType="int">
+	SELECT COUNT(*)
+		FROM  TA_STYLE_TIP A  LEFT JOIN TA_TIP_GOODS TG ON A.TIP_IDX = TG.TIP_IDX
+											LEFT JOIN VW_GOODS B ON TG.GOODS_IDX = B.GOODS_IDX 
+		WHERE A.DISP_YN = 'Y' 
+		<if test="KEYWORD neq ''.toString() and KEYWORD neq null">
+			AND (A.TIP_TITLE like #{KEYWORD} or B.GOODS_NM like #{KEYWORD} or A.SEARCH_KEYWORD like #{KEYWORD} )
+		</if>
+		
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT TIP_IDX 
+								FROM TA_STYLE_TIP_HASHTAG H 
+								WHERE A.TIP_IDX = H.TIP_IDX 
+								AND H.TIP_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		<if test="HASHTAGNAME neq ''.toString()">
+				AND  EXISTS (SELECT TIP_IDX 
+									 FROM TA_STYLE_TIP_HASHTAG H , TP_HASHTAG HT 
+									 WHERE H.HASHTAG_IDX = HT.HASHTAG_IDX 
+									 AND  A.TIP_IDX = H.TIP_IDX 
+									 AND HT.HASHTAG_NM = #{HASHTAGNAME}
+						)
+		</if>
+		
+	</select>
+	
+	
+	<!--  광고 리스트 -->
+	<select id="getBrandAdList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.AD_IDX, A.TITLE, A.VIDEO_URL_CODE
+		FROM TA_AD A
+		WHERE A.DISP_YN = 'Y'
+		<if test="KEYWORD neq ''.toString() and KEYWORD neq null">
+				AND (A.TITLE like #{KEYWORD} )
+		</if>
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT AD_IDX 
+								FROM TA_AD_HASHTAG H 
+								WHERE A.AD_IDX = H.AD_IDX 
+								AND H.AD_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		<if test="HASHTAGNAME neq ''.toString()">
+				AND  EXISTS (SELECT AD_IDX 
+									 FROM TA_AD_HASHTAG H , TP_HASHTAG HT 
+									 WHERE H.HASHTAG_IDX = HT.HASHTAG_IDX 
+									 AND  A.AD_IDX = H.AD_IDX 
+									 AND HT.HASHTAG_NM = #{HASHTAGNAME}
+						)
+		</if>
+		ORDER BY A.REG_DT DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+		
+	</select>
+	
+	<!--  광고 리스트 개수 -->
+	<select id="getBrandAdListCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TA_AD A
+		WHERE A.DISP_YN = 'Y'
+		<if test="KEYWORD neq ''.toString() and KEYWORD neq null">
+				AND (A.TITLE like #{KEYWORD} )
+		</if>
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT AD_IDX 
+								FROM TA_AD_HASHTAG H 
+								WHERE A.AD_IDX = H.AD_IDX 
+								AND H.AD_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		<if test="HASHTAGNAME neq ''.toString()">
+				AND  EXISTS (SELECT AD_IDX 
+									 FROM TA_AD_HASHTAG H , TP_HASHTAG HT 
+									 WHERE H.HASHTAG_IDX = HT.HASHTAG_IDX 
+									 AND  A.AD_IDX = H.AD_IDX 
+									 AND HT.HASHTAG_NM = #{HASHTAGNAME}
+						)
+		</if>
+	</select>
+	
+	
+	<!-- 매거진 리스트 -->
+	<select id="getMagazineList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MAGAZINE_IDX, A.TITLE, A.MAGAZINE_NM, A.MAGAZINE_IMG, A.MAGAZINE_DESC
+		FROM TA_MAGAZINE A
+		WHERE A.DISP_YN = 'Y'
+		<if test="KEYWORD neq ''.toString() and KEYWORD neq null">
+				AND (A.TITLE like #{KEYWORD} or A.SEARCH_KEYWORD  like #{KEYWORD} or A.MAGAZINE_NM  like #{KEYWORD} )
+		</if>
+		
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT MAGAZINE_IDX 
+								FROM TA_MAGAZINE_HASHTAG H 
+								WHERE A.MAGAZINE_IDX = H.MAGAZINE_IDX 
+								AND H.HASHTAG_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		<if test="HASHTAGNAME neq ''.toString()">
+				AND  EXISTS (SELECT MAGAZINE_IDX 
+									 FROM TA_MAGAZINE_HASHTAG H , TP_HASHTAG HT 
+									 WHERE A.MAGAZINE_IDX = H.MAGAZINE_IDX 
+									 AND H.HASHTAG_IDX = HT.HASHTAG_IDX 
+									 AND HT.HASHTAG_NM = #{HASHTAGNAME}
+						)
+		</if>
+		ORDER BY A.REG_DT DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 매거진 총 건수 -->
+	<select id="getMagazineListCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TA_MAGAZINE A
+		WHERE A.DISP_YN = 'Y'
+		<if test="KEYWORD neq ''.toString() and KEYWORD neq null">
+				AND (A.TITLE like #{KEYWORD} or A.SEARCH_KEYWORD  like #{KEYWORD} or A.MAGAZINE_NM  like #{KEYWORD} )
+		</if>
+		
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT MAGAZINE_IDX 
+								FROM TA_MAGAZINE_HASHTAG H 
+								WHERE A.MAGAZINE_IDX = H.MAGAZINE_IDX 
+								AND H.HASHTAG_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		<if test="HASHTAGNAME neq ''.toString()">
+				AND  EXISTS (SELECT MAGAZINE_IDX 
+									 FROM TA_MAGAZINE_HASHTAG H , TP_HASHTAG HT 
+									 WHERE A.MAGAZINE_IDX = H.MAGAZINE_IDX 
+									 AND H.HASHTAG_IDX = HT.HASHTAG_IDX 
+									 AND HT.HASHTAG_NM = #{HASHTAGNAME}
+						)
+		</if>
+	</select>
+	
+	<!-- 후기 리스트 -->
+	<select id="getReviewList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.REVIEW_IDX, A.RATING, A.REVIEW_DESC, A.IMG1, A.IMG2, A.IMG3, B.GOODS_IDX, B.GOODS_CD, B.GOODS_NM, C.IMG_FILE, 
+				   FN_MASK_NM(D.MEMBER_NM) AS MEMBER_NM
+		FROM TP_REVIEW A INNER JOIN TP_GOODS B ON A.GOODS_IDX = B.GOODS_IDX
+									INNER JOIN TP_GOODS_FILE C ON A.GOODS_IDX = C.GOODS_IDX AND MAIN_FLAG = 'Y'
+									INNER JOIN TM_MEMBER_DETAIL D ON A.MEMBER_IDX = D.MEMBER_DETAIL_IDX
+		WHERE 1=1
+		
+		<if test="KEYWORD neq ''.toString() and KEYWORD neq null">
+				AND (A.REVIEW_DESC like #{KEYWORD})
+		</if>
+		
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT MAGAZINE_IDX 
+								FROM TA_MAGAZINE_HASHTAG H 
+								WHERE A.MAGAZINE_IDX = H.MAGAZINE_IDX 
+								AND H.HASHTAG_IDX IN (${HASHTAG}) 
+						)
+		</if>
+		ORDER BY A.REG_DT DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 매거진 총 건수 -->
+	<select id="getReviewCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TP_REVIEW A INNER JOIN TP_GOODS B ON A.GOODS_IDX = B.GOODS_IDX
+									INNER JOIN TP_GOODS_FILE C ON A.GOODS_IDX = C.GOODS_IDX AND MAIN_FLAG = 'Y'
+									INNER JOIN TM_MEMBER_DETAIL D ON A.MEMBER_IDX = D.MEMBER_DETAIL_IDX
+		WHERE 1=1
+		
+		<if test="KEYWORD neq ''.toString() and KEYWORD neq null">
+				AND (A.REVIEW_DESC like #{KEYWORD})
+		</if>
+		
+		<if test="HASHTAG neq ''.toString()">
+				AND  EXISTS (SELECT MAGAZINE_IDX 
+								FROM TA_MAGAZINE_HASHTAG H 
+								WHERE A.MAGAZINE_IDX = H.MAGAZINE_IDX 
+								AND H.HASHTAG_IDX IN (${HASHTAG}) 
+						)
+		</if>
+	</select>
+	
+	<!--  GNB 해시태그 리스트 -->
+	<select id="getGnbHashList" parameterType="hashmap" resultType="sqlMap">
+		SELECT
+			A.MAIN_GUBUN,
+			CASE
+				WHEN A.MAIN_GUBUN = 'GB' THEN 'gatsby'
+				WHEN A.MAIN_GUBUN = 'BF' THEN 'bifesta'
+				WHEN A.MAIN_GUBUN = 'LD' THEN 'lucidol'
+				WHEN A.MAIN_GUBUN = 'MM' THEN 'mamabutter'
+				WHEN A.MAIN_GUBUN = 'DP' THEN 'dentalpro'
+				WHEN A.MAIN_GUBUN = 'CL' THEN 'charley'
+				WHEN A.MAIN_GUBUN = 'BR' THEN 'barrier'
+				WHEN A.MAIN_GUBUN = 'GP' THEN 'gpcreate'
+				WHEN A.MAIN_GUBUN = 'LO' THEN 'lucido'
+			END AS MAIN_TYPE,
+			A.GUBUN_IDX,
+			B.HASHTAG_IDX,
+			B.HASHTAG_NM,
+			B.RELATED_SEARCH,
+			B.HASHTAG_IMG,
+			B.HASHTAG_REAL_IMG,
+			B.USE_YN,
+			B.MAIN_YN
+		FROM TS_MAIN A INNER JOIN TP_HASHTAG B ON A.GUBUN_IDX = B.HASHTAG_IDX
+		WHERE A.GUBUN = 'hashtag'
+		ORDER BY A.ORDER_IDX
+	</select>
+	
+</mapper>

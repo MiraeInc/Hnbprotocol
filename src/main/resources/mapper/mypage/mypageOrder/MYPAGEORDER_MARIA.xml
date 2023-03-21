@@ -1,0 +1,1711 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mypageOrderDAO">
+
+	<!-- 쿠폰 갯수, 포인트, 상품 후기 건수, 이 달의 샘플 신청 건수 -->
+	<select id="getMemberCntInfo" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getMemberCntInfo **/
+		/* 회원 쿠폰 갯수 */
+		SELECT (
+			select COUNT(*) from (
+				SELECT A.COUPON_MEMBER_IDX,
+					       A.COUPON_IDX,
+					       A.MEMBER_IDX,
+					       A.COUPON_NM 
+					  FROM TO_COUPON_MEMBER A
+					  WHERE A.USE_YN = 'N' AND A.ORDER_IDX IS NULL AND A.ORDER_DETAIL_IDX IS NULL
+					  AND A.METHOD IN ('D','S')
+					  AND (A.USE_DATE_LIMIT_YN = 'N' OR ( A.USE_DATE_LIMIT_YN IN ('Y', 'P') AND  DATE(A.REAL_USE_START_DT) <![CDATA[<=]]> CURDATE() AND DATE(A.REAL_USE_END_DT) <![CDATA[>=]]> CURDATE() ))
+					 AND A.MEMBER_IDX = #{MEMBERIDX} 
+			UNION ALL
+			SELECT  0 AS COUPON_MEMBER_IDX,
+					       A.COUPON_IDX,
+					       #{MEMBERIDX}  AS MEMBER_IDX,
+					       A.COUPON_NM    
+					FROM TO_COUPON A
+					WHERE A.USE_YN = 'Y'   
+			        AND A.METHOD = 'A'       	 
+						AND (CURDATE() <![CDATA[>=]]> DATE(DOWN_START_DT) OR DOWN_START_DT IS NULL)	/* 다운로드 시작일 */
+						AND (CURDATE() <![CDATA[<=]]> DATE(DOWN_END_DT) OR DOWN_END_DT IS NULL) 		/* 다운로드 종료일 */
+						AND (A.USE_DATE_LIMIT_YN IN ('N','P') OR (USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(USE_START_DT) OR USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(USE_END_DT) OR USE_END_DT IS NULL)))	/* 사용기한 제한여부 */
+						AND (A.TARGET_MEMBER = 'A' 
+									OR (A.TARGET_MEMBER = 'G' AND A.TARGET_GRADE = (select LEVEL_IDX from tm_member_detail d where d.MEMBER_DETAIL_IDX = #{MEMBERIDX}  ) ) 
+									OR (A.TARGET_MEMBER = 'M' AND 
+											EXISTS ( /* 대상 회원에 포함되어 있는지 */
+														SELECT COUPON_IDX 
+														FROM TO_COUPON_TARGET_MEMBER
+														WHERE COUPON_IDX = A.COUPON_IDX
+														AND MEMBER_IDX = #{MEMBERIDX} 
+														)
+										)
+							  )
+						AND (A.ISSUE_CNT_LIMIT_YN = 'N' OR (A.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(A.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(A.MAX_ISSUE_CNT,0) > 0 AND IFNULL(A.MAX_ISSUE_CNT,0) > (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = A.COUPON_IDX)))))	/* 최대 발급수량 조건 */
+			) AA
+		) AS COUPON_CNT,
+		/* 회원 포인트 */
+		IFNULL((
+			SELECT IFNULL(POINT_PRICE,0) AS POINT 
+			FROM TM_MEMBER_INFO
+			WHERE MEMBER_INFO_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+		),0) AS POINT,
+		/* 상품 후기 건수 */
+		(
+			SELECT (
+				/* 구매확정 후 리뷰 안 쓴 건수 */
+				SELECT COUNT(*)
+				FROM TO_ORDER O
+				JOIN TO_ORDER_DETAIL OD ON O.ORDER_IDX = OD.ORDER_IDX
+				LEFT OUTER JOIN TP_REVIEW R ON R.MEMBER_IDX = #{MEMBERIDX} AND OD.ORDER_DETAIL_IDX = R.ORDER_DETAIL_IDX
+				WHERE OD.ORDER_STATUS_CD = '900'
+				AND O.MEMBER_IDX = #{MEMBERIDX}
+				AND R.REVIEW_IDX IS NULL
+				) + 
+				(
+				/* 샘플신청 당첨 후 리뷰 안 쓴 건수 */
+				SELECT COUNT(*)
+				FROM TA_SAMPLE_WINNER W
+				LEFT OUTER JOIN TP_REVIEW R ON R.MEMBER_IDX = #{MEMBERIDX} AND R.ORDER_DETAIL_IDX IS NULL AND W.WINNER_IDX = R.WINNER_IDX 
+				WHERE W.MEMBER_IDX = #{MEMBERIDX}
+				AND R.REVIEW_IDX IS NULL
+				)
+		) AS REVIEW_CNT,
+		/* 이 달의 샘플 신청 건수 */
+		(
+			SELECT COUNT(*)
+			FROM TA_SAMPLE A LEFT OUTER JOIN TA_SAMPLE_REPLY B ON A.SAMPLE_IDX = B.SAMPLE_IDX
+			WHERE DATE_FORMAT(A.START_DT,'%Y-%m-%d %H:%i') <![CDATA[<=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') AND DATE_FORMAT(A.END_DT,'%Y-%m-%d %H:%i') <![CDATA[>=]]> DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')
+				AND B.REG_IDX = #{MEMBERIDX}
+		) AS SAMPLE_CNT
+		,MONTH(CURDATE()) as CURRENT_MONTH
+        ,YEAR(DATE_ADD(CURDATE() , interval -2 Month)) as START_YEAR
+        ,MONTH(DATE_ADD(CURDATE() , interval -2 Month)) as START_MONTH
+        ,YEAR(CURDATE()) as END_YEAR
+        ,MONTH(CURDATE()) as END_MONTH
+        , (SELECT IFNULL(SUM(d.PAY_PRICE),0)
+        		FROM TO_ORDER_DETAIL d INNER JOIN TO_ORDER o on o.ORDER_IDX = d.order_Idx 
+			WHERE o.ORDER_DT <![CDATA[>=]]>  date(concat(YEAR(DATE_ADD(CURDATE() , interval -2 Month)),'-',MONTH(DATE_ADD(CURDATE() , interval -2 Month)),'-01'))
+            AND o.ORDER_DT <![CDATA[<=]]>  NOW()
+			AND o.MEMBER_IDX = #{MEMBERIDX}
+            AND d.order_status_cd = '900'  /* 구매확정 */
+          ) AS SUM_ORDER_PRICE     
+          
+	</select>
+	
+	<!-- 마이페이지 메인 - 주문 상태별 건수 -->
+	<select id="getOrderStatusCnt" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getOrderStatusCnt **/
+		SELECT
+			O.CNT_ALL,	/* 주문 접수(입금 대기), 결제 완료, 상품 준비중, 발송 완료(배송중), 구매확정 건수 */
+			O.CNT_100,	/* 주문 접수(입금 대기) 건수 */
+			O.CNT_200,	/* 결제 완료 건수 */
+			O.CNT_300,	/* 상품 준비중 건수 */
+			O.CNT_400,	/* 발송 완료(배송중) 건수 */
+			O.CNT_900,	/* 구매 확정 건수 */
+			C.CNT_800,	/* 취소 건수 */
+			C.CNT_600,	/* 교환 건수 */
+			C.CNT_700		/* 반품 건수 */
+		FROM (
+			SELECT
+				IFNULL(SUM(CASE WHEN ORDER_STATUS_CD IN ('100','200','300','400','900') THEN 1 ELSE 0 END),0) AS CNT_ALL,	/* 주문 접수(입금 대기), 결제 완료, 상품 준비중, 발송 완료(배송중), 구매 확정 건수 */
+				IFNULL(SUM(CASE WHEN ORDER_STATUS_CD = '100' THEN 1 ELSE 0 END),0) AS CNT_100,	/* 주문 접수(입금 대기) 건수 */
+				IFNULL(SUM(CASE WHEN ORDER_STATUS_CD = '200' THEN 1 ELSE 0 END),0) AS CNT_200,	/* 결제 완료 건수 */
+				IFNULL(SUM(CASE WHEN ORDER_STATUS_CD = '300' THEN 1 ELSE 0 END),0) AS CNT_300,	/* 상품 준비중 건수 */
+				IFNULL(SUM(CASE WHEN ORDER_STATUS_CD = '400' THEN 1 ELSE 0 END),0) AS CNT_400,	/* 발송 완료(배송중) 건수 */
+				IFNULL(SUM(CASE WHEN ORDER_STATUS_CD = '900' THEN 1 ELSE 0 END),0) AS CNT_900		/* 구매 확정 건수 */
+			FROM TO_ORDER
+			WHERE ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','690','700','750','790','800','890','900')
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+					AND MEMBER_ORDER_YN = 'Y'
+					AND MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+				</when>
+				<otherwise>																<!-- 비회원 -->
+					AND MEMBER_ORDER_YN = 'N'
+					AND ORDER_CD = #{ORDERCD}	/* 비회원 주문 코드 */
+				</otherwise>
+			</choose>
+		) O,
+		(
+			SELECT 
+				IFNULL(SUM(CASE WHEN C.CLAIM_TYPE = 'C' THEN 1 ELSE 0 END),0) AS CNT_800,	/* 취소 건수 */
+				IFNULL(SUM(CASE WHEN C.CLAIM_TYPE = 'X' THEN 1 ELSE 0 END),0) AS CNT_600,	/* 교환 건수 */
+				IFNULL(SUM(CASE WHEN C.CLAIM_TYPE = 'R' THEN 1 ELSE 0 END),0) AS CNT_700	/* 반품 건수 */
+			FROM TO_CLAIM C
+			JOIN TO_ORDER O ON C.ORDER_IDX = O.ORDER_IDX
+			WHERE O.ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','690','700','750','790','800','890','900')
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+					AND O.MEMBER_ORDER_YN = 'Y'
+					AND O.MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+				</when>
+				<otherwise>																<!-- 비회원 -->
+					AND O.MEMBER_ORDER_YN = 'N'
+					AND O.ORDER_CD = #{ORDERCD}	/* 비회원 주문 코드 */
+				</otherwise>
+			</choose>
+		) C
+	</select>
+	
+	<!-- 마이페이지 메인 - 주문 리스트(최근 1달 5건)  -->
+	<select id="getOrderListFor1Month" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getOrderListFor1Month **/
+		SELECT
+			O.ORDER_IDX,						/* 주문 마스터 일련번호	100000 번부터 시작 */
+			O.ORDER_CD,							/* 주문코드	YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+			O.MEMBER_ORDER_YN,			/* 회원/비회원 구분	Y : 회원주문, N : 비회원주문 */
+			O.MEMBER_IDX,						/* 회원 일련번호	TM_MEMBER 일련번호 */
+			O.MEMBER_ID,						/* 회원 아이디 */	
+			O.MEMBER_GRADE_IDX,			/* 회원등급 일련번호	TM_MEMBER_GRADE 일련번호 */
+			O.DEVICE,								/* 디바이스	P : PC, M : MOBILE, A : APP */
+			O.ORDER_DT,							/* 주문일자 */
+			O.ORDER_STATUS_CD,				/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			O.PAY_DT,								/* 결제일자	PG사 결제성공일시 */
+			O.PAY_TYPE,							/* 결제수단	(공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : Npay, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+			O.ESCROW_YN,						/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+			O.TOTAL_ORDER_PRICE,			/* 총 주문금액	총 상품금액 */
+			O.TOTAL_PAY_PRICE,				/* 결제금액	실제 PG사 결제금액 */
+			O.NOTCANCELCNT,                 /* 100, 200 이 아닌 주문상세 개수 (전체취소여부가능 판단) */
+			O.ENABLE_CLAIM,                  /*  교환,반품 버튼 노출 (0보다크면) */
+			OD.ORDER_DETAIL_IDX,			/* 주문 상세 일련번호 */
+			OD.GOODS_IDX,						/* 상품 일련번호 ( TP_GOODS 일련번호 ) */
+			OD.ORDER_CNT,						/* 상품 개수 */
+			OD.ORDER_STATUS_CD AS DETAIL_STATUS_CD,	/* 상세 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			FN_ORDER_STATUS_NM(OD.ORDER_STATUS_CD) AS DETAIL_STATUS_NM,	/* 상세 주문상태명 */
+			OD.DELIVERY_COMP_CD,			/* 배송업체 코드 */
+			CC.CD_INFO AS TRACKING_URL,	/* 배송추적 URL */
+			OD.INVOICE_NO,						/* 송장번호 */
+			OD.SHIPPING_DT,					/* 발송일 */
+			OD.DELIVERED_DT,					/* 배송완료일 */
+			OD.PURCHASE_DT,					/* 구매확정일 */ 			
+			G.SET_FLAG, 							/* 세트상품 구분 ( Y : 세트 상품 N : 일반상품 ) */
+			G.GOODS_CD, 						/* 상품코드 ( FRONT표기되는 상품코드 ) */
+			G.GOODS_NM, 						/* 상품명 ( 상품명 ) */
+			G.BRAND_IDX,						/* 브랜드 일련번호 */
+			G.BRAND_NM,							/* 브랜드명 */
+			G.PRICE, 								/* 판매가 */
+			G.DISCOUNT_RATE, 				/* 할인율 */
+			G.DISCOUNT_PRICE, 				/* 할인가 */
+			G.GOODS_BADGE, 					/* 상품유형 ( TC_COMMON_CD 테이블  GOODS_BADGE에 해당 되는 코드명 콤마 단위 구분(NEW,BEST등) ) */
+			GF.IMG_FILE AS MAIN_FILE,		/* 이미지 파일 */		
+			G.SOLDOUT_YN,
+			G.BEST_YN,
+			G.NEW_YN,
+			G.ONLINE_YN,
+			G.OPO_YN,
+			G.TPO_YN,
+			G.POINTICON_YN,
+			G.SALEICON_YN,
+			G.AUTO_COUPON_YN,
+			(SELECT COUNT(*) FROM tp_review rv where rv.ORDER_DETAIL_IDX = OD.ORDER_DETAIL_IDX AND rv.MEMBER_IDX AND O.MEMBER_IDX) REVIEW_CNT		/*리뷰 작성 개수*/
+		FROM (
+			/* 최근 한달내 주문중 최대 5건 */
+			SELECT
+				ORDER_IDX,								/* 주문 마스터 일련번호	100000 번부터 시작 */
+				ORDER_CD,								/* 주문코드	YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+				MEMBER_ORDER_YN,					/* 회원/비회원 구분	Y : 회원주문, N : 비회원주문 */
+				MEMBER_IDX,								/* 회원 일련번호	TM_MEMBER 일련번호 */
+				MEMBER_ID,								/* 회원 아이디 */	
+				MEMBER_GRADE_IDX,					/* 회원등급 일련번호	TM_MEMBER_GRADE 일련번호 */
+				DEVICE,										/* 디바이스	P : PC, M : MOBILE, A : APP */
+				DATE_FORMAT(ORDER_DT,'%Y.%m.%d') AS ORDER_DT,	/* 주문일자 */
+				ORDER_STATUS_CD,						/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+				PAY_DT,										/* 결제일자	PG사 결제성공일시 */
+				PAY_TYPE,									/* 결제수단	(공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : Npay, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+				ESCROW_YN,								/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+				TOTAL_ORDER_PRICE,					/* 총 주문금액	총 상품금액 */
+				TOTAL_PAY_PRICE,						/* 결제금액	실제 PG사 결제금액 */
+				( select count(*) from to_order_detail b where a.ORDER_IDX = b.ORDER_IDX and b.ORDER_STATUS_CD <![CDATA[<>]]>  '200' and b.ORDER_STATUS_CD <![CDATA[<>]]>  '100') NOTCANCELCNT,  /*  0 보다 크면 전체취소할수 없음. */
+				( select count(*) from to_order_detail b where a.ORDER_IDX = b.ORDER_IDX and b.ORDER_STATUS_CD in ('400','500','670','690'))  ENABLE_CLAIM  /*  0 보다 크면 교환, 반품 버튼 노출 (발송완료, 배송완료, 교환완료만 교환/신청 가능, 반품은 교환불가에서도 가능) */								
+			FROM TO_ORDER a
+			WHERE ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','670','690','700','750','770','790','800','890','900')
+				AND ORDER_DT <![CDATA[>=]]> ADDDATE(NOW(), INTERVAL -1 MONTH)
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+					AND MEMBER_ORDER_YN = 'Y'
+					AND MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+				</when>
+				<otherwise>																<!-- 비회원 -->
+					AND MEMBER_ORDER_YN = 'N'
+					AND ORDER_CD = #{ORDERCD}	/* 비회원 주문 코드 */
+				</otherwise>
+			</choose>
+			ORDER BY ORDER_IDX DESC
+			LIMIT 5
+		) O
+		JOIN TO_ORDER_DETAIL OD ON O.ORDER_IDX = OD.ORDER_IDX
+		JOIN VW_GOODS_ORIGIN G ON OD.GOODS_IDX = G.GOODS_IDX
+		LEFT OUTER JOIN TP_GOODS_FILE GF ON G.GOODS_IDX = GF.GOODS_IDX AND GF.MAIN_FLAG = 'Y'
+		LEFT OUTER JOIN TS_COMMON_CD CC ON OD.DELIVERY_COMP_CD = CC.COMMON_CD
+		ORDER BY O.ORDER_IDX DESC, OD.ORDER_DETAIL_IDX
+	</select>
+	
+	<!-- 마이페이지 메인 - 주문 리스트(최근 1달 5건) 건수  -->
+	<select id="getOrderListFor1MonthCnt" parameterType="hashmap" resultType="int">
+		/** mypageOrderDAO.getOrderListFor1MonthCnt **/
+		SELECT COUNT(*)
+		FROM (
+			/* 최근 한달내 주문중 최대 5건 */
+			SELECT ORDER_IDX
+			FROM TO_ORDER
+			WHERE ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','670','690','700','750','770','790','800','890','900')
+				AND ORDER_DT <![CDATA[>=]]> ADDDATE(NOW(), INTERVAL -1 MONTH)
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+					AND MEMBER_ORDER_YN = 'Y'
+					AND MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+				</when>
+				<otherwise>																<!-- 비회원 -->
+					AND MEMBER_ORDER_YN = 'N'
+					AND ORDER_CD = #{ORDERCD}	/* 비회원 주문 코드 */
+				</otherwise>
+			</choose>
+			<if test="DEVICEGUBUN eq 'M'.toString() ">
+			AND ORDER_STATUS_CD IN ('100','200','300','400','900')
+			</if>
+			ORDER BY ORDER_IDX DESC
+			<if test="DEVICEGUBUN eq 'P'.toString() ">
+			LIMIT 5
+			</if>
+		) O
+	</select>
+
+	<!-- 주문관리 - lgu+ 결제 결과  -->
+	<select id="getXpayResult" parameterType="hashmap" resultType="sqlMap">
+
+	select a.XPAY_RESULT_IDX,
+	       a.ORDER_CD,
+	       a.LGD_RESPCODE,
+	       a.LGD_RESPMSG,
+	       a.LGD_MID,
+	       a.LGD_OID,
+	       a.LGD_AMOUNT,
+	       a.LGD_TID,
+	       a.LGD_PAYTYPE,
+	       a.LGD_PAYDATE,
+	       a.LGD_HASHDATA,
+	       a.LGD_TIMESTAMP,
+	       a.LGD_BUYER,
+	       a.LGD_PRODUCTINFO,
+	       a.LGD_BUYERID,
+	       FN_DECRYPT(a.LGD_BUYERADDRESS) LGD_BUYERADDRESS,
+	       FN_DECRYPT(a.LGD_BUYERPHONE) LGD_BUYERPHONE,
+	       FN_DECRYPT(a.LGD_BUYEREMAIL) LGD_BUYEREMAIL,
+	       a.LGD_PRODUCTCODE,
+	       a.LGD_RECEIVER,
+	       a.LGD_RECEIVERPHONE,
+	       a.LGD_DELIVERYINFO,
+	       a.LGD_FINANCECODE,
+	       a.LGD_FINANCENAME,
+	       a.LGD_FINANCEAUTHNUM,
+	       a.LGD_ESCROWYN,
+	       a.LGD_CASHRECEIPTNUM,
+	       a.LGD_CASHRECEIPTSELFYN,
+	       a.LGD_CASHRECEIPTKIND,
+	       a.LGD_CARDNUM,
+	       a.LGD_CARDINSTALLMONTH,
+	       a.LGD_CARDNOINTYN,
+	       a.LGD_AFFILIATECODE,
+	       a.LGD_CARDGUBUN1,
+	       a.LGD_CARDGUBUN2,
+	       a.LGD_CARDACQUIRER,
+	       a.LGD_PCANCELFLAG,
+	       a.LGD_PCANCELSTR,
+	       a.LGD_TRANSAMOUNT,
+	       a.LGD_EXCHANGERATE,
+	       a.LGD_DISCOUNTUSEYN,
+	       a.LGD_DISCOUNTUSEAMOUNT,
+	       a.LGD_ACCOUNTNUM,
+	       a.LGD_ACCOUNTOWNER,
+	       a.LGD_PAYER,
+	       a.LGD_CASTAMOUNT,
+	       a.LGD_CASCAMOUNT,
+	       a.LGD_CASFLAG,
+	       a.LGD_CASSEQNO,
+	       a.LGD_SAOWNER,
+	       a.LGD_TELNO,
+	       a.LGD_PAYKEY,
+	       a.LGD_BUYERSSN,
+	       a.LGD_CARDNOINTEREST_YN,
+	       a.LGD_VANCODE,
+	       a.REG_DT
+	  FROM TO_XPAY_RESULT a
+      WHERE  a.ORDER_CD = #{ORDERCD}
+	</select>
+
+	<!-- 주문관리 - PAYCO 결제결과  -->
+	<select id="getPaycoApprovalResult" parameterType="hashmap" resultType="sqlMap">
+
+		SELECT a.APPROVAL_IDX,
+		       a.ORDER_IDX,
+		       a.sellerKey,
+		       a.reserveOrderNo,
+		       a.orderNo,
+		       a.sellerOrderReferenceKey,
+		       a.orderCertifyKey,
+		       a.memberName,
+		       a.memberEmail,
+		       a.orderChannel,
+		       a.totalOrderAmt,
+		       a.totalDeliveryFeeAmt,
+		       a.totalRemoteAreaDeliveryFeeAmt,
+		       a.totalPaymentAmt,
+		       a.receiptPaycoPointAmt,
+		       a.receiptPaycoPointTaxfreeAmt,
+		       a.receiptPaycoPointTaxableAmt,
+		       a.receiptPaycoPointVatAmt,
+		       a.receiptPaycoPointServiceAmt,
+		       a.paymentCompletionYn,
+		       a.paymentCompleteYmdt,
+		       a.orderProducts,
+		       a.REG_DT
+		  FROM TO_PAYCO_APPROVAL A
+		  WHERE sellerOrderReferenceKey =  #{ORDERCD}
+	</select>
+  
+	<insert id="insertClaimMaster" parameterType="hashmap">
+		INSERT INTO TO_CLAIM
+		(
+			ORDER_IDX,											/* 주문 마스터 일련번호 */
+			CLAIM_TYPE,											/* 클레임 구분 (C : 취소, X : 교환, R : 반품) */
+			DEVICE,													/* 디바이스 (P : PC, M : MOBILE, A : APP) */
+			REST_PAY_PRICE,									/* 잔여 결제금액 */
+			TOTAL_REFUND_CHARGE,							/* 총 환불수수료 */			
+			REFUND_SUBTRACTION,							/* 환불차감금액 */
+			FREE_SHIPPING_COUPON_REFUND_PRICE,	/* 무료배송 쿠폰 환불 금액 */
+			TOTAL_GIFT_COUPON_REFUND_PRICE,		/* 총 상품 쿠폰 환불 금액 */
+			TOTAL_CART_COUPON_REFUND_PRICE,		/* 총 장바구니 쿠폰 환불 금액 */
+			TOTAL_COUPON_REFUND_PRICE,				/* 총 쿠폰 환불 금액 */
+			SHIPPING_REFUND_PRICE	,						/* 배송비 환불 금액 */
+			TOTAL_POINT_REFUND_PRICE,					/* 포인트 결제 환불 금액 */
+			TOTAL_PRE_POINT_REFUND_PRICE,			/* 선포인트 결제 환불 금액 */
+			TOTAL_REFUND_PRICE,							/* 총 환불금액 */
+			TOTAL_REFUND_POINT,							/* 총 환불 포인트 */
+			TOTAL_PROMOTIONCODE_PRICE,
+			REASON_CD,											/* 사유코드 (공통코드) */
+			REASON,												/* 사유 상세 */
+              <!-- 반품 신청용 -->
+              <if test="REFUND_BANK_CODE != null and REFUND_BANK_CODE != '' ">
+              	REFUND_BANK_CODE,
+              </if>
+              <if test="REFUND_ACCOUNT != null and REFUND_ACCOUNT != '' ">
+              	REFUND_ACCOUNT,
+              </if>
+              <if test="REFUND_DEPOSITOR != null and REFUND_DEPOSITOR != '' ">
+              	REFUND_DEPOSITOR,
+              </if>
+              <!-- // 반품 신청용 -->
+              <!-- 취소, 교환, 반품 신청용 -->
+              <if test="REQ_MEMBER_IDX != null and REQ_MEMBER_IDX != '' ">
+              	REQ_MEMBER_IDX,
+              	REQ_DT,
+              </if>
+              <if test="REQ_HTTP_USER_AGENT != null and REQ_HTTP_USER_AGENT != '' ">
+              	REQ_HTTP_USER_AGENT,
+              </if>
+              <if test="REQ_IP != null and REQ_IP != '' ">
+              	REQ_IP,
+              </if>
+              <!-- // 취소, 교환, 반품 신청용 -->
+			<!-- 취소 신청용 -->
+			<if test="CLAIM_TYPE != null and CLAIM_TYPE eq 'C'.toString() ">
+				REFUND_METHOD,									/* 환불방식 (P : PG사 결제취소, A : 현금환불) */
+				REFUND_STATE,										/* 환불상태 (E : 처리 완료) */
+				REFUND_MEMBER_IDX,								/* 환불 처리자 일련번호 */
+				REFUND_HTTP_USER_AGENT,					/* 환불 처리자 USER_AGENT */
+				REFUND_IP,											/* 환불 처리자 IP */
+				REFUND_DT,											/* 환불 처리일자 */
+			</if>
+			<!-- // 취소 신청용 -->
+              REG_IDX,
+              REG_HTTP_USER_AGENT,
+              REG_IP,
+              REG_DT
+       )
+       VALUES
+       (
+              #{ORDER_IDX},
+              #{CLAIM_TYPE},
+              #{DEVICE},
+              #{REST_PAY_PRICE},
+              #{TOTAL_REFUND_CHARGE},
+              #{REFUND_SUBTRACTION},
+              #{FREE_SHIPPING_COUPON_REFUND_PRICE},
+              #{TOTAL_GIFT_COUPON_REFUND_PRICE},
+              #{TOTAL_CART_COUPON_REFUND_PRICE},
+              #{TOTAL_COUPON_REFUND_PRICE},
+              #{SHIPPING_REFUND_PRICE},
+              #{TOTAL_POINT_REFUND_PRICE},
+              #{TOTAL_PRE_POINT_REFUND_PRICE},
+              #{TOTAL_REFUND_PRICE},
+              #{TOTAL_REFUND_POINT},
+              #{TOTAL_PROMOTIONCODE_PRICE},
+			  #{REASON_CD},
+              #{REASON},
+              <!-- 반품 신청용 -->
+              <if test="REFUND_BANK_CODE != null and REFUND_BANK_CODE != '' ">
+              	#{REFUND_BANK_CODE},
+              </if>
+              <if test="REFUND_ACCOUNT != null and REFUND_ACCOUNT != '' ">
+              	#{REFUND_ACCOUNT},
+              </if>
+              <if test="REFUND_DEPOSITOR != null and REFUND_DEPOSITOR != '' ">
+              	#{REFUND_DEPOSITOR},
+              </if>
+              <!-- // 반품 신청용 -->
+              <!-- 취소, 교환, 반품 신청용 -->
+              <if test="REQ_MEMBER_IDX != null and REQ_MEMBER_IDX != '' ">
+              	#{REQ_MEMBER_IDX},
+              	NOW(),
+              </if>
+              <if test="REQ_HTTP_USER_AGENT != null and REQ_HTTP_USER_AGENT != '' ">
+              	#{REQ_HTTP_USER_AGENT},
+              </if>
+              <if test="REQ_IP != null and REQ_IP != '' ">
+              	#{REQ_IP},
+              </if>
+              <!-- // 취소, 교환, 반품 신청용 -->
+			<!-- 취소 신청용 -->
+			<if test="CLAIM_TYPE != null and CLAIM_TYPE eq 'C'.toString() ">
+				#{REFUND_METHOD},
+				#{REFUND_STATE},
+				#{REFUND_MEMBER_IDX},
+				#{REFUND_HTTP_USER_AGENT},
+				#{REFUND_IP},
+				NOW(),
+			</if>
+			<!-- // 취소 신청용 -->
+              #{REG_IDX},
+              #{REG_HTTP_USER_AGENT},
+              #{REG_IP},
+              NOW()
+       )
+       
+		<selectKey keyProperty="CLAIM_IDX" resultType="int" order="AFTER">
+			    SELECT LAST_INSERT_ID()
+		</selectKey>
+    </insert>
+    
+  	<insert id="insertClaimDetailAllCancel" parameterType="hashmap">
+		INSERT INTO TO_CLAIM_DETAIL 
+		(
+		   CLAIM_IDX,
+		   ORDER_DETAIL_IDX,
+		   CLAIM_CNT,
+		   REFUND_CHARGE,
+		   GIFT_COUPON_REFUND_PRICE,
+		   CART_COUPON_REFUND_PRICE,
+		   POINT_REFUND_PRICE,
+		   PRE_POINT_REFUND_PRICE,
+		   REFUND_PRICE,
+		   REFUND_POINT,
+		   APPROVE_YN,
+		   REJECT_REASON,
+		   REG_IDX,
+		   REG_HTTP_USER_AGENT,
+		   REG_IP,
+		   REG_DT
+		)
+		SELECT 
+			   #{CLAIM_IDX},
+		       ORDER_DETAIL_IDX,
+		       ORDER_CNT,
+		       0,                               -- 환불수수료
+		       GIFT_COUPON_PRICE,
+		       CART_COUPON_PRICE,
+		       POINT_PRICE,
+		       PRE_POINT_PRICE,
+		       PAY_PRICE,
+		       SAVE_POINT,
+		       'Y',
+		       '주문자 직접 취소',
+			   #{REG_IDX},
+			   #{REG_HTTP_USER_AGENT},
+			   #{REG_IP},
+		       NOW()
+		  FROM TO_ORDER_DETAIL
+		  WHERE ORDER_IDX = #{ORDER_IDX}
+    </insert>
+  
+  
+  	<!-- 
+  	    취소, 반품 DB 관련 처리 모듈
+		파라미터 설명
+		P_CLAIM_IDX			INT					클레임테이블 번호
+ 	-->
+	<select id="procSpOrderCancelRefund" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="sqlMap">
+		{ CALL SP_ORDER_CANCEL_REFUND(#{CLAIM_IDX, mode=IN, jdbcType=INTEGER}) }
+	</select>
+	
+	
+	<!-- 주문 배송지 수정 -->
+	<update id="updateOrderMasterDelivery" parameterType="hashmap">
+		UPDATE TO_ORDER
+		SET
+			RECEIVER_NM = #{RECEIVERNM},  													/* 받는 사람 이름 */
+			RECEIVER_ADDR = FN_ENCRYPT(#{RECEIVERADDR}),  											/* 받는 사람 주소 (도로명주소) */
+			RECEIVER_ADDR_DETAIL = FN_ENCRYPT(#{RECEIVERADDRDETAIL}), 						/* 받는 사람 상세주소	(도로명, 지번 공통) */
+			RECEIVER_ZIP_CD = #{RECEIVERZIPCD},  										/* 받는 사람 우편번호	(신우편번호) */
+			RECEIVER_OLD_ADDR = FN_ENCRYPT(#{RECEIVEROLDADDR}),  								/* 받는 사람 주소 (지번주소) */
+			RECEIVER_OLD_ZIP_CD = #{RECEIVEROLDZIPCD}, 							/* 받는 사람 (구)우편번호	((-) 포함) */
+			RECEIVER_PHONE_NO = FN_ENCRYPT(#{RECEIVERPHONENO}),  								/* 받는 사람 휴대폰번호 */
+			RECEIVER_TEL_NO = FN_ENCRYPT(#{RECEIVERTELNO})										/* 받는 사람 전화번호	 */
+		WHERE ORDER_CD = #{ORDERCD}			
+			AND (ORDER_STATUS_CD = '100' or ORDER_STATUS_CD = '200' )
+	</update>
+	
+	
+	<!-- 구매확정으로 변경 -->
+	<update id="updateOrderDetailStatusTo900" parameterType="hashmap">
+		UPDATE TO_ORDER_DETAIL
+		SET
+			ORDER_STATUS_CD = '900',
+			PURCHASE_DT = NOW()
+		WHERE ORDER_IDX = #{ORDERIDX}	
+		AND 		ORDER_DETAIL_IDX = #{ORDERDETAILIDX}
+		AND (ORDER_STATUS_CD = '400' or ORDER_STATUS_CD = '500' or ORDER_STATUS_CD = '670' or ORDER_STATUS_CD = '690' )  /*배송중(발송 완료), 배송 완료, 교환 불가, 교환 완료시 구매 확정 가능*/
+	</update>
+	
+	<!-- 주문관리 - 증명서 신청 리스트 의 상품정보목록  -->
+	<select id="getProductList" parameterType="hashmap" resultType="sqlMap">
+		SELECT 
+			OD.GOODS_NM,
+			G.BRAND_IDX,						/* 브랜드 일련번호 */
+			G.BRAND_NM,							/* 브랜드명 */
+			G.SOLDOUT_YN,
+			G.BEST_YN,
+			G.NEW_YN,
+			G.ONLINE_YN,
+			G.OPO_YN,
+			G.TPO_YN,
+			G.POINTICON_YN,
+			G.SALEICON_YN,
+			G.AUTO_COUPON_YN
+		FROM TO_ORDER_DETAIL OD
+		JOIN VW_GOODS_ORIGIN G ON OD.GOODS_IDX = G.GOODS_IDX
+		WHERE OD.ORDER_IDX = #{ORDERIDX}
+	</select>
+	
+	<!-- 주문관리 - 증명서 신청 리스트  -->
+	<select id="getIssueDocumentList" parameterType="hashmap" resultType="sqlMap">
+	
+	SELECT a.ORDER_IDX
+			, a.ORDER_CD
+			, a.MEMBER_ORDER_YN
+			, a.MEMBER_IDX
+			, a.MEMBER_NM
+			, a.ORDER_STATUS_CD
+			, FN_ORDER_STATUS_NM(a.ORDER_STATUS_CD) AS ORDER_STATUS_NM
+			, DATE_FORMAT(a.ORDER_DT,'%Y.%m.%d') AS ORDER_DT
+			, DATE_FORMAT(a.PAY_DT,'%Y.%m.%d') AS PAY_DT	
+			, a.PAY_TYPE
+			, FN_COMMON_NM(a.PAY_TYPE) AS PAY_NM			/* 결제수단명 */
+			, a.BANK_CODE
+			, FN_DECRYPT(a.ACCOUNT) ACCOUNT 
+			, a.DEPOSITOR
+			, a.DEPOSIT_DEADLINE_DT
+			, a.ESCROW_YN
+			, a.CASH_RECEIPT_GUBUN
+			, a.CASH_RECEIPT_NO
+			, a.TOTAL_ORDER_PRICE
+			, a.TOTAL_PAY_PRICE
+			, case when (IFNULL(b.PAYMENTAMT,'')='' ) then a.TOTAL_PAY_PRICE ELSE b.PAYMENTAMT END as CASH_PRICE  -- 현금결제액
+			, c.REG_DT as TAX_REG_DT
+            , c.STATUS as TAX_STATUS  -- 10:신청 , 20:처리
+            , c.ADM_REG_DT as TAX_ADM_REG_DT			
+		 from to_order a 
+		left join (
+		  select pa.APPROVAL_IDX, pa.ORDER_IDX, pp.PAYMENTAMT, pp.PAYMENTMETHODNAME , pa.PAYMENTCOMPLETIONYN, pp.paymentMethodCode
+		  from to_payco_approval pa 
+		      inner join to_payco_approval_payment pp 
+		      on pa.APPROVAL_IDX = pp.APPROVAL_IDX 
+		        and pp.paymentMethodCode in ('02', '04') -- 무통장, 계좌이체
+		      and pa.paymentCompletionYn = 'Y' -- 입금완료
+		) b on a.order_idx = b.order_idx
+		left join ta_taxbill_req c on a.ORDER_IDX = c.order_idx
+		 
+		where a.PAY_TYPE in ('PAY_TYPE20', 'PAY_TYPE25')          -- 실시간계좌이체, 가상계좌, PAYCO, 'PAY_TYPE35'
+		and a.ORDER_STATUS_CD != '000'
+     	and a.ORDER_STATUS_CD = '900'   -- 구매확정
+-- 	PAYCO현금영수증때문에 일단 삭제	and ( a.pay_type = 'PAY_TYPE20' or a.pay_type = 'PAY_TYPE25' or ( a.pay_type = 'PAY_TYPE35' and ifnull(b.paymentMethodCode,'') != '')) -- PAYCO의 계좌이체, 무통장만
+ 		<if test="SCHSTARTDT != null and SCHENDDT != '' ">
+			AND a.ORDER_DT <![CDATA[>=]]> #{SCHSTARTDT} AND a.ORDER_DT <![CDATA[<=]]> #{SCHENDDT} 
+		</if>
+		<if test="SCHORDERSTATUS != null and SCHORDERSTATUS != '' ">
+			AND a.PAY_TYPE = #{SCHORDERSTATUS}
+		</if>
+				<!-- 대상 회원/비회원 -->
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != ''  and MEMBERIDX != '0'" >	<!-- 회원 -->
+				AND a.MEMBER_ORDER_YN = 'Y'
+				AND a.MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				AND MEMBER_ORDER_YN = 'N'
+				AND ORDER_CD = #{ORDERCD}	/* 비회원 주문 코드 */
+			</otherwise>
+		</choose>
+		order by a.order_dt desc
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	
+	<!-- 주문관리 - 증명서 신청 리스트  개수 -->
+	<select id="getIssueDocumentCnt" parameterType="hashmap" resultType="int">
+	
+	SELECT COUNT(*)
+		 from to_order a 
+		left join (
+		  select pa.APPROVAL_IDX, pa.ORDER_IDX, pp.PAYMENTAMT, pp.PAYMENTMETHODNAME , pa.PAYMENTCOMPLETIONYN, pp.paymentMethodCode
+		  from to_payco_approval pa 
+		      inner join to_payco_approval_payment pp 
+		      on pa.APPROVAL_IDX = pp.APPROVAL_IDX 
+		        and pp.paymentMethodCode in ('02', '04') -- 무통장, 계좌이체
+		    	and pa.paymentCompletionYn = 'Y' -- 입금완료
+		) b on a.order_idx = b.order_idx 
+		where a.PAY_TYPE in ('PAY_TYPE20', 'PAY_TYPE25')          -- 실시간계좌이체, 가상계좌, PAYCO, 'PAY_TYPE35'
+		and a.ORDER_STATUS_CD != '000'
+	   	and a.ORDER_STATUS_CD = '900'   -- 구매확정
+-- 	PAYCO현금영수증때문에 일단 삭제	and ( a.pay_type = 'PAY_TYPE20' or a.pay_type = 'PAY_TYPE25' or ( a.pay_type = 'PAY_TYPE35' and ifnull(b.paymentMethodCode,'') != '')) -- PAYCO의 계좌이체, 무통장만
+		<if test="SCHSTARTDT != null and SCHENDDT != '' ">
+			AND a.ORDER_DT <![CDATA[>=]]> #{SCHSTARTDT} AND a.ORDER_DT <![CDATA[<=]]> #{SCHENDDT} 
+		</if>
+		<if test="SCHORDERSTATUS != null and SCHORDERSTATUS != '' ">
+			AND a.PAY_TYPE = #{SCHORDERSTATUS}
+		</if>
+				<!-- 대상 회원/비회원 -->
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != ''  and MEMBERIDX != '0'" >	<!-- 회원 -->
+				AND a.MEMBER_ORDER_YN = 'Y'
+				AND a.MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				AND MEMBER_ORDER_YN = 'N'
+				AND ORDER_CD = #{ORDERCD}	/* 비회원 주문 코드 */
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!-- 주문관리 - 현금영수증 발급 신청 -->
+  <update id="updateCashBillReq" parameterType="hashmap">
+	UPDATE TO_ORDER 
+	SET
+		CASH_RECEIPT_GUBUN = #{CASH_RECEIPT_GUBUN}
+		,CASH_RECEIPT_NO = #{CASH_RECEIPT_NO}
+	WHERE ORDER_IDX = #{ORDER_IDX}
+    </update>
+    
+    
+	<!-- 주문관리 - 세금계산서 발급 신청 -->
+  <insert id="insertTaxBillReq" parameterType="hashmap">
+	INSERT
+	INTO   TA_TAXBILL_REQ
+	      (
+              ORDER_IDX,
+              BUSINESS_NO,
+              COMPANY_NM,
+              CEO_NM,
+              ADDR,
+              UPTAE,
+              JONGMOK,
+              DAMDANG_NM,
+              DAMDANG_EMAIL,
+              STATUS,
+              REG_IDX,
+              REG_DT
+       )
+       VALUES
+       (
+              #{ORDER_IDX},
+              #{BUSINESS_NO},
+              #{COMPANY_NM},
+              #{CEO_NM},
+              FN_ENCRYPT(#{ADDR}),
+              #{UPTAE},
+              #{JONGMOK},
+              #{DAMDANG_NM},
+              FN_ENCRYPT(#{DAMDANG_EMAIL}),
+              #{STATUS},
+              #{REG_IDX},
+              NOW()
+       )
+    </insert>
+    
+    
+	<!-- 주문관리 - 주문 리스트  -->
+	<select id="getMyOrderList" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getMyOrderList **/
+		SELECT
+			O.ORDER_IDX,						/* 주문 마스터 일련번호	100000 번부터 시작 */
+			O.ORDER_CD,							/* 주문코드	YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+			O.MEMBER_ORDER_YN,			/* 회원/비회원 구분	Y : 회원주문, N : 비회원주문 */
+			O.MEMBER_IDX,						/* 회원 일련번호	TM_MEMBER 일련번호 */
+			O.MEMBER_ID,						/* 회원 아이디 */	
+			O.MEMBER_GRADE_IDX,			/* 회원등급 일련번호	TM_MEMBER_GRADE 일련번호 */
+			O.DEVICE,								/* 디바이스	P : PC, M : MOBILE, A : APP */
+			O.ORDER_DT,							/* 주문일자 */
+			O.ORDER_STATUS_CD,				/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			O.PAY_DT,								/* 결제일자	PG사 결제성공일시 */
+			O.PAY_TYPE,							/* 결제수단	(공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : Npay, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+			O.ESCROW_YN,						/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+			O.TOTAL_ORDER_PRICE,			/* 총 주문금액	총 상품금액 */
+			O.TOTAL_PAY_PRICE,				/* 결제금액	실제 PG사 결제금액 */
+			O.NOTCANCELCNT,                 /* 100, 200 이 아닌 주문상세 개수 (전체취소여부가능 판단) */
+			O.ENABLE_CLAIM,                  /*  교환,반품 버튼 노출 (0보다크면) */
+			OD.ORDER_DETAIL_IDX,			/* 주문 상세 일련번호 */
+			OD.GOODS_IDX,						/* 상품 일련번호 ( TP_GOODS 일련번호 ) */
+			OD.ORDER_CNT,						/* 상품 개수 */
+			OD.GIFT_COUPON_IDX	,			/* 상품 쿠폰 일련번호 (결제 페이지에서 임시 적용된 상품 쿠폰 일련번호 (자동 발급 쿠폰은 -  붙여서 저장)) */
+			OD.GIFT_COUPON_PRICE,			/* 상품 쿠폰 할인 금액 */
+			OD.ORDER_STATUS_CD AS DETAIL_STATUS_CD,	/* 상세 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			FN_ORDER_STATUS_NM(OD.ORDER_STATUS_CD) AS DETAIL_STATUS_NM,	/* 상세 주문상태명 */
+			OD.DELIVERY_COMP_CD,			/* 배송업체 코드 */
+			CC.CD_INFO AS TRACKING_URL,	/* 배송추적 URL */
+			OD.INVOICE_NO,						/* 송장번호 */
+			OD.SHIPPING_DT,					/* 발송일 */
+			OD.DELIVERED_DT,					/* 배송완료일 */
+			OD.PURCHASE_DT,					/* 구매확정일 */ 			
+			G.SET_FLAG, 							/* 세트상품 구분 ( Y : 세트 상품 N : 일반상품 ) */
+			G.GOODS_CD, 						/* 상품코드 ( FRONT표기되는 상품코드 ) */
+			G.GOODS_NM, 						/* 상품명 ( 상품명 ) */
+			G.BRAND_IDX,						/* 브랜드 일련번호 */
+			G.BRAND_NM,							/* 브랜드명 */
+			G.DISPLAY_DATE, 					/* 상품노출일자 ( 상품 FRONT 전시되는 일자 YYYYMMDD 형태 ) */
+			G.SALE_FLAG, 						/* 판매기간 옵션구분 ( Y: 시작일/종료일  N: 기간없음 ) */
+			G.SALE_START_DATE, 				/* 판매시작일자 ( YYYYMMDD 형태 ) */
+			G.SALE_END_DATE, 					/* 판매종료일자 ( YYYYMMDD 형태 ) */
+			G.SALE_STATUS, 						/* 판매상태 ( P:판매전, Y:판매중, R:일시품절, S:판매중단 ) */
+			G.STOCK_FLAG, 						/* 재고 설정구분 ( Y: 재고수량에 따름  N: 무제한 ) */
+			G.STOCK_CNT, 						/* 재고 수량 ( 재고 설정이 무제한인 경우 수량 0 ) */
+			G.SAFE_STOCK_RATE, 				/* 안전재고율 ( 실재고는 재고수량%안전재고율  안전재고율 0%는 안전재고 미적용 ) */
+			G.BUY_LIMIT_FLAG, 				/* 구매제한 설정구분 ( Y: 수량별 구매제한 N: 제한 없음 ) */
+			G.BUY_MAX_CNT, 					/* 최대 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			G.BUY_MIN_CNT, 					/* 최소 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			G.PRICE, 								/* 판매가 */
+			G.DISCOUNT_RATE, 				/* 할인율 */
+			G.DISCOUNT_PRICE, 				/* 할인가 */
+			G.POINT_FLAG, 						/* 포인트 적립 설정구분 ( Y: 적립 사용 N: 미적립 D: 기본포인트적립 ) */
+			G.POINT_RATE, 						/* 포인트 적립율 */
+			G.SALE_GUBUN, 						/* 매출구분(통계용) */
+			G.GOODS_BADGE, 					/* 상품유형 ( TC_COMMON_CD 테이블  GOODS_BADGE에 해당 되는 코드명 콤마 단위 구분(NEW,BEST등) ) */
+			GF.IMG_FILE AS MAIN_FILE,		/* 이미지 파일 */
+			G.SOLDOUT_YN,
+			G.BEST_YN,
+			G.NEW_YN,
+			G.ONLINE_YN,
+			G.OPO_YN,
+			G.TPO_YN,
+			G.POINTICON_YN,
+			G.SALEICON_YN,
+			G.AUTO_COUPON_YN,
+			(SELECT LGD_TID FROM to_xpay_result x where x.order_cd = OD.order_cd) TID,
+			(SELECT COUNT(*) FROM tp_review rv where rv.ORDER_DETAIL_IDX = OD.ORDER_DETAIL_IDX AND rv.MEMBER_IDX AND O.MEMBER_IDX) REVIEW_CNT		/*리뷰 작성 개수*/
+		FROM (
+			SELECT
+				ORDER_IDX,						/* 주문 마스터 일련번호	100000 번부터 시작 */
+				ORDER_CD,						/* 주문코드	YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+				MEMBER_ORDER_YN,			/* 회원/비회원 구분	Y : 회원주문, N : 비회원주문 */
+				MEMBER_IDX,						/* 회원 일련번호	TM_MEMBER 일련번호 */
+				MEMBER_ID,						/* 회원 아이디 */	
+				MEMBER_GRADE_IDX,			/* 회원등급 일련번호	TM_MEMBER_GRADE 일련번호 */
+				DEVICE,								/* 디바이스	P : PC, M : MOBILE, A : APP */
+				DATE_FORMAT(ORDER_DT,'%Y.%m.%d') AS ORDER_DT,	/* 주문일자 */
+				ORDER_STATUS_CD,				/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+				PAY_DT,								/* 결제일자	PG사 결제성공일시 */
+				PAY_TYPE,							/* 결제수단	(공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : Npay, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+				ESCROW_YN,						/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+				TOTAL_ORDER_PRICE,			/* 총 주문금액	총 상품금액 */
+				TOTAL_PAY_PRICE,				/* 결제금액	실제 PG사 결제금액 */
+				( select count(*) from to_order_detail b where a.ORDER_IDX = b.ORDER_IDX and b.ORDER_STATUS_CD <![CDATA[<>]]>  '200' and b.ORDER_STATUS_CD <![CDATA[<>]]>  '100') NOTCANCELCNT,  /*  0 보다 크면 전체취소할수 없음. */
+				( select count(*) from to_order_detail b where a.ORDER_IDX = b.ORDER_IDX and b.ORDER_STATUS_CD in ('400','500','670','690'))  ENABLE_CLAIM  /*  0 보다 크면 교환, 반품 버튼 노출 (발송완료, 배송완료, 교환완료만 교환/신청 가능, 반품은 교환불가에서도 가능) */				
+			FROM TO_ORDER a
+			<trim prefix="WHERE" prefixOverrides="AND|OR">
+				<!-- 주문일자 -->
+				<if test="SCHSTARTDT != null and SCHENDDT != '' ">
+					AND ORDER_DT <![CDATA[>=]]> #{SCHSTARTDT} AND ORDER_DT <![CDATA[<=]]> #{SCHENDDT} 
+				</if>
+				<!-- 주문상태 -->
+				<if test="SCHORDERSTATUS != null and SCHORDERSTATUS != '' and SCHORDERSTATUS.length > 0 ">
+					AND ORDER_STATUS_CD IN 
+					<foreach collection="SCHORDERSTATUS" item="item" open="(" close=")" separator=",">
+						 #{item}
+					</foreach>
+				</if>
+				<!-- 대상 회원/비회원 -->
+				<choose>
+					<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+						AND MEMBER_ORDER_YN = 'Y'
+						AND MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+					</when>
+					<otherwise>																<!-- 비회원 -->
+						AND MEMBER_ORDER_YN = 'N'
+						AND ORDER_CD = #{ORDERCD}	/* 비회원 주문 코드 */
+					</otherwise>
+				</choose>
+			</trim>
+			ORDER BY ORDER_IDX DESC
+			LIMIT #{PAGESTART}, #{PAGEBLOCK}
+		) O
+		JOIN TO_ORDER_DETAIL OD ON O.ORDER_IDX = OD.ORDER_IDX
+		JOIN VW_GOODS_ORIGIN G ON OD.GOODS_IDX = G.GOODS_IDX
+		LEFT OUTER JOIN TP_GOODS_FILE GF ON G.GOODS_IDX = GF.GOODS_IDX AND GF.MAIN_FLAG = 'Y'
+		LEFT OUTER JOIN TS_COMMON_CD CC ON OD.DELIVERY_COMP_CD = CC.COMMON_CD
+		ORDER BY O.ORDER_IDX DESC, OD.ORDER_DETAIL_IDX
+	</select>
+	
+	<!-- 주문관리 - 주문 리스트 건수 -->
+	<select id="getMyOrderListCnt" parameterType="hashmap" resultType="int">
+		/** mypageOrderDAO.getMyOrderListCnt **/
+		SELECT COUNT(*)
+		FROM TO_ORDER 
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<!-- 주문일자 -->
+			<if test="SCHSTARTDT != null and SCHENDDT != '' ">
+				AND ORDER_DT <![CDATA[>=]]> #{SCHSTARTDT} AND ORDER_DT <![CDATA[<=]]> #{SCHENDDT} 
+			</if>
+			<!-- 주문상태 -->
+			<if test="SCHORDERSTATUS != null and SCHORDERSTATUS != '' and SCHORDERSTATUS.length > 0 ">
+				AND ORDER_STATUS_CD IN 
+				<foreach collection="SCHORDERSTATUS" item="item" open="(" close=")" separator=",">
+					 #{item}
+				</foreach>
+			</if>
+			<!-- 대상 회원/비회원 -->
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+					AND MEMBER_ORDER_YN = 'Y'
+					AND MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+				</when>
+				<otherwise>																<!-- 비회원 -->
+					AND MEMBER_ORDER_YN = 'N'
+					AND ORDER_CD = #{ORDERCD}	/* 비회원 주문 코드 */
+				</otherwise>
+			</choose>
+		</trim>
+	</select>
+
+	<!-- 주문관리 - 취소, 반품, 교환 리스트  -->
+	<select id="getMyClaimList" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getMyClaimList **/
+		SELECT
+			C.CLAIM_IDX,																	/* 클레임 마스터 일련번호 */
+			O.ORDER_IDX,																/* 주문 마스터 일련번호	100000 번부터 시작 */
+			O.ORDER_CD,																	/* 주문코드	YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+			O.MEMBER_ORDER_YN,													/* 회원/비회원 구분	Y : 회원주문, N : 비회원주문 */
+			O.MEMBER_IDX,																/* 회원 일련번호	TM_MEMBER 일련번호 */
+			O.MEMBER_ID,																/* 회원 아이디 */	
+			O.MEMBER_GRADE_IDX,													/* 회원등급 일련번호	TM_MEMBER_GRADE 일련번호 */
+			O.DEVICE,																		/* 디바이스	P : PC, M : MOBILE, A : APP */
+			DATE_FORMAT(O.ORDER_DT,'%Y.%m.%d') AS ORDER_DT,	/* 주문일자 */
+			O.ORDER_STATUS_CD,														/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			O.PAY_DT,																		/* 결제일자	PG사 결제성공일시 */
+			O.PAY_TYPE,																	/* 결제수단	(공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : NPAY, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+			O.TOTAL_ORDER_PRICE,													/* 총 주문금액	총 상품금액 */
+			O.TOTAL_PAY_PRICE,														/* 결제금액	실제 PG사 결제금액 */
+			DATE_FORMAT(C.REQ_DT,'%Y.%m.%d') AS REQ_DT,			/* 취소,교환,반품 신청일자 */
+			DATE_FORMAT(C.REFUND_DT,'%Y.%m.%d') AS REFUND_DT	/* 취소일자 */
+		FROM TO_CLAIM C
+		JOIN TO_ORDER O ON C.ORDER_IDX = O.ORDER_IDX 
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<!-- 클레임 타입 (C : 취소, X : 교환, R : 반품) -->
+			AND C.CLAIM_TYPE = #{CLAIMTYPE}
+			<!-- 주문일자 -->
+			<if test="SCHSTARTDT != null and SCHENDDT != '' ">
+				AND O.ORDER_DT <![CDATA[>=]]> #{SCHSTARTDT} AND O.ORDER_DT <![CDATA[<=]]> #{SCHENDDT} 
+			</if>
+			<if test="SCHSTATUS != null and SCHSTATUS != '' ">
+			AND (select count(*) from to_claim_detail d where d.CLAIM_IDX = c.CLAIM_IDX and d.APPROVE_YN = #{SCHSTATUS}) <![CDATA[>]]> 0
+			</if>
+			<!-- 대상 회원/비회원 -->
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+					AND O.MEMBER_ORDER_YN = 'Y'
+					AND O.MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+				</when>
+				<otherwise>																<!-- 비회원 -->
+					AND O.MEMBER_ORDER_YN = 'N'
+					AND O.ORDER_CD = #{ORDERCD}	/* 비회원 주문 코드 */
+				</otherwise>
+			</choose>
+		</trim>
+		ORDER BY C.CLAIM_IDX DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 주문관리 - 취소, 반품, 교환 리스트 건수  -->
+	<select id="getMyClaimListCnt" parameterType="hashmap" resultType="int">
+		/** mypageOrderDAO.getMyClaimListCnt **/
+		SELECT COUNT(*)
+		FROM TO_CLAIM C
+		JOIN TO_ORDER O ON C.ORDER_IDX = O.ORDER_IDX 
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<!-- 클레임 타입 (C : 취소, X : 교환, R : 반품) -->
+			AND C.CLAIM_TYPE = #{CLAIMTYPE}
+			<!-- 주문일자 -->
+			<if test="SCHSTARTDT != null and SCHENDDT != '' ">
+				AND O.ORDER_DT <![CDATA[>=]]> #{SCHSTARTDT} AND O.ORDER_DT <![CDATA[<=]]> #{SCHENDDT} 
+			</if>
+			<if test="SCHSTATUS != null and SCHSTATUS != '' ">
+			AND (select count(*) from to_claim_detail d where d.CLAIM_IDX = c.CLAIM_IDX and d.APPROVE_YN = #{SCHSTATUS}) <![CDATA[>]]> 0
+			</if>
+			<!-- 대상 회원/비회원 -->
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+					AND O.MEMBER_ORDER_YN = 'Y'
+					AND O.MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+				</when>
+				<otherwise>																<!-- 비회원 -->
+					AND O.MEMBER_ORDER_YN = 'N'
+					AND O.ORDER_CD = #{ORDERCD}	/* 비회원 주문 코드 */
+				</otherwise>
+			</choose>
+		</trim>
+	</select>
+
+	
+	<!-- 주문 상세 - 주문 마스터 정보 -->
+	<select id="getOrderInfo" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getOrderInfo **/
+		SELECT
+			O.ORDER_IDX,								/* 주문 마스터 일련번호 (100000 번부터 시작) */
+			O.ORDER_CD,									/*	주문코드	YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+			O.MEMBER_ORDER_YN,					/*	회원/비회원 구분 (Y : 회원주문, N : 비회원주문) */
+			O.MEMBER_IDX,								/* 회원 일련번호 (TM_MEMBER 일련번호) */
+			O.MEMBER_ID,								/* 회원 아이디 */	
+			O.MEMBER_GRADE_IDX,					/* 회원등급 일련번호 (TM_MEMBER_GRADE 일련번호) */
+			O.MEMBER_NM,								/* 회원명(주문자명) (비회원일때는 주문자명) */
+			DATE_FORMAT(O.ORDER_DT,'%Y.%m.%d') AS ORDER_DT,	/* 주문일자 */
+			O.ORDER_STATUS_CD,						/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			DATE_FORMAT(O.PAY_DT,'%Y.%m.%d') AS PAY_DT,	/* 결제일자 */
+			DATE_FORMAT(O.PAY_DT,'%Y년 %m월 %d일 %H:%i') AS PAY_DT_STR,	/* 결제일자(주문 상세용) */
+			O.PAY_TYPE,									/* 결제수단 (공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : Npay, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+			FN_COMMON_NM(O.PAY_TYPE) AS PAY_NM,			/* 결제수단명 */
+			FN_DECRYPT(O.ACCOUNT) ACCOUNT,									/* 입금 계좌번호 (무통장(가상계좌)일때 사용) */
+			O.DEPOSITOR,								/* 입금 예금주명 (무통장(가상계좌)일때 사용) */
+			DATE_FORMAT(O.DEPOSIT_DEADLINE_DT,'%Y년 %m월 %d일') DEPOSIT_DEADLINE_DT,				/* 입금 기한 (무통장(가상계좌)일때 사용) */
+			O.TOTAL_ORDER_PRICE,					/* 총 주문금액 (총 상품금액) */
+			O.FREE_SHIPPING_COUPON_PRICE,	/* 무료배송 쿠폰 할인 금액 */
+			O.TOTAL_GIFT_COUPON_PRICE,		/* 총 상품 쿠폰 할인 금액  */
+			O.TOTAL_CART_COUPON_PRICE,		/* 총 장바구니 쿠폰 할인 금액	 */
+			O.TOTAL_PROMOTIONCODE_PRICE,	/* 총 프로모션 코드 할인 금액	 */
+			O.TOTAL_COUPON_PRICE,				/* 총 쿠폰/프로모션코드 할인 금액	(무료배송 쿠폰 할인 금액 + 총 상품 쿠폰 할인금액 + 총 장바구니 쿠폰 할인금액 + 총 프로모션 코드 할인금액) */
+			O.SHIPPING_PRICE,							/* 배송비 (무료배송쿠폰이 적용되면 0) */
+			O.TOTAL_POINT_PRICE,					/* 포인트 결제 금액 */
+			O.TOTAL_PAY_PRICE,						/* 결제금액 (실제 PG사 결제금액) */
+			O.TOTAL_SAVE_POINT,						/* 적립 예정 포인트 (원래 적립 예정 포인트 - 선포인트 결제 금액) */
+			O.SENDER_NM,								/* 보내는 사람 이름 (비회원 주문시 필수) */
+			FN_DECRYPT(O.SENDER_ADDR) SENDER_ADDR,							/* 보내는 사람 주소 (도로명주소) */
+			FN_DECRYPT(O.SENDER_ADDR_DETAIL) SENDER_ADDR_DETAIL,					/* 보내는 사람 상세주소 (도로명, 지번 공통) */
+			O.SENDER_ZIP_CD,							/* 보내는 사람 우편번호 (신우편번호) */
+			FN_DECRYPT(O.SENDER_OLD_ADDR) SENDER_OLD_ADDR,						/* 보내는 사람 주소 (지번주소) */
+			O.SENDER_OLD_ZIP_CD,					/* 보내는 사람 (구)우편번호 ((-) 포함) */
+			FN_DECRYPT(O.SENDER_TEL_NO) SENDER_TEL_NO,							/* 보내는 사람 전화번호 */
+			FN_MAKE_PHONE(FN_DECRYPT(O.SENDER_PHONE_NO)) AS SENDER_PHONE_NO,					/* 보내는 사람 휴대폰번호	(비회원 주문시 필수) */
+			FN_DECRYPT(O.SENDER_EMAIL) SENDER_EMAIL,							/* 보내는 사람 이메일 */
+			O.SHIPPING_NM,								/* 주소록명 */
+			O.RECEIVER_NM,								/* 받는 사람 이름 */
+			FN_DECRYPT(O.RECEIVER_ADDR) RECEIVER_ADDR,							/* 받는 사람 주소 (도로명주소) */
+			FN_DECRYPT(O.RECEIVER_ADDR_DETAIL) RECEIVER_ADDR_DETAIL,				/* 받는 사람 상세주소 (도로명, 지번 공통) */
+			O.RECEIVER_ZIP_CD,						/* 받는 사람 우편번호 (신우편번호) */
+			FN_DECRYPT(O.RECEIVER_OLD_ADDR) RECEIVER_OLD_ADDR,					/* 받는 사람 주소 (지번주소) */
+			O.RECEIVER_OLD_ZIP_CD,				/* 받는 사람 (구)우편번호	((-) 포함) */
+			FN_DECRYPT(O.RECEIVER_TEL_NO) RECEIVER_TEL_NO,						/* 받는 사람 전화번호 */
+			FN_MAKE_PHONE(FN_DECRYPT(O.RECEIVER_PHONE_NO)) AS RECEIVER_PHONE_NO,					/* 받는 사람 휴대폰번호 */
+			FN_DECRYPT(O.RECEIVER_PHONE_NO) AS ORIGIN_RECEIVER_PHONE_NO,					/* 받는 사람 휴대폰번호 */
+			O.ORDER_MEMO,								/* 배송시 요청사항	 */
+			O.ORDER_MEMO_VAL,					/* 선택한 배송시 요청사항 SELECTBOX value */
+			CASE WHEN O.ORDER_MEMO_VAL = 'ORDER_MEMO90' THEN O.ORDER_MEMO ELSE FN_COMMON_NM(O.ORDER_MEMO_VAL) END AS ORDER_MEMO_STR,	/* 배송시 요청사항 (내용까지) */
+			O.GIFT_PACKING_YN,						/* 선물 포장 여부 (Y : 선물 포장, N : 선물 포장 안 함) */
+			O.BANK_CODE,								/* 입금 은행코드 (공통코드 무통장(가상계좌)일때 사용) */
+			IFNULL(FN_COMMON_NM(O.BANK_CODE), O.BANK_CODE) AS BANK_NM,
+ 			IFNULL(DATE_FORMAT( O.DEPOSIT_DEADLINE_DT, '%Y.%m.%d' ),'') DEPOSIT_DT,			
+			O.ESCROW_YN,								/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+			O.CASH_RECEIPT_GUBUN,				/* 현금영수증 여부 (0 : 미신청, 1 : 개인, 2 : 사업자) */
+			O.CASH_RECEIPT_NO,						/* 현금영수증 번호 (CASH_RECEIPT_GUBUN가 '0'이 아닐때만 사용, 개인은 휴대폰번호, 사업자는 사업자등록번호) */
+			( select count(*) from to_order_detail b where O.ORDER_IDX = b.ORDER_IDX and b.ORDER_STATUS_CD <![CDATA[<>]]>  '200' and b.ORDER_STATUS_CD <![CDATA[<>]]>  '100') NOTCANCELCNT,  /*  0 보다 크면 전체취소할수 없음. */
+			( select count(*) from to_order_detail b where O.ORDER_IDX = b.ORDER_IDX and b.ORDER_STATUS_CD in ('400','500','670','690'))  ENABLE_CLAIM,  /*  0 보다 크면 교환, 반품 버튼 노출 (발송완료, 배송완료, 교환완료만 교환/신청 가능, 반품은 교환불가에서도 가능) */		
+			/*** LG U+ 결과 ***/			
+			X.LGD_MID,								
+			X.LGD_TID,										/* LG유플러스 거래번호 */
+			X.PG_TYPE,                                       /*PG구분 ( LG, KCP )*/
+			X.LGD_PAYTYPE,								/* 결제수단 */
+			X.LGD_PAYDATE,								/* 결제일시 */
+			X.LGD_FINANCENAME, 						/* 결제기관명 */
+			X.LGD_ESCROWYN,							/* 에스크로적용유무 */	
+			X.LGD_CASHRECEIPTNUM,				/* 현금영수증승인번호 */	
+			X.LGD_CASHRECEIPTSELFYN,			/* 현금영수증자진발급제유무	'Y': 자진발급 */
+			X.LGD_CASHRECEIPTKIND,				/* 현금영수증종류	'0':소득공제, '1':지출증빙 */
+			X.LGD_CARDNUM,							/* 신용카드번호 */	
+			X.LGD_CARDINSTALLMONTH,				/* 신용카드할부개월	save 포인트 : 할부개월 + 40, 포인트 결제 : 할부개월 + 60, 현대카드 포인트 : 할부개월 + 80 */
+			X.LGD_CARDNOINTYN,						/* 신용카드무이자여부	0:일반할부,  1:무이자할부 */
+			X.LGD_PCANCELFLAG,						/* 신용카드부분취소가능여부	0: 부분취소불가능,  1: 부분취소가능 */
+			X.LGD_PCANCELSTR,						/* 신용카드부분취소불가능사유	부분취소가능시는 "0" 으로 리턴 */
+			X.LGD_ACCOUNTNUM,						/* 가상계좌발급번호 */
+			X.LGD_ACCOUNTOWNER,					/* 계좌주명 */
+			X.LGD_PAYER,									/* 가상계좌입금자명 */
+			X.LGD_CASTAMOUNT,						/* 입금누적금액 */
+			X.LGD_CASCAMOUNT,						/* 현입금금액 */
+			X.LGD_CASFLAG,								/* 거래종류(R:할당,I:입금,C:취소) */
+			X.LGD_SAOWNER,							/* 가상계좌 입금계좌주명 */
+			X.LGD_TELNO,								/* 결제휴대폰번호 */
+			X.COMMID,
+			X.MOBILE_NO,
+			SM.TID											/* 스마일 페이 결제 TID 값 */
+		FROM TO_ORDER O
+		LEFT OUTER JOIN TO_XPAY_RESULT X ON O.ORDER_CD = X.ORDER_CD
+		LEFT OUTER JOIN TO_SMILEPAY_RESULT SM ON O.ORDER_CD = SM.ORDER_CD
+		WHERE O.ORDER_CD = #{ORDERCD}
+		<if test="ORDERCDONLY eq null or ORDERCDONLY eq '' ">	<!-- 가상계좌 입금완료에서 호출시는 회원/비회원 여부 상관없이 주문 코드로만 조회하기 위해 -->
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' and MEMBERIDX != '0' " >	<!-- 회원 -->
+					AND O.MEMBER_ORDER_YN = 'Y'
+					AND O.MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+				</when>
+				<otherwise>																<!-- 비회원 -->
+					AND O.MEMBER_ORDER_YN = 'N'
+				</otherwise>
+			</choose>
+		</if>
+	</select>
+
+	<!-- 주문 상세 - 주문 상세 리스트  -->
+	<select id="getOrderDetailList" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getOrderDetailList **/
+		SELECT
+			OD.ORDER_DETAIL_IDX,			/* 주문 상세 일련번호 */
+			OD.GOODS_IDX,						/* 상품 일련번호 ( TP_GOODS 일련번호 ) */
+			OD.ORDER_CNT,						/* 상품 개수 */
+			OD.GIFT_COUPON_IDX	,			/* 상품 쿠폰 일련번호 (결제 페이지에서 임시 적용된 상품 쿠폰 일련번호 (자동 발급 쿠폰은 -  붙여서 저장)) */
+			OD.GIFT_COUPON_PRICE,			/* 상품 쿠폰 할인 금액 */
+			OD.ORDER_STATUS_CD AS DETAIL_STATUS_CD,	/* 상세 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			FN_ORDER_STATUS_NM(OD.ORDER_STATUS_CD) AS DETAIL_STATUS_NM,	/* 상세 주문상태명 */
+			OD.DELIVERY_COMP_CD,			/* 배송업체 코드 */
+			CC.CD_INFO AS TRACKING_URL,	/* 배송추적 URL */
+			OD.INVOICE_NO,						/* 송장번호 */
+			OD.SHIPPING_DT,					/* 발송일 */
+			OD.DELIVERED_DT,					/* 배송완료일 */
+			OD.PURCHASE_DT,					/* 구매확정일 */ 		
+			OD.PAY_PRICE,
+			O.ESCROW_YN,						/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+			G.SET_FLAG, 							/* 세트상품 구분 ( Y : 세트 상품 N : 일반상품 ) */
+			G.GOODS_CD, 						/* 상품코드 ( FRONT표기되는 상품코드 ) */
+			G.GOODS_NM, 						/* 상품명 ( 상품명 ) */
+			G.BRAND_IDX,						/* 브랜드 일련번호 */
+			G.BRAND_NM,							/* 브랜드명 */
+			G.DISPLAY_DATE, 					/* 상품노출일자 ( 상품 FRONT 전시되는 일자 YYYYMMDD 형태 ) */
+			G.SALE_FLAG, 						/* 판매기간 옵션구분 ( Y: 시작일/종료일  N: 기간없음 ) */
+			G.SALE_START_DATE, 				/* 판매시작일자 ( YYYYMMDD 형태 ) */
+			G.SALE_END_DATE, 					/* 판매종료일자 ( YYYYMMDD 형태 ) */
+			G.SALE_STATUS, 						/* 판매상태 ( P:판매전, Y:판매중, R:일시품절, S:판매중단 ) */
+			G.STOCK_FLAG, 						/* 재고 설정구분 ( Y: 재고수량에 따름  N: 무제한 ) */
+			G.STOCK_CNT, 						/* 재고 수량 ( 재고 설정이 무제한인 경우 수량 0 ) */
+			G.SAFE_STOCK_RATE, 				/* 안전재고율 ( 실재고는 재고수량%안전재고율  안전재고율 0%는 안전재고 미적용 ) */
+			G.BUY_LIMIT_FLAG, 				/* 구매제한 설정구분 ( Y: 수량별 구매제한 N: 제한 없음 ) */
+			G.BUY_MAX_CNT, 					/* 최대 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			G.BUY_MIN_CNT, 					/* 최소 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			G.PRICE, 								/* 판매가 */
+			G.DISCOUNT_RATE, 				/* 할인율 */
+			G.DISCOUNT_PRICE, 				/* 할인가 */
+			G.POINT_FLAG, 						/* 포인트 적립 설정구분 ( Y: 적립 사용 N: 미적립 D: 기본포인트적립 ) */
+			G.POINT_RATE, 						/* 포인트 적립율 */
+			G.SALE_GUBUN, 						/* 매출구분(통계용) */
+			G.GOODS_BADGE, 					/* 상품유형 ( TC_COMMON_CD 테이블  GOODS_BADGE에 해당 되는 코드명 콤마 단위 구분(NEW,BEST등) ) */
+			GF.IMG_FILE AS MAIN_FILE,		/* 이미지 파일 */		
+			G.SOLDOUT_YN,
+			G.BEST_YN,
+			G.NEW_YN,
+			G.ONLINE_YN,
+			G.OPO_YN,
+			G.TPO_YN,
+			G.POINTICON_YN,
+			G.SALEICON_YN,
+			G.AUTO_COUPON_YN,
+			(SELECT COUNT(*) FROM tp_review rv where rv.ORDER_DETAIL_IDX = OD.ORDER_DETAIL_IDX AND rv.MEMBER_IDX AND O.MEMBER_IDX) REVIEW_CNT		/*리뷰 작성 개수*/
+		FROM TO_ORDER O
+		JOIN TO_ORDER_DETAIL OD ON O.ORDER_IDX = OD.ORDER_IDX
+		JOIN VW_GOODS_ORIGIN G ON OD.GOODS_IDX = G.GOODS_IDX
+		LEFT OUTER JOIN TP_GOODS_FILE GF ON G.GOODS_IDX = GF.GOODS_IDX AND GF.MAIN_FLAG = 'Y'
+		LEFT OUTER JOIN TS_COMMON_CD CC ON OD.DELIVERY_COMP_CD = CC.COMMON_CD
+		WHERE O.ORDER_CD = #{ORDERCD}
+		<if test="ORDERCDONLY eq null or ORDERCDONLY eq '' ">	<!-- 가상계좌 입금완료에서 호출시는 회원/비회원 여부 상관없이 주문 코드로만 조회하기 위해 -->
+			<choose>
+				<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+					AND O.MEMBER_ORDER_YN = 'Y'
+					AND O.MEMBER_IDX = #{MEMBERIDX}	/* 회원 일련번호 */
+				</when>
+				<otherwise>																<!-- 비회원 -->
+					AND O.MEMBER_ORDER_YN = 'N'
+				</otherwise>
+			</choose>
+		</if>
+		ORDER BY OD.ORDER_DETAIL_IDX
+	</select>
+
+	<!-- 주문 상세 - 사은품 리스트  -->
+	<select id="getOrderGiftList" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getOrderGiftList **/
+		SELECT
+			ORDER_GIFT_IDX, 		/* 사은품 내역 일련번호 */	
+			ORDER_IDX, 				/* 주문 마스터 일련번호	TO_ORDER 일련번호 */
+			ORDER_CD, 				/* 주문코드 */	
+			GIFT_IDX, 					/* 사은품 일련번호	TP_GIFT 일련번호 */
+			GIFT_NM, 					/* 사은품명 */	
+			GIFT_IMG, 					/* 사은품 이미지 */	
+			GIFT_FLAG, 				/* 사은품 구분	P : 금액별 G : 상품별(상품별사용안함) */
+			TERM_IDX, 				/* 사은품구간일련번호	TP_GIFT_TERM 일련번호 */
+			FREE_YN, 					/* 무료구분	Y : 무료사은품, N:구간사은품 */
+			BRAND_IDX,				/* 브랜드 (0이면 전체) */
+			TERM_NM, 					/* 구간명 */	
+			DELIVERY_COMP_CD, 	/* 배송업체 코드	공통코드 */
+			INVOICE_NO, 				/* 송장번호 */	
+			STATUS, 					/* 상태	0: 발송전, 1:발송완료(송장번호입력시), 9:취소 */
+			SEL_YN,						/* 선택여부 (Y : 선택사은품, N : 브랜드, 금액 해당되면 모두증정) */	
+			CASE STATUS WHEN 0 THEN '접수' WHEN 1 THEN '발송' WHEN 9 THEN '취소' END AS STATUS_NM	/* 상태명 */ 
+		FROM TO_ORDER_GIFT
+		WHERE ORDER_CD = #{ORDERCD}
+		<if test="FREEYN != null and FREEYN != '' ">
+			AND (FREE_YN = #{FREEYN} 
+				<if test="FREEYN eq 'N'.toString() ">
+					OR FREE_YN IS NULL	/* 사은품 선택 안함 */
+				</if>
+			)
+		</if>
+		ORDER BY FREE_YN DESC, ORDER_GIFT_IDX
+	</select>
+		
+	<!-- 주문 상세 - PAYCO 결제 결과 리스트  -->
+	<select id="getPaycoResultList" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getPaycoResultList **/
+		SELECT
+			A.APPROVAL_IDX,								/* 일련번호 */
+			A.ORDER_IDX,									/* 주문번호 */
+			A.ORDERNO,										/* 주문번호 ( PAYCO에서 발급한 주문번호(중요) ) */
+			A.MEMBERNAME,									/* 주문자명 ( 일부마스킹처리 ) */
+			A.TOTALORDERAMT,								/* 총주문금액 */
+			A.TOTALPAYMENTAMT,							/* 총결제금액(배송비포함) */
+			A.PAYMENTCOMPLETIONYN,					/* 결제완료여부 ( Y/N ) */
+			A.PAYMENTCOMPLETEYMDT,					/* 결제완료일자 ( yyyyMMddHHmmss ) */
+			AP.PAYMENTTRADENO,							/* 결제번호 ( ex)201409191000001142 ) */
+			AP.PAYMENTMETHODCODE,					/* 결제수단코드 ( 01 ) */
+			AP.PAYMENTMETHODNAME,					/* 결제수단명 ( 신용카드 ) */
+			AP.PAYMENTAMT,									/* 결제금액 ( 111900 ) */
+			AP.TRADEYMDT,									/* 결제일시 ( yyyyMMddHHmmss ) */
+			AP.CARDCOMPANYNAME,						/* 카드사명 */
+			AP.CARDCOMPANYCODE,						/* 카드사코드 */
+			AP.CARDNO,										/* 카드번호 */
+			AP.CARDINSTALLMENTMONTHNUMBER,	/* 카드결제 할부개월 */
+			AP.CARDINTERESTFREEYN,					/* 카드무이자여부 ( Y/N ) */
+			AP.PARTCANCELPOSSIBLEYN,				/* 카드부분취소가능여부 ( Y/N ) */
+			FN_MAKE_PHONE(AP.CELLPHONENO) AS CELLPHONENO,	/* 핸드폰결제 (핸드폰번호) ( 010-1111-5222 형태 ) */
+			AP.BANKNAME,									/* 실시간계좌이체,무통장(은행명) */
+			AP.BANKCODE,									/* 실시간계좌이체,무통장(은행코드) */
+			AP.ACCOUNTNO,									/* 무통장(계좌번호) */
+			CONCAT(SUBSTR(AP.PAYMENTEXPIRATIONYMD,1,4),'년 ',SUBSTR(AP.PAYMENTEXPIRATIONYMD,5,2),'월 ',SUBSTR(AP.PAYMENTEXPIRATIONYMD,7,2),'일') AS EXPIRATION_DT,	/* 무통장(입금만료일) ( YYYYMMDD ) */			
+			AP.DISCOUNTAMT,								/* 쿠폰(할인금액) */
+			AP.DISCOUNTCONDITIONAMT				/* 쿠폰(쿠폰할인조건) */
+		FROM TO_PAYCO_APPROVAL A
+		JOIN TO_PAYCO_APPROVAL_PAYMENT AP ON A.APPROVAL_IDX = AP.APPROVAL_IDX
+		WHERE A.SELLERORDERREFERENCEKEY = #{ORDERCD}
+		ORDER BY AP.PAYMENTMETHODCODE
+	</select>
+
+
+
+	<!-- 주문 상세 정보구하기 -->
+	<select id="getOrderDetailInfo" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getOrderDetailInfo **/
+		SELECT *
+		FROM TO_ORDER_DETAIL
+		WHERE ORDER_DETAIL_IDX =  #{ORDERDETAILIDX}			
+	</select>
+	
+	<!-- 주문 상세 - 선택한 상품들 중 해당 상태에 맞는 상품 건 수 -->
+	<select id="getOrderDetailValidStatusCnt" parameterType="hashmap" resultType="int">
+		/** mypageOrderDAO.getOrderDetailValidStatusCnt **/
+		SELECT COUNT(*)
+		FROM TO_ORDER_DETAIL
+		WHERE ORDER_CD = #{ORDERCD}
+			AND ORDER_DETAIL_IDX IN
+				<foreach collection="ORDERDETAILIDXES" item="item" open="(" close=")" separator=",">
+					 #{item}
+				</foreach>
+				AND ORDER_STATUS_CD IN
+				<foreach collection="ORDERSTATUSCDS" item="item" open="(" close=")" separator=",">
+					 #{item}
+				</foreach>			
+	</select>
+
+	<!-- 주문 상세 주문상태 변경 -->
+	<update id="updateDetailOrderStatusCd" parameterType="hashmap">
+		/** mypageOrderDAO.updateDetailOrderStatusCd **/
+		UPDATE TO_ORDER_DETAIL
+		SET
+			ORDER_STATUS_CD = #{ORDERSTATUSCD},
+			<if test="ORDERSTATUSCD eq '500'.toString() ">		<!-- 배송완료로 바뀌는거면 배송완료일자 저장 -->
+				DELIVERED_DT = NOW(),				
+			</if>
+			<if test="ORDERSTATUSCD eq '900'.toString() ">		<!-- 구매확정으로 바뀌는거면 구매확정일자 저장 -->
+				PURCHASE_DT = NOW(),				
+			</if>
+			EDIT_IDX = #{EDITIDX},
+			EDIT_HTTP_USER_AGENT = #{EDITHTTPUSERAGENT},
+			EDIT_IP = #{EDITIP},
+			EDIT_DT = NOW()		
+		WHERE ORDER_IDX = #{ORDERIDX}
+		<if test="ORDERDETAILIDX != '' and ORDERDETAILIDX != null ">
+			AND ORDER_DETAIL_IDX = #{ORDERDETAILIDX}
+		</if>
+		<if test="BEFOREORDERSTATUSCD != '' and BEFOREORDERSTATUSCD != null ">
+			AND ORDER_STATUS_CD = #{BEFOREORDERSTATUSCD}
+		</if>
+		<if test="BEFOREORDERSTATUSCDS != null and BEFOREORDERSTATUSCDS != '' and BEFOREORDERSTATUSCDS.length > 0 ">
+			AND ORDER_STATUS_CD  IN 
+			<foreach collection="BEFOREORDERSTATUSCDS" item="item" open="(" close=")" separator=",">
+				 #{item}
+			</foreach>
+		</if>
+	</update>
+
+	<!-- 주문 상세 - 주문 상세 로그 저장 -->
+	<insert id="insertOrderStatusLog" parameterType="hashmap">
+		/** mypageOrderDAO.insertOrderStatusLog **/
+		INSERT INTO TO_ORDER_STATUS_LOG(ORDER_IDX, ORDER_DETAIL_IDX, ORDER_STATUS_CD, REASON, DEVICE, REG_IDX, REG_HTTP_USER_AGENT, REG_IP, REG_DT)
+		VALUES(#{ORDERIDX}, #{ORDERDETAILIDX}, #{ORDERSTATUSCD}, #{REASON}, #{DEVICE}, #{REGIDX}, #{REGHTTPUSERAGENT}, #{REGIP}, NOW())
+	</insert>
+
+	<!-- 클레임 디테일 등록 -->
+	<insert id="insertClaimDetail" parameterType="hashmap" useGeneratedKeys="true" keyProperty="CLAIM_DETAIL_IDX">
+		/** mypageOrderDAO.insertClaimDetail **/
+		INSERT INTO TO_CLAIM_DETAIL
+		(
+			CLAIM_IDX,								/* 클레임 마스터 일련번호 */
+			ORDER_DETAIL_IDX,					/* 주문 디테일 일련번호 */
+			CLAIM_CNT,								/* 신청수량 */
+			REFUND_CHARGE	,						/* 환불수수료 */
+			GIFT_COUPON_REFUND_PRICE,		/* 상품 쿠폰 환불 금액 */
+			CART_COUPON_REFUND_PRICE,	/* 장바구니 쿠폰 환불 금액 */
+			POINT_REFUND_PRICE,				/* 포인트 결제 환불 금액 */
+			PROMOTIONCODE_PRICE,				/* 프로모션 코드 환불 금액 */
+			PRE_POINT_REFUND_PRICE,			/* 선포인트 결제 환불 금액 */
+			REFUND_PRICE,							/* 환불 금액 */
+			REFUND_POINT,							/* 환불 포인트 */
+			APPROVE_YN,								/* 승인/불가 여부 */
+			REJECT_REASON,							/* 불가 사유 상세 */
+			EXCHANGE_DELIVERY_COMP_CD,	/* 교환 배송업체 코드 */
+			EXCHANGE_INVOICE_NO,				/* 교환 송장번호 */
+			EXCHANGE_SHIPPING_DT,			/* 교환 발송일 */
+			EXCHANGE_DELIVERED_DT,			/* 교환 배송완료일 */
+			REG_IDX,									/* 작성자 일련번호 */
+			REG_HTTP_USER_AGENT,				/* 작성자 USER_AGENT */
+			REG_IP,										/* 작성자 IP */
+			REG_DT										/* 작성일자 */
+		)
+		VALUES
+		(
+			#{CLAIMIDX},
+			#{ORDERDETAILIDX},
+			(SELECT ORDER_CNT FROM TO_ORDER_DETAIL WHERE ORDER_DETAIL_IDX = #{ORDERDETAILIDX}),
+			#{REFUNDCHARGE},
+			#{GIFTCOUPONREFUNDPRICE},
+			#{CARTCOUPONREFUNDPRICE},
+			#{POINTREFUNDPRICE},
+			#{PROMOTIONCODEPRICE},
+			#{PREPOINTREFUNDPRICE},
+			#{REFUNDPRICE},
+			#{REFUNDPOINT},
+			#{APPROVEYN},
+			#{REJECTREASON},
+			#{EXCHANGEDELIVERYCOMPCD},
+			#{EXCHANGEINVOICENO},
+			#{EXCHANGESHIPPINGDT},
+			#{EXCHANGEDELIVEREDDT},
+			#{REGIDX},
+			#{REGHTTPUSERAGENT},
+			#{REGIP},
+			NOW()
+		)
+	</insert>
+
+	<!-- 클레임 상세 로그 저장 -->
+	<insert id="insertClaimStatusLog" parameterType="hashmap">
+		/** mypageOrderDAO.insertClaimStatusLog **/
+		INSERT INTO TO_CLAIM_STATUS_LOG(CLAIM_DETAIL_IDX, ORDER_IDX, ORDER_DETAIL_IDX, CLAIM_TYPE, APPROVE_YN, EXCHANGE_DELIVERY_COMP_CD, EXCHANGE_INVOICE_NO, DEVICE, REG_IDX, REG_HTTP_USER_AGENT, REG_IP, REG_DT)
+		VALUES(#{CLAIMDETAILIDX}, #{ORDERIDX}, #{ORDERDETAILIDX}, #{CLAIMTYPE}, #{APPROVEYN}, #{EXCHANGEDELIVERYCOMPCD}, #{EXCHANGEINVOICENO}, #{DEVICE}, #{REGIDX}, #{REGHTTPUSERAGENT}, #{REGIP}, NOW())
+	</insert>
+
+	<!-- 클레임 파일 업데이트 -->
+	<update id="updateClaimFile" parameterType="hashmap">
+		/** mypageOrderDAO.updateClaimFile **/
+		UPDATE TO_CLAIM
+		SET IMG_FILE = #{IMGFILE},
+			REAL_IMG_FILE = #{REALIMGFILE}
+		WHERE CLAIM_IDX = #{CLAIMIDX}
+	</update>
+
+	<!-- 주문 상세의 주문 상태 코드들 최소값으로 주문 마스터의 주문 상태 코드 변경 -->
+	<update id="updateOrderStatusCdAsDetailMinOrderStatusCd" parameterType="hashmap">
+		/** mypageOrderDAO.updateOrderStatusCdAsDetailMinOrderStatusCd **/
+		UPDATE TO_ORDER
+		SET ORDER_STATUS_CD = (SELECT MIN(ORDER_STATUS_CD) FROM TO_ORDER_DETAIL WHERE ORDER_IDX = #{ORDERIDX})
+		WHERE ORDER_IDX = #{ORDERIDX}
+	</update>
+
+	<!-- 환불 계좌번호 저장 -->
+	<insert id="insertRefundAccount" parameterType="hashmap">
+		/** mypageOrderDAO.insertRefundAccount **/
+		INSERT INTO TO_ACCOUNT
+		(
+			MEMBER_IDX,
+			BANK_CODE,
+			ACCOUNT,
+			DEPOSITOR,
+			REG_IDX,
+			REG_HTTP_USER_AGENT,
+			REG_IP,
+			REG_DT
+		)
+		VALUES(
+			#{MEMBERIDX},
+			#{BANKCODE},
+			#{ACCOUNT},
+			#{DEPOSITOR},
+			#{REGIDX},
+			#{REGHTTPUSERAGENT},
+			#{REGIP},
+			NOW()
+		)
+		ON DUPLICATE KEY UPDATE 
+			BANK_CODE = #{BANKCODE},
+			ACCOUNT = #{ACCOUNT},
+			DEPOSITOR = #{DEPOSITOR},
+			EDIT_IDX = #{REGIDX},
+			EDIT_HTTP_USER_AGENT = #{REGHTTPUSERAGENT},
+			EDIT_IP = #{REGIP},
+			EDIT_DT = NOW()
+	</insert>	
+	
+	<!-- claim- 주문 상세 리스트  -->
+	<select id="getClaimDetailList" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getClaimDetailList **/		
+		SELECT
+			OD.ORDER_DETAIL_IDX,			/* 주문 상세 일련번호 */
+			OD.GOODS_IDX,						/* 상품 일련번호 ( TP_GOODS 일련번호 ) */
+			OD.ORDER_CNT,						/* 상품 개수 */
+			OD.GIFT_COUPON_IDX	,			/* 상품 쿠폰 일련번호 (결제 페이지에서 임시 적용된 상품 쿠폰 일련번호 (자동 발급 쿠폰은 -  붙여서 저장)) */
+			OD.GIFT_COUPON_PRICE,			/* 상품 쿠폰 할인 금액 */
+			OD.ORDER_STATUS_CD AS DETAIL_STATUS_CD,	/* 상세 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			FN_ORDER_STATUS_NM(OD.ORDER_STATUS_CD) AS DETAIL_STATUS_NM,	/* 상세 주문상태명 */
+			OD.DELIVERY_COMP_CD,			/* 배송업체 코드 */
+			CC.CD_INFO AS TRACKING_URL,	/* 배송추적 URL */
+			OD.INVOICE_NO,						/* 송장번호 */
+			OD.SHIPPING_DT,					/* 발송일 */
+			OD.DELIVERED_DT,					/* 배송완료일 */
+			OD.PURCHASE_DT,					/* 구매확정일 */ 			
+			G.SET_FLAG, 							/* 세트상품 구분 ( Y : 세트 상품 N : 일반상품 ) */
+			G.GOODS_CD, 						/* 상품코드 ( FRONT표기되는 상품코드 ) */
+			G.GOODS_NM, 						/* 상품명 ( 상품명 ) */
+			G.BRAND_IDX,						/* 브랜드 일련번호 */
+			G.BRAND_NM,							/* 브랜드명 */
+			G.DISPLAY_DATE, 					/* 상품노출일자 ( 상품 FRONT 전시되는 일자 YYYYMMDD 형태 ) */
+			G.SALE_FLAG, 						/* 판매기간 옵션구분 ( Y: 시작일/종료일  N: 기간없음 ) */
+			G.SALE_START_DATE, 				/* 판매시작일자 ( YYYYMMDD 형태 ) */
+			G.SALE_END_DATE, 					/* 판매종료일자 ( YYYYMMDD 형태 ) */
+			G.SALE_STATUS, 						/* 판매상태 ( P:판매전, Y:판매중, R:일시품절, S:판매중단 ) */
+			G.STOCK_FLAG, 						/* 재고 설정구분 ( Y: 재고수량에 따름  N: 무제한 ) */
+			G.STOCK_CNT, 						/* 재고 수량 ( 재고 설정이 무제한인 경우 수량 0 ) */
+			G.SAFE_STOCK_RATE, 				/* 안전재고율 ( 실재고는 재고수량%안전재고율  안전재고율 0%는 안전재고 미적용 ) */
+			G.BUY_LIMIT_FLAG, 				/* 구매제한 설정구분 ( Y: 수량별 구매제한 N: 제한 없음 ) */
+			G.BUY_MAX_CNT, 					/* 최대 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			G.BUY_MIN_CNT, 					/* 최소 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			G.PRICE, 								/* 판매가 */
+			G.DISCOUNT_RATE, 				/* 할인율 */
+			G.DISCOUNT_PRICE, 				/* 할인가 */
+			G.POINT_FLAG, 						/* 포인트 적립 설정구분 ( Y: 적립 사용 N: 미적립 D: 기본포인트적립 ) */
+			G.POINT_RATE, 						/* 포인트 적립율 */
+			G.SALE_GUBUN, 						/* 매출구분(통계용) */
+			G.GOODS_BADGE, 					/* 상품유형 ( TC_COMMON_CD 테이블  GOODS_BADGE에 해당 되는 코드명 콤마 단위 구분(NEW,BEST등) ) */
+			GF.IMG_FILE AS MAIN_FILE,		/* 이미지 파일 */
+			G.SOLDOUT_YN,
+			G.BEST_YN,
+			G.NEW_YN,
+			G.ONLINE_YN,
+			G.OPO_YN,
+			G.TPO_YN,
+			G.POINTICON_YN,
+			G.SALEICON_YN,
+			G.AUTO_COUPON_YN,
+			CASE C.CLAIM_TYPE
+              WHEN 'C'
+              THEN '주문 취소'
+              WHEN 'X'
+              THEN
+                       CASE CD.APPROVE_YN
+                                WHEN 'B'
+                                THEN '교환 신청'
+                                WHEN 'Y'
+                                THEN '교환 완료'
+                                WHEN 'N'
+                                THEN '교환 불가'
+                       END
+              WHEN 'R'
+              THEN
+                       CASE CD.APPROVE_YN
+                                WHEN 'B'
+                                THEN '반품 신청'
+                                WHEN 'Y'
+                                THEN '반품 완료'
+                                WHEN 'N'
+                                THEN '반품 불가'
+                       END
+    		 END CLAIM_STATUS		
+		FROM TO_CLAIM C
+		JOIN TO_CLAIM_DETAIL CD ON C.CLAIM_IDX = CD.CLAIM_IDX
+		JOIN TO_ORDER_DETAIL OD ON CD.ORDER_DETAIL_IDX = OD.ORDER_DETAIL_IDX
+		JOIN VW_GOODS_ORIGIN G ON OD.GOODS_IDX = G.GOODS_IDX
+		LEFT OUTER JOIN TP_GOODS_FILE GF ON G.GOODS_IDX = GF.GOODS_IDX AND GF.MAIN_FLAG = 'Y'
+		LEFT OUTER JOIN TS_COMMON_CD CC ON OD.DELIVERY_COMP_CD = CC.COMMON_CD
+		WHERE C.CLAIM_IDX = ${CLAIMIDX}
+		ORDER BY OD.ORDER_DETAIL_IDX
+	</select>
+	
+	
+	<!--  포인트 히스토리 추가 -->
+	<insert id="orderInsertPointHistory" parameterType="java.util.HashMap">
+		/** mypageOrderDAO.orderInsertPointHistory **/
+		INSERT INTO TM_POINT_INFO
+       (
+              MEMBER_IDX,
+              ORDER_IDX,
+            <if test="EVENT_IDX != null and EVENT_IDX != '' ">
+				EVENT_IDX,
+			</if>
+              PAY_DED_TYPE,
+              PAY_DED_REASON,
+             <if test="PAYMENT_PRICE != null and PAYMENT_PRICE != '' ">
+              PAYMENT_PRICE,
+             </if>
+              <if test="DEDUCTION_PRICE != null and DEDUCTION_PRICE != '' ">
+           	  DEDUCTION_PRICE,
+             </if>             
+              PAY_DED_DT,
+              OPERATOR_ID,
+              REG_IDX,
+              REG_DT
+       )
+       VALUES
+       (
+              #{MEMBER_IDX},
+              #{ORDER_IDX},
+              <if test="EVENT_IDX != null and EVENT_IDX != '' ">
+              #{EVENT_IDX},
+              </if>
+              #{PAY_DED_TYPE},
+              #{PAY_DED_REASON},
+              <if test="PAYMENT_PRICE != null and PAYMENT_PRICE != '' ">
+              #{PAYMENT_PRICE},
+             </if>
+              <if test="DEDUCTION_PRICE != null and DEDUCTION_PRICE != '' ">
+              #{DEDUCTION_PRICE},
+             </if>
+              NOW(),
+              #{MEMBER_IDX},
+              #{MEMBER_IDX},
+              NOW()
+       )
+	</insert>
+	
+	<!-- 회원 보유 포인트 변경 -->
+	<update id="memberPointUpdate" parameterType="java.util.HashMap">
+		/** mypageOrderDAO.memberPointMinus **/
+		UPDATE TM_MEMBER_INFO
+		SET POINT_PRICE = POINT_PRICE + #{POINT}
+		WHERE MEMBER_INFO_IDX = #{MEMBERIDX}
+	</update>
+	
+	<!-- 주문 적립 포인트  -->
+	<select id="getOrderSavePoint" parameterType="hashmap" resultType="int">
+		/** mypageOrderDAO.getOrderSavePoint **/
+		select IFNULL(SAVE_POINT,0) AS SAVE_POINT 
+		from to_order_detail
+		where ORDER_DETAIL_IDX = #{ORDERDETAILIDX}
+	</select>
+
+	<!-- 회원가입시 추천인 반환 -->	
+	<!-- RECOMMEND_IDX는 회원가입시 추천인 일련번호를 넣고 최초 주문시 해당 추천인에게 포인트 지급 후 NULL 로 수정해버리므로 RECOMMEND_IDX가 NOT NULL이면 최초 주문이고 추천인이 있다는 뜻 -->
+	<select id="getRecommendIdx" parameterType="hashmap" resultType="Integer">
+		/** mypageOrderDAO.getRecommendIdx **/
+		SELECT RECOMMEND_IDX
+		FROM TM_MEMBER_DETAIL A
+		WHERE MEMBER_DETAIL_IDX = #{MEMBERIDX} 
+	</select>
+
+	<!-- 회원 추천인 NULL로 수정 -->
+	<update id="updateRecommendIdxNull" parameterType="java.util.HashMap">
+		/** mypageOrderDAO.updateRecommendIdxNull **/
+		UPDATE TM_MEMBER_DETAIL
+		SET RECOMMEND_IDX = NULL
+		WHERE MEMBER_DETAIL_IDX = #{MEMBERIDX}
+	</update>
+	
+		
+	<!-- 주문 상세 - 주문 마스터 정보 -->
+	<select id="getOrderMasterInfo" parameterType="hashmap" resultType="sqlMap">
+		/** mypageOrderDAO.getOrderMasterInfo **/
+		SELECT
+			O.ORDER_IDX,								/* 주문 마스터 일련번호 (100000 번부터 시작) */
+			O.ORDER_CD,									/*	주문코드	YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+			O.MEMBER_ORDER_YN,					/*	회원/비회원 구분 (Y : 회원주문, N : 비회원주문) */
+			O.MEMBER_IDX,								/* 회원 일련번호 (TM_MEMBER 일련번호) */
+			O.MEMBER_ID,								/* 회원 아이디 */	
+			O.MEMBER_GRADE_IDX,					/* 회원등급 일련번호 (TM_MEMBER_GRADE 일련번호) */
+			O.MEMBER_NM,								/* 회원명(주문자명) (비회원일때는 주문자명) */
+			DATE_FORMAT(O.ORDER_DT,'%Y.%m.%d') AS ORDER_DT,	/* 주문일자 */
+			O.ORDER_STATUS_CD,						/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			DATE_FORMAT(O.PAY_DT,'%Y.%m.%d') AS PAY_DT,	/* 결제일자 */
+			DATE_FORMAT(O.PAY_DT,'%Y년 %m월 %d일 %H:%i') AS PAY_DT_STR,	/* 결제일자(주문 상세용) */
+			O.PAY_TYPE,									/* 결제수단 (공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : Npay, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+			FN_COMMON_NM(O.PAY_TYPE) AS PAY_NM,			/* 결제수단명 */
+			FN_DECRYPT(O.ACCOUNT) ACCOUNT,									/* 입금 계좌번호 (무통장(가상계좌)일때 사용) */
+			O.DEPOSITOR,								/* 입금 예금주명 (무통장(가상계좌)일때 사용) */
+			DATE_FORMAT(O.DEPOSIT_DEADLINE_DT,'%Y.%m.%d') DEPOSIT_DEADLINE_DT,				/* 입금 기한 (무통장(가상계좌)일때 사용) */
+			O.TOTAL_ORDER_PRICE,					/* 총 주문금액 (총 상품금액) */
+			O.FREE_SHIPPING_COUPON_PRICE,	/* 무료배송 쿠폰 할인 금액 */
+			O.TOTAL_GIFT_COUPON_PRICE,		/* 총 상품 쿠폰 할인 금액  */
+			O.TOTAL_CART_COUPON_PRICE,		/* 총 장바구니 쿠폰 할인 금액	 */
+			O.TOTAL_PROMOTIONCODE_PRICE,	/* 총 프로모션 코드 할인 금액	 */
+			O.TOTAL_COUPON_PRICE,				/* 총 쿠폰/프로모션코드 할인 금액	(무료배송 쿠폰 할인 금액 + 총 상품 쿠폰 할인금액 + 총 장바구니 쿠폰 할인금액 + 총 프로모션 코드 할인금액) */
+			O.SHIPPING_PRICE,							/* 배송비 (무료배송쿠폰이 적용되면 0) */
+			O.TOTAL_POINT_PRICE,					/* 포인트 결제 금액 */
+			O.TOTAL_PAY_PRICE,						/* 결제금액 (실제 PG사 결제금액) */
+			O.TOTAL_SAVE_POINT,						/* 적립 예정 포인트 (원래 적립 예정 포인트 - 선포인트 결제 금액) */
+			O.SENDER_NM,								/* 보내는 사람 이름 (비회원 주문시 필수) */
+			FN_DECRYPT(O.SENDER_ADDR) SENDER_ADDR,							/* 보내는 사람 주소 (도로명주소) */
+			FN_DECRYPT(O.SENDER_ADDR_DETAIL) SENDER_ADDR_DETAIL,					/* 보내는 사람 상세주소 (도로명, 지번 공통) */
+			O.SENDER_ZIP_CD,							/* 보내는 사람 우편번호 (신우편번호) */
+			FN_DECRYPT(O.SENDER_OLD_ADDR) SENDER_OLD_ADDR,						/* 보내는 사람 주소 (지번주소) */
+			O.SENDER_OLD_ZIP_CD,					/* 보내는 사람 (구)우편번호 ((-) 포함) */
+			FN_DECRYPT(O.SENDER_TEL_NO) SENDER_TEL_NO,							/* 보내는 사람 전화번호 */
+			FN_MAKE_PHONE(FN_DECRYPT(O.SENDER_PHONE_NO)) AS SENDER_PHONE_NO,					/* 보내는 사람 휴대폰번호	(비회원 주문시 필수) */
+			FN_DECRYPT(O.SENDER_EMAIL) SENDER_EMAIL,							/* 보내는 사람 이메일 */
+			O.SHIPPING_NM,								/* 주소록명 */
+			O.RECEIVER_NM,								/* 받는 사람 이름 */
+			FN_DECRYPT(O.RECEIVER_ADDR) RECEIVER_ADDR,							/* 받는 사람 주소 (도로명주소) */
+			FN_DECRYPT(O.RECEIVER_ADDR_DETAIL) RECEIVER_ADDR_DETAIL,				/* 받는 사람 상세주소 (도로명, 지번 공통) */
+			O.RECEIVER_ZIP_CD,						/* 받는 사람 우편번호 (신우편번호) */
+			FN_DECRYPT(O.RECEIVER_OLD_ADDR) RECEIVER_OLD_ADDR,					/* 받는 사람 주소 (지번주소) */
+			O.RECEIVER_OLD_ZIP_CD,				/* 받는 사람 (구)우편번호	((-) 포함) */
+			FN_DECRYPT(O.RECEIVER_TEL_NO) RECEIVER_TEL_NO,						/* 받는 사람 전화번호 */
+			FN_MAKE_PHONE(FN_DECRYPT(O.RECEIVER_PHONE_NO)) AS RECEIVER_PHONE_NO,					/* 받는 사람 휴대폰번호 */
+			FN_DECRYPT(O.RECEIVER_PHONE_NO) AS ORIGIN_RECEIVER_PHONE_NO,					/* 받는 사람 휴대폰번호 */
+			O.ORDER_MEMO,								/* 배송시 요청사항	 */
+			O.ORDER_MEMO_VAL,					/* 선택한 배송시 요청사항 SELECTBOX value */
+			CASE WHEN O.ORDER_MEMO_VAL = 'ORDER_MEMO90' THEN O.ORDER_MEMO ELSE FN_COMMON_NM(O.ORDER_MEMO_VAL) END AS ORDER_MEMO_STR,	/* 배송시 요청사항 (내용까지) */
+			O.GIFT_PACKING_YN,						/* 선물 포장 여부 (Y : 선물 포장, N : 선물 포장 안 함) */
+			O.BANK_CODE,								/* 입금 은행코드 (공통코드 무통장(가상계좌)일때 사용) */
+			IFNULL(FN_COMMON_NM(O.BANK_CODE), O.BANK_CODE) AS BANK_NM,
+ 			IFNULL(DATE_FORMAT( O.DEPOSIT_DEADLINE_DT, '%Y.%m.%d' ),'') DEPOSIT_DT,			
+			O.ESCROW_YN,								/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+			O.CASH_RECEIPT_GUBUN,				/* 현금영수증 여부 (0 : 미신청, 1 : 개인, 2 : 사업자) */
+			O.CASH_RECEIPT_NO,						/* 현금영수증 번호 (CASH_RECEIPT_GUBUN가 '0'이 아닐때만 사용, 개인은 휴대폰번호, 사업자는 사업자등록번호) */
+			( select count(*) from to_order_detail b where O.ORDER_IDX = b.ORDER_IDX and b.ORDER_STATUS_CD <![CDATA[<>]]>  '200' and b.ORDER_STATUS_CD <![CDATA[<>]]>  '100') NOTCANCELCNT,  /*  0 보다 크면 전체취소할수 없음. */
+			( select count(*) from to_order_detail b where O.ORDER_IDX = b.ORDER_IDX and b.ORDER_STATUS_CD in ('400','500','670','690'))  ENABLE_CLAIM,  /*  0 보다 크면 교환, 반품 버튼 노출 (발송완료, 배송완료, 교환완료만 교환/신청 가능, 반품은 교환불가에서도 가능) */		
+			/*** LG U+ 결과 ***/			
+			X.LGD_MID,								
+			X.LGD_TID,										/* LG유플러스 거래번호 */
+			X.LGD_PAYTYPE,								/* 결제수단 */
+			X.LGD_PAYDATE,								/* 결제일시 */
+			X.LGD_FINANCENAME, 						/* 결제기관명 */
+			X.LGD_ESCROWYN,							/* 에스크로적용유무 */	
+			X.LGD_CASHRECEIPTNUM,				/* 현금영수증승인번호 */	
+			X.LGD_CASHRECEIPTSELFYN,			/* 현금영수증자진발급제유무	'Y': 자진발급 */
+			X.LGD_CASHRECEIPTKIND,				/* 현금영수증종류	'0':소득공제, '1':지출증빙 */
+			X.LGD_CARDNUM,							/* 신용카드번호 */	
+			X.LGD_CARDINSTALLMONTH,				/* 신용카드할부개월	save 포인트 : 할부개월 + 40, 포인트 결제 : 할부개월 + 60, 현대카드 포인트 : 할부개월 + 80 */
+			X.LGD_CARDNOINTYN,						/* 신용카드무이자여부	0:일반할부,  1:무이자할부 */
+			X.LGD_PCANCELFLAG,						/* 신용카드부분취소가능여부	0: 부분취소불가능,  1: 부분취소가능 */
+			X.LGD_PCANCELSTR,						/* 신용카드부분취소불가능사유	부분취소가능시는 "0" 으로 리턴 */
+			X.LGD_ACCOUNTNUM,						/* 가상계좌발급번호 */
+			X.LGD_ACCOUNTOWNER,					/* 계좌주명 */
+			X.LGD_PAYER,									/* 가상계좌입금자명 */
+			X.LGD_CASTAMOUNT,						/* 입금누적금액 */
+			X.LGD_CASCAMOUNT,						/* 현입금금액 */
+			X.LGD_CASFLAG,								/* 거래종류(R:할당,I:입금,C:취소) */
+			X.LGD_SAOWNER,							/* 가상계좌 입금계좌주명 */
+			X.LGD_TELNO									/* 결제휴대폰번호 */
+		FROM TO_ORDER O
+		LEFT OUTER JOIN TO_XPAY_RESULT X ON O.ORDER_CD = X.ORDER_CD
+		WHERE O.ORDER_CD = #{ORDERCD}
+	</select>
+	
+	
+	<!-- 사은품 상태 변경 -->
+	<update id="updateOrderGiftStatus" parameterType="java.util.HashMap">
+		/** mypageOrderDAO.updateOrderGiftStatus **/
+		UPDATE TO_ORDER_GIFT
+		SET STATUS = #{STATUS}
+		WHERE ORDER_IDX = #{ORDER_IDX}
+	</update>
+
+	<!-- 반품 신청시 클레임 마스터 정보 디테일 합계로 업데이트 -->
+	<update id="updateClaimSumDetail" parameterType="hashmap">
+		/** mypageOrderDAO.updateClaimSumDetail **/
+	   UPDATE TO_CLAIM a 
+       left join
+       (
+	       select 
+	       c.CLAIM_IDX,
+	       IFNULL(SUM(c.GIFT_COUPON_REFUND_PRICE),0) SUM_GIFT_COUPON_REFUND_PRICE,
+	       IFNULL(SUM(c.CART_COUPON_REFUND_PRICE),0) SUM_CART_COUPON_REFUND_PRICE,
+	       IFNULL(SUM(c.POINT_REFUND_PRICE),0) SUM_POINT_REFUND_PRICE,
+	       IFNULL(SUM(c.REFUND_PRICE),0) + #{REFUNDSUBTRACTION} AS  SUM_REFUND_PRICE,    /*총 환불금액 + 배송비 */
+	       IFNULL(SUM(c.REFUND_POINT),0) SUM_REFUND_POINT,
+	       IFNULL(SUM(c.PROMOTIONCODE_PRICE),0) SUM_PROMOTIONCODE_PRICE
+	       FROM TO_CLAIM_DETAIL c
+	       WHERE c.CLAIM_IDX = #{CLAIMIDX}
+	       group by c.CLAIM_IDX
+	       ) b on a.CLAIM_IDX = b.CLAIM_IDX 
+		SET    a.TOTAL_GIFT_COUPON_REFUND_PRICE = b.SUM_GIFT_COUPON_REFUND_PRICE,   /*총 상품 쿠폰 환불 금액*/
+		       a.TOTAL_CART_COUPON_REFUND_PRICE = b.SUM_CART_COUPON_REFUND_PRICE,    /*총 장바구니 쿠폰 환불 금액*/
+		       a.TOTAL_POINT_REFUND_PRICE = b.SUM_POINT_REFUND_PRICE,                           /*포인트 결제 환불 금액*/
+		       a.TOTAL_REFUND_PRICE = b.SUM_REFUND_PRICE,                                              /*총 환불금액 + 배송비 */
+		       a.TOTAL_REFUND_POINT = b.SUM_REFUND_POINT,                                              /*총 환불 포인트*/
+		       a.TOTAL_PROMOTIONCODE_PRICE = b.SUM_PROMOTIONCODE_PRICE                     /*프로모션코드 환불 금액*/
+		WHERE  a.CLAIM_IDX = b.CLAIM_IDX
+		AND    a.CLAIM_IDX = #{CLAIMIDX}
+
+	</update>
+	
+	<select id="getSmilepayResult" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.SMILEPAY_IDX , A.ORDER_CD , A.TID , 
+       			   A.CARD_NAME , A.CARD_QUOTA , A.CARD_INTEREST , 
+       			   A.CARD_CI , A.CARD_NO
+  		  FROM TO_SMILEPAY_RESULT A LEFT OUTER JOIN TO_ORDER B 
+    		 ON A.ORDER_CD = B.ORDER_CD
+ 	   WHERE A.RESULT_CODE='3001' AND B.ORDER_CD = #{ORDERCD}
+	</select>
+		
+	<select id="getWonderpayResult" parameterType="hashmap" resultType="sqlMap">
+		select a.IDX,
+		       a.ORDER_CD,
+		       a.ORDER_IDX,
+		       a.RES_CD,
+		       a.REQ_MSG,
+		       a.GOOD_MNY,
+		       a.TID,
+		       a.SITE_CD,
+		       a.APP_TIME,
+		       a.PAY_METHOD,
+		       a.PG_CODE,
+		       a.BK_MNY,
+		       a.BANK_CD,
+		       a.CASH_RECEIPT_FLAG,
+		       a.CARD_MNY,
+		       a.CARD_CD,
+		       a.QUOTA,
+		       a.NOINF,
+		       a.COUPON_MNY,
+		       a.REG_DT
+		  from to_wonderpay_result a
+ 	   	  WHERE a.ORDER_CD = #{ORDERCD}
+	</select>
+</mapper>

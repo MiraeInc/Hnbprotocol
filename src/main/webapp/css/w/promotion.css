@@ -1,0 +1,22 @@
+#wrap {min-width: 1320px;}
+
+.sr-only{width: 1px;height: 1px;margin: -1px;padding: 0;position: absolute;border: 0;overflow: hidden;clip: rect(0,0,0,0);}
+
+.promo-wing {display: none; position: fixed !important; background: none; width: auto; padding: 0; font-size: 0;}
+.promo-wing {-webkit-box-shadow: 15px 25px 35px 4px rgba(0,0,0,0.27); box-shadow: 15px 25px 35px 4px rgba(0,0,0,0.27);}
+
+[class^="promo-section-"] img {max-width: 100%}
+[class^="promo-section-"] .container {position: relative; width: 1320px; height: 100%; margin: 0 auto;}
+
+.promo-section-1 {height: 1653px;background: url('../../images/w/promotion/img_promo_1.png') top center repeat-x;}
+.promo-section-1 .video {position: absolute; left: 50%; top: 698px; width: 734px; height: 414px; margin-left: -367px; background-color: #000;}
+.promo-section-1 .video {-webkit-box-shadow: 15px 25px 35px 4px rgba(0,0,0,0.27); box-shadow: 15px 25px 35px 4px rgba(0,0,0,0.27);}
+.promo-section-1 .link-hint {position: absolute; left: 530px; top: 1532px; width: 260px; height: 71px;}
+
+.promo-section-2 {height: 1033px; background: url('../../images/w/promotion/img_promo_2.png') top center repeat-x;}
+.promo-section-2 .link-login {position: absolute; left: 632px; top: 245px; width: 175px; height: 35px;}
+.promo-section-2 .link-mall {position: absolute; left: 530px; top: 918px; width: 260px; height: 71px;}
+
+.poromo-comment {width: 1160px; margin: 0 auto; padding-bottom: 40px;}
+.poromo-comment .comment-txt1 {padding-top: 60px}
+.poromo-comment .color-1 {color: #4d2aec !important;}

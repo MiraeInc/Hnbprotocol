@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="reviewDAO">
+	<!-- 리뷰 리스트 -->
+	<select id="getReviewList" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.REVIEW_IDX, A.ORDER_DETAIL_IDX, A.WINNER_IDX, A.REVIEW_POINT, A.MEMBER_IDX, A.RATING, FN_COMMON_NM(A.HAIR_STYLE) AS HAIR_STYLE, FN_COMMON_NM(A.HAIR_TYPE) AS HAIR_TYPE
+		   		 	 , A.TITLE, A.REVIEW_DESC, A.IMG1, A.IMG2, A.IMG3
+		       		 , FN_MASK_NM(B.MEMBER_NM) AS MEMBER_NM
+		FROM TP_REVIEW A
+		LEFT OUTER JOIN TM_MEMBER_DETAIL B
+		ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+		WHERE A.GOODS_IDX = #{GOODSIDX}
+		<if test="REVIEWTYPE eq 'PHOTO'.toString() ">
+			AND A.IMG1 IS NOT NULL
+		</if>
+		ORDER BY DATE_FORMAT(A.REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 리뷰 총 건수 -->
+	<select id="getReviewCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) AS REVIEW_CNT
+		FROM TP_REVIEW A
+		WHERE A.GOODS_IDX = #{GOODSIDX}
+	</select>
+	
+	<!-- 리뷰 총 건수 -->
+	<select id="getPhotoCnt" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*) AS PHOTO_CNT
+		FROM TP_REVIEW A
+		WHERE A.GOODS_IDX = #{GOODSIDX}
+		AND A.IMG1 IS NOT NULL
+	</select>
+	
+	<!-- 구매 만족도 평균 별표시 -->
+	<select id="getReviewAvg" parameterType="hashmap" resultType="int">
+		SELECT IFNULL(ROUND(AVG(A.RATING),0),0) AS REVIEW_AVG 
+		FROM TP_REVIEW A 
+       	WHERE A.GOODS_IDX = #{GOODSIDX}
+	</select>
+	
+	<!-- 리뷰 상세 -->
+	<select id="getReviewDetail" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.REVIEW_IDX, A.ORDER_DETAIL_IDX, A.WINNER_IDX, A.MEMBER_IDX, A.RATING, A.HAIR_STYLE, A.HAIR_TYPE
+					 , FN_COMMON_NM(A.HAIR_STYLE) AS HAIR_STYLE_NM, FN_COMMON_NM(A.HAIR_TYPE) AS HAIR_TYPE_NM
+		   		 	 , A.TITLE, A.REVIEW_DESC, A.IMG1, A.IMG2, A.IMG3, A.REVIEW_POINT
+		       		 , FN_MASK_NM(B.MEMBER_NM) AS MEMBER_NM,
+		       		 A.GOODS_IDX,
+		       		 C.GOODS_CD,
+		       		 C.GOODS_NM,
+		       		 D.IMG_FILE AS MAIN_FILE,
+		       		 CASE WHEN E.DEPTH_LV = 1 THEN F.CATE_IDX 
+						   WHEN E.DEPTH_LV = 2 THEN G.CATE_IDX
+						   WHEN E.DEPTH_LV = 3 THEN H.CATE_IDX
+					       WHEN E.DEPTH_LV = 4 THEN I.CATE_IDX END AS CATE_IDX1
+		FROM TP_REVIEW A LEFT OUTER JOIN TM_MEMBER_DETAIL B ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+									 LEFT OUTER JOIN TP_GOODS C ON A.GOODS_IDX = C.GOODS_IDX
+									 LEFT OUTER JOIN TP_GOODS_FILE D ON A.GOODS_IDX = D.GOODS_IDX AND D.MAIN_FLAG = 'Y'
+									 LEFT OUTER JOIN TP_GOODS_BRAND_CATE	E ON A.GOODS_IDX = E.GOODS_IDX AND E.TOP_YN ='Y'
+		        					LEFT OUTER JOIN TP_BRAND_CATE F ON E.CATE_IDX = F.CATE_IDX 
+		        					LEFT OUTER JOIN TP_BRAND_CATE G ON G.CATE_IDX = F.UPPER_CATE_IDX 
+		        					LEFT OUTER JOIN TP_BRAND_CATE H ON H.CATE_IDX = G.UPPER_CATE_IDX 
+		        					LEFT OUTER JOIN TP_BRAND_CATE I ON I.CATE_IDX = H.UPPER_CATE_IDX 
+		WHERE A.REVIEW_IDX = #{REVIEWIDX}
+	</select>
+	
+	<!-- 리뷰 등록 -->
+	<insert id="reviewSave" parameterType="java.util.HashMap">
+		/** reviewDAO.reviewSave **/
+		INSERT INTO TP_REVIEW  
+					( 
+						GOODS_IDX,WINNER_IDX, ORDER_DETAIL_IDX,  MEMBER_IDX, RATING, HAIR_STYLE, HAIR_TYPE, REVIEW_DESC, REVIEW_POINT, REG_IDX, REG_DT
+					)
+		VALUES (
+						#{GOODSIDX}, #{WINNERIDX}, #{ORDERDETAILIDX}, #{MEMBERIDX}, #{RATING}, #{HAIRSTYLE}, #{HAIRTYPE}, #{REVIEWDESC}, #{REVIEWPOINT}, #{MEMBERIDX}, NOW()
+					)
+		
+		<selectKey keyProperty="reviewIdx" resultType="int" order="AFTER">
+			    SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	<!-- 리뷰 이미지 등록 -->
+	<update id="reviewImgInsert" parameterType="java.util.HashMap">
+		/** inquiryDAO.reviewImgInsert **/
+		UPDATE TP_REVIEW  
+		SET IMG1 = #{IMG1},	
+			  REAL_IMG1 = #{IMG1},
+			  IMG2 = #{IMG2},
+			  REAL_IMG2 = #{IMG2},
+			  IMG3 = #{IMG3},
+			  REAL_IMG3 = #{IMG3}
+		WHERE REVIEW_IDX = #{REVIEWIDX}
+	</update>
+	
+	<!-- 당첨자 중복 리뷰 체크 -->
+	<select id="reviewCheck"  parameterType="java.util.HashMap" resultType="int">
+		/** reviewDAO.reviewCheck **/
+		SELECT COUNT(*)
+		FROM TP_REVIEW 
+		WHERE 1=1
+		<if test="WINNERIDX  != '' and WINNERIDX != null">
+		AND WINNER_IDX = #{WINNERIDX}
+		</if>
+		<if test="ORDERDETAILIDX != '' and ORDERDETAILIDX != null">
+		AND ORDER_DETAIL_IDX = #{ORDERDETAILIDX}
+		</if>		
+		AND MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+	<!-- 작성 가능한 리뷰 총 개수 -->
+	<select id="getNoWriteReviewCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** reviewDAO.getNoWriteReviewCnt **/
+		SELECT count(*)
+		FROM (
+			SELECT OD.ORDER_DETAIL_IDX,	/* 주문 디테일 일련번호 */
+					   R.WINNER_IDX,				/* 당첨자 일련번호 (항상 NULL) */
+					   OD.GOODS_IDX,				/* 주문상품 일련번호 */
+					   OD.GOODS_CD,				/* 주문상품 코드 */
+					   OD.GOODS_NM,				/* 주문 상품 명 */
+					   GF.IMG_FILE,					/* 주문 상품 이미지 */
+					   OD.PRICE,						/* 주문 상품 판매가 */
+					   OD.ORDER_CNT,				/* 주문 구매 수량 */
+					   OD.DISCOUNT_RATE,		/* 주문 할인율 */
+					   CASE
+					   		WHEN OD.ORDER_STATUS_CD = '900' THEN '구매 확정'
+					   END AS ORDER_STATUS_CD_NM,
+					   VG.BRAND_IDX,
+                       VG.SOLDOUT_YN,
+                       VG.BEST_YN,
+                       VG.NEW_YN,
+                       VG.OPO_YN,
+                       VG.TPO_YN,
+                       VG.POINTICON_YN,
+                       VG.SALEICON_YN,
+					   O.ORDER_DT AS REG_DT
+			FROM TO_ORDER O JOIN TO_ORDER_DETAIL OD ON O.ORDER_IDX = OD.ORDER_IDX
+										LEFT OUTER JOIN TP_REVIEW R ON OD.ORDER_DETAIL_IDX = R.ORDER_DETAIL_IDX AND R.MEMBER_IDX =  #{MEMBERIDX}
+										JOIN TP_GOODS_FILE GF ON OD.GOODS_IDX = GF.GOODS_IDX AND GF.MAIN_FLAG = 'Y'
+										JOIN VW_GOODS VG ON OD.GOODS_IDX = VG.GOODS_IDX
+			WHERE OD.ORDER_STATUS_CD = '900'
+			AND O.MEMBER_IDX =  #{MEMBERIDX}
+			AND R.REVIEW_IDX IS NULL
+			
+			UNION ALL
+			
+			SELECT R.ORDER_DETAIL_IDX,	/* 주문 디테일 일련번호 (항상 NULL) */
+					   W.WINNER_IDX,		/* 당첨자 일련번호 */
+					   G.GOODS_IDX,			/* 샘플 상품 일련번호 */
+					   G.GOODS_CD,			/* 샘플 상품 코드 */
+					   G.GOODS_NM,			/* 샘플 상품 명 */
+					   GF.IMG_FILE,			/* 샘플 상품 이미지 */
+					   G.PRICE,					/* 샘플 상품 판매가 */
+					   1 AS ORDER_CNT,		/* 샘플 상품 수량 (1개 고정) */
+					   G.DISCOUNT_RATE,	/* 샘플 상품 할인율 */
+					   '' AS ORDER_STATUS_CD_NM,	/* 주문상태명 */
+					   VG.BRAND_IDX,
+                       VG.SOLDOUT_YN,
+                       VG.BEST_YN,
+                       VG.NEW_YN,
+                       VG.OPO_YN,
+                       VG.TPO_YN,
+                       VG.POINTICON_YN,
+                       VG.SALEICON_YN,
+					   W.REG_DT
+			FROM TA_SAMPLE_WINNER W 
+            	LEFT OUTER JOIN TP_REVIEW R ON W.WINNER_IDX = R.WINNER_IDX AND R.MEMBER_IDX =  #{MEMBERIDX} AND R.ORDER_DETAIL_IDX IS NULL
+                JOIN TP_GOODS G ON W.GOODS_IDX = G.GOODS_IDX
+                JOIN TP_GOODS_FILE GF ON G.GOODS_IDX = GF.GOODS_IDX AND GF.MAIN_FLAG = 'Y'
+                JOIN VW_GOODS VG ON G.GOODS_IDX = VG.GOODS_IDX
+			WHERE W.MEMBER_IDX =  #{MEMBERIDX}
+			AND R.REVIEW_IDX IS NULL
+		) AA
+	</select>
+	
+	<!-- 작성 가능한 리뷰 리스트 -->
+	<select id="getNoWriteList"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** reviewDAO.getNoWriteList **/
+		SELECT AA.GOODS_IDX,					/* 상품 일련번호 */
+				   AA.GOODS_CD,					/* 상품 코드 */
+				   AA.GOODS_NM,					/* 상품 명 */
+				   AA.IMG_FILE,						/* 상품 이미지 */
+				   AA.PRICE,							/* 판매가 */
+				   AA.ORDER_CNT,					/* 수량 */
+				   AA.DISCOUNT_RATE,				/* 할인율 */
+				   AA.ORDER_DETAIL_IDX,		/* 주문 디테일 일련번호 */
+				   AA.WINNER_IDX,					/* 당첨자 일련번호 */
+				   AA.ORDER_STATUS_CD_NM,	/* 주문상태명 */
+				   AA.BRAND_IDX,
+                   AA.SOLDOUT_YN,
+                   AA.BEST_YN,
+                   AA.NEW_YN,
+                   AA.OPO_YN,
+                   AA.TPO_YN,
+                   AA.POINTICON_YN,
+                   AA.SALEICON_YN,
+				   AA.REG_DT
+		FROM(
+			SELECT OD.ORDER_DETAIL_IDX,	/* 주문 디테일 일련번호 */
+					   R.WINNER_IDX,				/* 당첨자 일련번호 (항상 NULL) */
+					   OD.GOODS_IDX,				/* 주문상품 일련번호 */
+					   OD.GOODS_CD,				/* 주문상품 코드 */
+					   OD.GOODS_NM,				/* 주문 상품 명 */
+					   GF.IMG_FILE,					/* 주문 상품 이미지 */
+					   OD.PRICE,						/* 주문 상품 판매가 */
+					   OD.ORDER_CNT,				/* 주문 구매 수량 */
+					   OD.DISCOUNT_RATE,		/* 주문 할인율 */
+					   CASE
+					   		WHEN OD.ORDER_STATUS_CD = '900' THEN '구매 확정'
+					   END AS ORDER_STATUS_CD_NM,
+					   VG.BRAND_IDX,
+                       VG.SOLDOUT_YN,
+                       VG.BEST_YN,
+                       VG.NEW_YN,
+                       VG.OPO_YN,
+                       VG.TPO_YN,
+                       VG.POINTICON_YN,
+                       VG.SALEICON_YN,
+					   O.ORDER_DT AS REG_DT
+			FROM TO_ORDER O JOIN TO_ORDER_DETAIL OD ON O.ORDER_IDX = OD.ORDER_IDX
+										LEFT OUTER JOIN TP_REVIEW R ON OD.ORDER_DETAIL_IDX = R.ORDER_DETAIL_IDX AND R.MEMBER_IDX = #{MEMBERIDX}
+										JOIN TP_GOODS_FILE GF ON OD.GOODS_IDX = GF.GOODS_IDX AND GF.MAIN_FLAG = 'Y'
+										JOIN VW_GOODS VG ON OD.GOODS_IDX = VG.GOODS_IDX
+			WHERE OD.ORDER_STATUS_CD = '900'
+			AND O.MEMBER_IDX = #{MEMBERIDX}
+			AND R.REVIEW_IDX IS NULL
+			
+			UNION ALL
+			
+			SELECT R.ORDER_DETAIL_IDX,	/* 주문 디테일 일련번호 (항상 NULL) */
+					   W.WINNER_IDX,		/* 당첨자 일련번호 */
+					   G.GOODS_IDX,			/* 샘플 상품 일련번호 */
+					   G.GOODS_CD,			/* 샘플 상품 코드 */
+					   G.GOODS_NM,			/* 샘플 상품 명 */
+					   GF.IMG_FILE,			/* 샘플 상품 이미지 */
+					   G.PRICE,					/* 샘플 상품 판매가 */
+					   1 AS ORDER_CNT,		/* 샘플 상품 수량 (1개 고정) */
+					   G.DISCOUNT_RATE,	/* 샘플 상품 할인율 */
+					   '' AS ORDER_STATUS_CD_NM,	/* 주문상태명 */
+					   VG.BRAND_IDX,
+                       VG.SOLDOUT_YN,
+                       VG.BEST_YN,
+                       VG.NEW_YN,
+                       VG.OPO_YN,
+                       VG.TPO_YN,
+                       VG.POINTICON_YN,
+                       VG.SALEICON_YN,
+					   W.REG_DT
+			FROM TA_SAMPLE_WINNER W 
+            	LEFT OUTER JOIN TP_REVIEW R ON W.WINNER_IDX = R.WINNER_IDX AND R.MEMBER_IDX =  #{MEMBERIDX} AND R.ORDER_DETAIL_IDX IS NULL
+                JOIN TP_GOODS G ON W.GOODS_IDX = G.GOODS_IDX
+                JOIN TP_GOODS_FILE GF ON G.GOODS_IDX = GF.GOODS_IDX AND GF.MAIN_FLAG = 'Y'
+                JOIN VW_GOODS VG ON G.GOODS_IDX = VG.GOODS_IDX                		   
+			WHERE W.MEMBER_IDX = #{MEMBERIDX}
+			AND R.REVIEW_IDX IS NULL
+		) AA
+		ORDER BY DATE_FORMAT(AA.REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 작성 한 리뷰 총 개수 -->
+	<select id="getWriteListCnt"  parameterType="java.util.HashMap" resultType="int">
+		/** reviewDAO.getWriteListCnt **/
+		SELECT
+			COUNT(*)
+		FROM TP_REVIEW A INNER JOIN TP_GOODS B ON A.GOODS_IDX = B.GOODS_IDX
+									INNER JOIN TP_GOODS_FILE C ON A.GOODS_IDX = C.GOODS_IDX AND C.MAIN_FLAG = 'Y'
+									LEFT OUTER JOIN TO_ORDER_DETAIL D ON A.ORDER_DETAIL_IDX = D.ORDER_DETAIL_IDX 
+		WHERE A.MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+	<!-- 작성 한 리뷰 리스트 -->
+	<select id="getWriteList"  parameterType="java.util.HashMap" resultType="sqlMap">
+		/** reviewDAO.getWriteList **/
+		SELECT
+			A.REVIEW_IDX,			/* 리뷰 일련번호 */
+			A.ORDER_DETAIL_IDX,	/* 주문 디테일 일련번호 */
+			DATE_FORMAT(D.REG_DT, '%Y.%m.%d') AS ORDER_DT,
+			A.WINNER_IDX,			/* 당첨자 일련번호 */
+			A.GOODS_IDX,			/* 상품 일련번호 */
+			B.GOODS_CD,				/* 상품 코드 */
+			B.GOODS_NM,				/* 상품 명 */
+			C.IMG_FILE AS MAIN_FILE,	/* 상품 이미지 */
+			A.RATING,					/* 별점 */
+			FN_COMMON_NM(A.HAIR_STYLE) AS HAIR_STYLE_NM,	/* 모발 길이 명 */
+			FN_COMMON_NM(A.HAIR_TYPE) AS HAIR_TYPE_NM,		/* 모발 타입 명 */
+			A.REVIEW_DESC,			/* 내용 */
+			A.IMG1,
+			A.IMG2,
+			A.IMG3,
+			VG.BRAND_IDX,
+            VG.SOLDOUT_YN,
+            VG.BEST_YN,
+            VG.NEW_YN,
+            VG.OPO_YN,
+            VG.TPO_YN,
+            VG.POINTICON_YN,
+            VG.SALEICON_YN,
+			DATE_FORMAT(A.REG_DT, '%Y.%m.%d') AS REG_DT		/* 작성 일자 */
+		FROM TP_REVIEW A INNER JOIN TP_GOODS B ON A.GOODS_IDX = B.GOODS_IDX
+									INNER JOIN TP_GOODS_FILE C ON A.GOODS_IDX = C.GOODS_IDX AND C.MAIN_FLAG = 'Y'
+									LEFT OUTER JOIN TO_ORDER_DETAIL D ON A.ORDER_DETAIL_IDX = D.ORDER_DETAIL_IDX 
+									INNER JOIN VW_GOODS VG ON A.GOODS_IDX = VG.GOODS_IDX
+		WHERE A.MEMBER_IDX = #{MEMBERIDX}
+		ORDER BY DATE_FORMAT(A.REG_DT,'%Y.%m.%d %H:%i:%s') DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+	
+	<!-- 리뷰 삭제 -->
+	<delete id="reviewDelete" parameterType="java.util.HashMap">
+		/** reviewDAO.reviewDelete **/
+		DELETE FROM TP_REVIEW
+		WHERE REVIEW_IDX = #{REVIEWIDX}
+		AND MEMBER_IDX = #{MEMBERIDX}
+	</delete>
+	
+	<!-- 회원 보유 포인트 증가 -->
+	<update id="memberPointAdd" parameterType="java.util.HashMap">
+		/** reviewDAO.memberPointAdd **/
+		UPDATE TM_MEMBER_INFO
+		SET POINT_PRICE = POINT_PRICE + #{REVIEWPOINT}
+		WHERE MEMBER_INFO_IDX = #{MEMBERIDX}
+	</update>
+	
+	<!-- 회원 포인트 증가 히스토리 추가 -->
+	<insert id="memberPointAddHistory" parameterType="java.util.HashMap">
+		/** reviewDAO.memberPointAddHistory **/
+		INSERT INTO TM_POINT_INFO 
+			(
+				MEMBER_IDX, PAY_DED_TYPE, PAY_DED_REASON, PAYMENT_PRICE, PAY_DED_DT, REG_IDX, REG_DT
+			)
+		VALUES 
+			(
+				#{MEMBERIDX}, 'P', #{PAYDEDREASON}, #{REVIEWPOINT}, NOW(), #{MEMBERIDX}, NOW()
+			)
+	</insert>
+	
+	<!-- 회원 보유 포인트 차감 -->
+	<update id="memberPointMinus" parameterType="java.util.HashMap">
+		/** reviewDAO.memberPointMinus **/
+		UPDATE TM_MEMBER_INFO
+		SET POINT_PRICE = POINT_PRICE - #{REVIEWPOINT}
+		WHERE MEMBER_INFO_IDX = #{MEMBERIDX}
+	</update>
+	
+	<!-- 회원 포인트 차감 히스토리 추가 -->
+	<insert id="memberPointMinusHistory" parameterType="java.util.HashMap">
+		/** reviewDAO.memberPointMinusHistory **/
+		INSERT INTO TM_POINT_INFO 
+			(
+				MEMBER_IDX, PAY_DED_TYPE, PAY_DED_REASON, DEDUCTION_PRICE, PAY_DED_DT, REG_IDX, REG_DT
+			)
+		VALUES 
+			(
+				#{MEMBERIDX}, 'M', #{PAYDEDREASON}, #{REVIEWPOINT}, NOW(), #{MEMBERIDX}, NOW()
+			)
+	</insert>
+	
+	<!-- 상품 정보 -->
+	<select id="getGoodsDetail" parameterType="hashmap" resultType="sqlMap">
+		/** reviewDAO.getGoodsDetail **/
+		SELECT A.*
+			FROM(
+				SELECT A.GOODS_IDX, A.GOODS_CD, A.GOODS_NM, D.IMG_FILE, 
+						   CASE WHEN E.DEPTH_LV = 1 THEN F.CATE_IDX 
+								   WHEN E.DEPTH_LV = 2 THEN G.CATE_IDX
+								   WHEN E.DEPTH_LV = 3 THEN H.CATE_IDX
+							       WHEN E.DEPTH_LV = 4 THEN I.CATE_IDX END AS CATE_IDX1
+				FROM TP_GOODS A LEFT OUTER JOIN TP_GOODS_FILE D ON A.GOODS_IDX = D.GOODS_IDX AND D.MAIN_FLAG='Y'
+				  							LEFT OUTER JOIN TP_GOODS_BRAND_CATE	E ON A.GOODS_IDX = E.GOODS_IDX AND E.TOP_YN ='Y'
+				        					LEFT OUTER JOIN TP_BRAND_CATE F ON E.CATE_IDX = F.CATE_IDX 
+				        					LEFT OUTER JOIN TP_BRAND_CATE G ON G.CATE_IDX = F.UPPER_CATE_IDX 
+				        					LEFT OUTER JOIN TP_BRAND_CATE H ON H.CATE_IDX = G.UPPER_CATE_IDX 
+				        					LEFT OUTER JOIN TP_BRAND_CATE I ON I.CATE_IDX = H.UPPER_CATE_IDX 
+		 		) A
+		WHERE 1=1
+		AND A.GOODS_IDX = #{GOODSIDX}
+	</select>
+	
+	<!-- 리뷰 수정 -->
+	<update id="reviewUpdate" parameterType="java.util.HashMap">
+		/** reviewDAO.reviewUpdate **/
+		UPDATE TP_REVIEW  
+		SET RATING = #{RATING},
+			  HAIR_STYLE = #{HAIRSTYLE},
+			  HAIR_TYPE = #{HAIRTYPE},
+			  REVIEW_DESC = #{REVIEWDESC},
+			  IMG1 = #{IMG1},
+			  REAL_IMG1 = #{IMG1},
+			  IMG2 = #{IMG2},
+			  REAL_IMG2 = #{IMG2},
+			  IMG3 = #{IMG3},	
+			  REAL_IMG3 = #{IMG3}
+		WHERE REVIEW_IDX = #{REVIEWIDX}
+		AND MEMBER_IDX = #{MEMBERIDX}
+	</update>
+	
+	<!-- 조회 수 증가 -->
+	<update id="addViewCnt" parameterType="java.util.HashMap">
+		/** reviewDAO.addViewCnt **/
+		UPDATE TP_REVIEW
+		SET VIEW_CNT = VIEW_CNT+1
+		WHERE REVIEW_IDX = #{REVIEWIDX}
+	</update>
+	
+	<!-- 메인 전시 관리 리뷰 삭제 -->
+	<delete id="reviewDisplayDelete" parameterType="java.util.HashMap">
+		/** reviewDAO.reviewDisplayDelete **/
+		DELETE FROM TS_MAIN_DISPLAY_DETAIL
+		WHERE GUBUN = 'review'
+		AND GUBUN_IDX = #{REVIEWIDX}
+	</delete>
+	
+	<!-- 주문 디테일 정보 -->
+	<select id="getOrderDetail" parameterType="hashmap" resultType="sqlMap">
+		/** reviewDAO.getOrderDetail **/
+		SELECT 
+			A.ORDER_DETAIL_IDX
+			, A.GOODS_IDX
+		FROM TO_ORDER_DETAIL A
+		WHERE 1=1
+		AND A.ORDER_DETAIL_IDX = #{ORDERDETAILIDX}
+		AND A.REG_IDX = #{MEMBERIDX}
+	</select>
+	
+	<!-- 당첨자 정보 -->
+	<select id="getWinnerDetail" parameterType="hashmap" resultType="sqlMap">
+		/** reviewDAO.getWinnerDetail **/
+		SELECT 
+			A.WINNER_IDX
+			, A.GOODS_IDX
+		FROM TA_SAMPLE_WINNER A INNER JOIN TA_SAMPLE B ON A.SAMPLE_IDX = B.SAMPLE_IDX
+		WHERE 1=1
+		AND A.WINNER_IDX = #{WINNERIDX}
+		AND A.MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+</mapper>

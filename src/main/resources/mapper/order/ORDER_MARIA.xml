@@ -1,0 +1,2556 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="orderDAO">
+
+	<!-- 주문 마스터 저장 -->
+	<insert id="insertOrderMaster" parameterType="hashmap" useGeneratedKeys="true" keyProperty="ORDER_IDX">
+		/** orderDAO.insertOrderMaster **/
+		INSERT INTO TO_ORDER
+		(
+			ORDER_CD, 						/* 주문코드 YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+			MEMBER_ORDER_YN,  			/* 회원/비회원 구분 (Y : 회원주문, N : 비회원주문) */
+			MEMBER_IDX, 					/* 회원 일련번호 (TM_MEMBER 일련번호) */
+			MEMBER_ID,  						/* 회원 아이디 */
+			MEMBER_GRADE_IDX, 			/* 회원등급 일련번호 (TM_MEMBER_GRADE 일련번호) */
+			MEMBER_NM,  					/* 회원명(주문자명) (비회원일때는 주문자명) */
+			SESSION_ID, 						/* 세션ID	(비회원일때만 사용됨) */
+			NONMEMBER_PW, 				/* 비밀번호 (비회원일때만 사용됨) */
+			DEVICE, 							/* 디바이스 (P : PC, M : MOBILE, A : APP) */
+			ORDER_DT, 						/* 주문일자 */
+			ORDER_STATUS_CD,  			/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			PAY_TYPE, 							/* 결제수단 (공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : Npay, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+			BILLKEY_IDX,						/* 빌키 일련번호 (원클릭 결제시 결제된 빌키 일련번호) */
+			TOTAL_ORDER_PRICE,			/* 총 주문금액 */
+			SHIPPING_PRICE,				/* 배송비 */
+			SENDER_NM,						/* 보내는 사람 이름 (비회원 주문시 필수) */
+			SENDER_PHONE_NO,			/* 보내는 사람 휴대폰번호 (비회원 주문시 필수) */
+			SENDER_EMAIL,					/* 보내는 사람 이메일 */
+			SHIPPING_NM,					/* 주소록명 */
+			RECEIVER_NM,					/* 받는 사람 이름 */	
+			RECEIVER_ADDR,					/* 받는 사람 주소	도로명주소 */
+			RECEIVER_ADDR_DETAIL,		/* 받는 사람 상세주소	도로명, 지번 공통 */
+			RECEIVER_ZIP_CD,				/* 받는 사람 우편번호	신우편번호 */
+			RECEIVER_OLD_ADDR,			/* 받는 사람 주소	지번주소 */
+			RECEIVER_OLD_ZIP_CD,		/* 받는 사람 (구)우편번호	(-) 포함 */
+			RECEIVER_TEL_NO,				/* 받는 사람 전화번호 */
+			RECEIVER_PHONE_NO,			/* 받는 사람 휴대폰번호 */
+			SELECT_ADDRESS_IDX,		/* 선택한 배송지 목록 일련번호 */
+			ADFROM,							/* 광고 경로 TAG */			
+			REG_IDX,
+			REG_HTTP_USER_AGENT,
+			REG_IP,
+			REG_DT
+		)
+		VALUES
+		(
+			#{ORDERCD},
+			#{MEMBERORDERYN},
+			#{MEMBERIDX},
+			#{MEMBERID},
+			#{MEMBERGRADEIDX},
+			#{MEMBERNM},
+			#{SESSIONID},
+			#{NONMEMBERPW},
+			#{DEVICE},
+			NOW(),
+			#{ORDERSTATUSCD},
+			#{PAYTYPE},
+			#{BILLKEYIDX},
+			#{TOTALORDERPRICE},
+			#{SHIPPINGPRICE},
+			#{MEMBERNM},
+			FN_ENCRYPT(#{SENDERPHONENO}),
+			FN_ENCRYPT(#{SENDEREMAIL}),
+			#{SHIPPINGNM},
+			#{RECEIVERNM},
+			FN_ENCRYPT(#{RECEIVERADDR}),
+			FN_ENCRYPT(#{RECEIVERADDRDETAIL}),
+			#{RECEIVERZIPCD},
+			FN_ENCRYPT(#{RECEIVEROLDADDR}),
+			#{RECEIVEROLDZIP_CD},
+			FN_ENCRYPT(#{RECEIVERTELNO}),
+			FN_ENCRYPT(#{RECEIVERPHONENO}),
+			#{SELECTADDRESSIDX},
+			#{ADFROM},
+			#{REGIDX},
+			#{REGHTTPUSERAGENT},
+			#{REGIP},
+			NOW()
+		)
+	</insert>
+
+	<!-- 주문 디테일 저장 -->
+	<insert id="insertOrderDetail" parameterType="hashmap" useGeneratedKeys="true" keyProperty="ORDER_DETAIL_IDX">
+		/** orderDAO.insertOrderDetail **/
+		INSERT INTO TO_ORDER_DETAIL
+		(
+			ORDER_IDX,  					/* 주문 마스터 일련번호 (TO_ORDER 일련번호) */
+			ORDER_CD, 					/* 주문코드 */
+			ORDER_STATUS_CD,  		/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			GOODS_IDX,  					/* 상품 일련번호 (TP_GOODS 일련번호) */
+			GOODS_CD, 					/* 상품코드 (FRONT 표기되는 상품코드) */
+			GOODS_NM, 					/* 상품명 */
+			ORDER_CNT,  					/* 상품 개수 */
+			PRICE,  							/* 판매가 */
+			DISCOUNT_RATE,  			/* 할인율 */
+			DISCOUNT_PRICE, 			/* 할인가 */
+			SUPPLY_PRICE,               /* 공급가 */
+			GIFT_COUPON_IDX,  		/* 상품 쿠폰 일련번호 (결제 페이지에서 임시 적용된 상품 쿠폰 일련번호) */
+			GIFT_COUPON_PRICE,  	/* 상품 쿠폰 할인 금액 (상품 쿠폰 여러 개 적용됐으면 금액 합) */
+			CART_COUPON_PRICE,  	/* 장바구니 쿠폰 할인 금액 (비율로 나눠서 저장) */
+			PROMOTIONCODE_PRICE,	/* 프로모션 코드 할인 금액 (비율로 나눠서 저장) */
+			POINT_PRICE,  				/* 포인트 결제 금액 (비율로 나눠서 저장) */
+			PRE_POINT_PRICE,  		/* 선포인트 결제 금액 (비율로 나눠서 저장) */
+			PAY_PRICE, 					/* 결제금액 (실제 PG사 결제금액, 비율로 나눠서 저장) */
+			SAVE_POINT, 					/* 적립 예정 포인트 */
+			DISPLAY_DATE, 				/* 상품노출일자 (상품 FRONT 전시되는 일자 YYYYMMDD 형태) */
+			SALE_FLAG,  					/* 판매기간 옵션구분 (Y: 시작일/종료일, N: 기간없음) */
+			SALE_START_DATE,  		/* 판매시작일자 (YYYYMMDD 형태) */
+			SALE_END_DATE,  			/* 판매종료일자 (YYYYMMDD 형태) */
+			SALE_STATUS,  				/* 판매상태 (P:판매전, Y:판매중, R:품절, S:판매중단) */
+			STOCK_FLAG, 					/* 재고 설정구분 (Y: 재고수량에 따름, N: 무제한) */
+			STOCK_CNT,  					/* 재고 수량 (재고 설정이 무제한인 경우 수량 0) */
+			SAFE_STOCK_RATE,  		/* 안전재고율 (실재고는 재고수량%안전재고율  안전재고율 0%는 안전재고 미적용) */
+			BUY_LIMIT_FLAG, 			/* 구매제한 설정구분 (Y: 수량별 구매제한, N: 제한 없음) */
+			BUY_MAX_CNT,  				/* 최대 구매 가능 수량 (수량별 구매제한인 경우만 유효) */
+			BUY_MIN_CNT,  				/* 최소 구매 가능 수량 (수량별 구매제한인 경우만 유효) */
+			POINT_FLAG, 					/* 포인트 적립 설정구분 (Y: 적립 사용, N: 미적립, D: 기본포인트적립) */
+			POINT_RATE, 					/* 포인트 적립율 */
+			EVENT_CODE, 				/* 행사코드(통계용) */
+			SALE_GUBUN, 				/* 매출구분(통계용) */
+			SET_FLAG, 						/* 세트상품 구분 (Y : 세트 상품, N : 일반상품) */
+			EXH_OPO_IDX,				/* 1+1 기획전 일련번호 (1+1 기획전 상품일때만 사용) */
+			EXH_TPO_IDX,				/* 2+1 기획전 일련번호 (2+1 기획전 상품일때만 사용) */
+			EXH_SALE_IDX,				/* SALE 기획전 일련번호 (SALE 기획전 상품일때만 사용) */
+			EXH_POINT_IDX,				/* POINT 기획전 일련번호 (POINT 기획전 상품일때만 사용) */
+			TIMESALE_IDX,				/* 타임세일 일련번호 (타임세일 상품일때만 사용) */			
+			CATE_IDX, 						/* 카테고리 일련번호 (카테고리별 가격이 다른 쇼핑몰에서 사용, TP_CATEGORY 일련번호) */
+			PARTNER_IDX,  				/* 파트너 데이타 일련번호 (네이버EP용, TO_PARTNER_DATA 일련번호) */
+			REG_IDX,
+			REG_HTTP_USER_AGENT,
+			REG_IP,
+			REG_DT
+		)
+		SELECT
+			#{ORDERIDX},
+			#{ORDERCD},
+			#{ORDERSTATUSCD},
+			#{GOODSIDX},
+			GOODS_CD,
+			GOODS_NM,
+			#{ORDERCNT},
+			PRICE,
+			DISCOUNT_RATE,
+			DISCOUNT_PRICE,
+			SUPPLY_PRICE,               
+			#{GIFTCOUPONIDX},
+			#{GIFTCOUPONPRICE},
+			#{CARTCOUPONPRICE},
+			#{PROMOTIONCODEPRICE},
+			#{POINTPRICE},
+			#{PREPOINTPRICE},
+			#{PAYPRICE},
+			#{SAVEPOINT},
+			DISPLAY_DATE,
+			SALE_FLAG,
+			SALE_START_DATE,
+			SALE_END_DATE,
+			SALE_STATUS,
+			STOCK_FLAG,
+			STOCK_CNT,
+			SAFE_STOCK_RATE,
+			BUY_LIMIT_FLAG,
+			BUY_MAX_CNT,
+			BUY_MIN_CNT,
+			POINT_FLAG,
+			POINT_RATE,
+			EVENT_CODE,
+			SALE_GUBUN,
+			SET_FLAG,
+			EXH_OPO_IDX,
+			EXH_TPO_IDX,
+			EXH_SALE_IDX,
+			EXH_POINT_IDX,
+			TIMESALE_IDX,
+			#{CATEIDX},
+			#{PARTNERIDX},
+			#{REGIDX},
+			#{REGHTTPUSERAGENT},
+			#{REGIP},
+			NOW()
+		FROM VW_GOODS
+		WHERE GOODS_IDX = #{GOODSIDX}
+	</insert>
+
+	<!-- 주문 서브 디테일 저장 -->
+	<insert id="insertOrderSubDetail" parameterType="hashmap">
+		/** orderDAO.insertOrderSubDetail **/
+		INSERT INTO TO_ORDER_SUB_DETAIL
+		(
+			ORDER_DETAIL_IDX,		/* 주문 디테일 일련번호 */			
+			ORDER_IDX,  					/* 주문 마스터 일련번호 (TO_ORDER 일련번호) */
+			ORDER_CD, 					/* 주문코드 */
+			ORDER_STATUS_CD,  		/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			GOODS_IDX,  					/* 상품 일련번호 (TP_GOODS 일련번호) */
+			GOODS_CD, 					/* 상품코드 (FRONT 표기되는 상품코드) */
+			GOODS_NM, 					/* 상품명 */
+			SET_GOODS_IDX,  			/* 세트 상품 테이블 일련번호 (세트상품일 경우에만 사용, TP_GOODS_SET의 GOODS_IDX) */
+			ORDER_CNT,  					/* 상품 개수 */
+			PRICE,  							/* 판매가 */
+			DISCOUNT_RATE,  			/* 할인율 */
+			DISCOUNT_PRICE, 			/* 할인가 */
+			SUPPLY_PRICE,               /* 공급가 */
+			GIFT_COUPON_IDX,  		/* 상품 쿠폰 일련번호 (결제 페이지에서 임시 적용된 상품 쿠폰 일련번호) */
+			GIFT_COUPON_PRICE,  	/* 상품 쿠폰 할인 금액 (상품 쿠폰 여러 개 적용됐으면 금액 합) */
+			CART_COUPON_PRICE,  	/* 장바구니 쿠폰 할인 금액 (비율로 나눠서 저장) */
+			PROMOTIONCODE_PRICE,	/* 프로모션 코드 할인 금액 (비율로 나눠서 저장) */
+			POINT_PRICE,  				/* 포인트 결제 금액 (비율로 나눠서 저장) */
+			PRE_POINT_PRICE,  		/* 선포인트 결제 금액 (비율로 나눠서 저장) */
+			PAY_PRICE, 					/* 결제금액 (실제 PG사 결제금액, 비율로 나눠서 저장) */
+			SAVE_POINT, 					/* 적립 예정 포인트 */
+			DISPLAY_DATE, 				/* 상품노출일자 (상품 FRONT 전시되는 일자 YYYYMMDD 형태) */
+			SALE_FLAG,  					/* 판매기간 옵션구분 (Y: 시작일/종료일, N: 기간없음) */
+			SALE_START_DATE,  		/* 판매시작일자 (YYYYMMDD 형태) */
+			SALE_END_DATE,  			/* 판매종료일자 (YYYYMMDD 형태) */
+			SALE_STATUS,  				/* 판매상태 (P:판매전, Y:판매중, R:품절, S:판매중단) */
+			STOCK_FLAG, 					/* 재고 설정구분 (Y: 재고수량에 따름, N: 무제한) */
+			STOCK_CNT,  					/* 재고 수량 (재고 설정이 무제한인 경우 수량 0) */
+			SAFE_STOCK_RATE,  		/* 안전재고율 (실재고는 재고수량%안전재고율  안전재고율 0%는 안전재고 미적용) */
+			BUY_LIMIT_FLAG, 			/* 구매제한 설정구분 (Y: 수량별 구매제한, N: 제한 없음) */
+			BUY_MAX_CNT,  				/* 최대 구매 가능 수량 (수량별 구매제한인 경우만 유효) */
+			BUY_MIN_CNT,  				/* 최소 구매 가능 수량 (수량별 구매제한인 경우만 유효) */
+			POINT_FLAG, 					/* 포인트 적립 설정구분 (Y: 적립 사용, N: 미적립, D: 기본포인트적립) */
+			POINT_RATE, 					/* 포인트 적립율 */
+			EVENT_CODE, 				/* 행사코드(통계용) */
+			SALE_GUBUN, 				/* 매출구분(통계용) */
+			SET_FLAG, 						/* 세트상품 구분 (Y : 세트 상품, N : 일반상품) */
+			EXH_OPO_IDX,				/* 1+1 기획전 일련번호 (1+1 기획전 상품일때만 사용) */
+			EXH_TPO_IDX,				/* 2+1 기획전 일련번호 (2+1 기획전 상품일때만 사용) */
+			EXH_SALE_IDX,				/* SALE 기획전 일련번호 (SALE 기획전 상품일때만 사용) */
+			EXH_POINT_IDX,				/* POINT 기획전 일련번호 (POINT 기획전 상품일때만 사용) */
+			TIMESALE_IDX,				/* 타임세일 일련번호 (타임세일 상품일때만 사용) */			
+			CATE_IDX, 						/* 카테고리 일련번호 (카테고리별 가격이 다른 쇼핑몰에서 사용, TP_CATEGORY 일련번호) */
+			PARTNER_IDX,  				/* 파트너 데이타 일련번호 (네이버EP용, TO_PARTNER_DATA 일련번호) */
+			REG_IDX,
+			REG_HTTP_USER_AGENT,
+			REG_IP,
+			REG_DT
+		)
+		SELECT
+			#{ORDERDETAILIDX},
+			#{ORDERIDX},
+			#{ORDERCD},
+			#{ORDERSTATUSCD},
+			GS.SET_GOODS_IDX,
+			IFNULL(VG.GOODS_CD,G.GOODS_CD),
+			IFNULL(VG.GOODS_NM,G.GOODS_NM),
+			GS.GOODS_IDX,  			/* 세트 상품 테이블 일련번호 (세트상품일 경우에만 사용, TP_GOODS_SET의 GOODS_IDX) */
+			#{ORDERCNT},
+			IFNULL(VG.PRICE,G.PRICE),
+			GS.DISCOUNT_RATE,
+			GS.PRICE,
+			GS.SUPPLY_PRICE,
+			#{GIFTCOUPONIDX},
+			#{GIFTCOUPONPRICE},
+			#{CARTCOUPONPRICE},
+			#{PROMOTIONCODEPRICE},
+			#{POINTPRICE},
+			#{PREPOINTPRICE},
+			#{PAYPRICE},
+			#{SAVEPOINT},
+			IFNULL(VG.DISPLAY_DATE,G.DISPLAY_DATE),
+			IFNULL(VG.SALE_FLAG,G.SALE_FLAG),
+			IFNULL(VG.SALE_START_DATE,G.SALE_START_DATE),
+			IFNULL(VG.SALE_END_DATE,G.SALE_END_DATE),
+			IFNULL(VG.SALE_STATUS,G.SALE_STATUS),
+			IFNULL(VG.STOCK_FLAG,G.STOCK_FLAG),
+			IFNULL(VG.STOCK_CNT,G.STOCK_CNT),
+			IFNULL(VG.SAFE_STOCK_RATE,G.SAFE_STOCK_RATE),
+			IFNULL(VG.BUY_LIMIT_FLAG,G.BUY_LIMIT_FLAG),
+			IFNULL(VG.BUY_MAX_CNT,G.BUY_MAX_CNT),
+			IFNULL(VG.BUY_MIN_CNT,G.BUY_MIN_CNT),
+			IFNULL(VG.POINT_FLAG,G.POINT_FLAG),
+			IFNULL(VG.POINT_RATE,G.POINT_RATE),
+			IFNULL(VG.EVENT_CODE,G.EVENT_CODE),
+			GS.SALE_GUBUN,
+			IFNULL(VG.SET_FLAG,G.SET_FLAG),
+			VG.EXH_OPO_IDX,
+			VG.EXH_TPO_IDX,
+			VG.EXH_SALE_IDX,
+			VG.EXH_POINT_IDX,
+			VG.TIMESALE_IDX,
+			#{CATEIDX},
+			#{PARTNERIDX},
+			#{REGIDX},
+			#{REGHTTPUSERAGENT},
+			#{REGIP},
+			NOW()
+ 		FROM TP_GOODS G
+		JOIN TP_GOODS_SET GS ON G.GOODS_IDX = GS.SET_GOODS_IDX
+		LEFT OUTER JOIN VW_GOODS VG ON G.GOODS_IDX = VG.GOODS_IDX
+		WHERE GS.GOODS_IDX = #{GOODSIDX}
+	</insert>
+
+	<!-- 사은품 내역 저장 -->
+	<insert id="insertOrderGift" parameterType="hashmap">
+		/** orderDAO.insertOrderGift **/
+		INSERT INTO TO_ORDER_GIFT
+		(
+			ORDER_IDX,			/* 주문 마스터 일련번호 (TO_ORDER 일련번호) */
+			ORDER_CD, 			/* 주문코드 YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+			GIFT_IDX,				/* 사은품 일련번호 (TP_GIFT 일련번호) */
+			GIFT_NM,				/* 사은품명 */	
+			GIFT_IMG,				/* 사은품 이미지 */	
+			GIFT_REAL_IMG,		/* 사은품 실제 이미지 */	
+			GIFT_FLAG,				/* 사은품 구분 (P : 금액별 G : 상품별(상품별사용안함)) */
+			GIFT_CNT,              /* 사은품개수 (상품사은품일경우 구매한수만큼) */
+			TERM_IDX,				/* 사은품구간일련번호 (TP_GIFT_TERM 일련번호) */
+			FREE_YN,				/* 무료구분 (Y : 무료사은품, N:구간사은품) */
+			BRAND_IDX,			/* 브랜드 (0이면 전체) */
+			TERM_NM,				/* 구간명 */	
+			PRICE_START,			/* 구간시작금액 (구간사은품인경우 1이상) */
+			PRICE_END,			/* 구간끝금액 */	
+			GIFT_START_DATE,	/* 사은품 증정 시작일자 */	
+			GIFT_END_DATE,		/* 사은품 증정 종료일자 */
+			SEL_YN,					/* 선택여부 (Y : 선택사은품, N : 브랜드, 금액 해당되면 모두증정) */	
+			STATUS					/* 상태 (0: 발송전, 1:발송완료(송장번호입력시), 9:취소) */
+		)
+		VALUES
+		(
+			#{ORDERIDX},
+			#{ORDERCD},
+			#{GIFTIDX},
+			#{GIFTNM},
+			#{GIFTIMG},
+			#{GIFTREALIMG},
+			#{GIFTFLAG},
+			#{GIFTCNT},
+			#{TERMIDX},
+			#{FREEYN},
+			#{BRANDIDX},
+			#{TERMNM},
+			#{PRICESTART},
+			#{PRICEEND},
+			#{GIFTSTARTDATE},
+			#{GIFTENDDATE},
+			#{SELYN},
+			0
+		)
+	</insert>
+
+	<!-- 상품 정보 -->
+	<select id="getGoodsInfo" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** orderDAO.getGoodsInfo **/
+		SELECT 
+			SET_FLAG,							/* 세트상품 구분 ( Y : 세트 상품 N : 일반상품 ) */
+			STOCK_FLAG, 						/* 재고 설정구분 ( Y: 재고수량에 따름  N: 무제한 ) */
+			STOCK_CNT, 						/* 재고 수량 ( 재고 설정이 무제한인 경우 수량 0 ) */
+			BUY_LIMIT_FLAG, 				/* 구매제한 설정구분 ( Y: 수량별 구매제한 N: 제한 없음 ) */
+			BUY_MAX_CNT, 					/* 최대 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			BUY_MIN_CNT, 					/* 최소 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			PRICE, 								/* 판매가 */
+			DISCOUNT_RATE, 				/* 할인율 */
+			DISCOUNT_PRICE, 				/* 할인가 */
+			POINT_FLAG, 						/* 포인트 적립 설정구분 ( Y: 적립 사용 N: 미적립 D: 기본포인트적립 ) */
+			POINT_RATE 						/* 포인트 적립율 */ 
+		FROM VW_GOODS
+		WHERE GOODS_IDX = #{GOODSIDX}
+	</select>
+
+	<!-- 주문 상품 리스트 -->
+	<select id="getOrderGoodsList" parameterType="hashmap" resultType="sqlMap">
+		/** orderDAO.getOrderGoodsList **/
+		SELECT
+			OD.ORDER_DETAIL_IDX,			/* 주문 상세 일련번호 */
+			OD.ORDER_IDX,						/* 주문 마스터 일련번호 */
+			OD.ORDER_CD,						/* 주문 코드 */
+			OD.GOODS_IDX,						/* 상품 일련번호 ( TP_GOODS 일련번호 ) */
+			OD.ORDER_CNT,						/* 상품 개수 */
+			OD.GIFT_COUPON_IDX	,			/* 상품 쿠폰 일련번호 (결제 페이지에서 임시 적용된 상품 쿠폰 일련번호 (자동 발급 쿠폰은 -  붙여서 저장)) */
+			OD.GIFT_COUPON_PRICE,			/* 상품 쿠폰 할인 금액 */			
+	<choose>
+		<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+			CASE WHEN IFNULL(OD.GIFT_COUPON_IDX,0) <![CDATA[<]]> 0 THEN CP.COUPON_NM WHEN IFNULL(OD.GIFT_COUPON_IDX,0) <![CDATA[>]]> 0 THEN CPM.COUPON_NM END AS COUPON_NM,	/* 적용 쿠폰명 */
+			OD.GIFT_COUPON_PRICE AS COUPON_DISCOUNT_PRICE,	/* 적용 쿠폰 할인액 */
+		</when>
+		<otherwise>																<!-- 비회원 -->
+            NULL AS COUPON_NM,				/* 자동 적용 쿠폰명 */
+            0 AS COUPON_DISCOUNT_PRICE,		/* 자동 적용 쿠폰 할인액 */  
+		</otherwise>
+	</choose>
+			G.SET_FLAG, 							/* 세트상품 구분 ( Y : 세트 상품 N : 일반상품 ) */
+			G.GOODS_CD, 						/* 상품코드 ( FRONT표기되는 상품코드 ) */
+			G.GOODS_NM, 						/* 상품명 ( 상품명 ) */
+			G.BRAND_IDX,						/* 브랜드 일련번호 */
+			G.BRAND_NM,							/* 브랜드명 */
+			G.DISPLAY_DATE, 					/* 상품노출일자 ( 상품 FRONT 전시되는 일자 YYYYMMDD 형태 ) */
+			G.SALE_FLAG, 						/* 판매기간 옵션구분 ( Y: 시작일/종료일  N: 기간없음 ) */
+			G.SALE_START_DATE, 				/* 판매시작일자 ( YYYYMMDD 형태 ) */
+			G.SALE_END_DATE, 					/* 판매종료일자 ( YYYYMMDD 형태 ) */
+			G.SALE_STATUS, 						/* 판매상태 ( P:판매전, Y:판매중, R:일시품절, S:판매중단 ) */
+			G.STOCK_FLAG, 						/* 재고 설정구분 ( Y: 재고수량에 따름  N: 무제한 ) */
+			G.STOCK_CNT, 						/* 재고 수량 ( 재고 설정이 무제한인 경우 수량 0 ) */
+			G.SAFE_STOCK_RATE, 				/* 안전재고율 ( 실재고는 재고수량%안전재고율  안전재고율 0%는 안전재고 미적용 ) */
+			G.BUY_LIMIT_FLAG, 				/* 구매제한 설정구분 ( Y: 수량별 구매제한 N: 제한 없음 ) */
+			G.BUY_MAX_CNT, 					/* 최대 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			G.BUY_MIN_CNT, 					/* 최소 구매 가능 수량 ( 수량별 구매제한인 경우만 유효 ) */
+			G.PRICE, 								/* 판매가 */
+			G.DISCOUNT_RATE, 				/* 할인율 */
+			G.DISCOUNT_PRICE, 				/* 할인가 */
+			G.POINT_FLAG, 						/* 포인트 적립 설정구분 ( Y: 적립 사용 N: 미적립 D: 기본포인트적립 ) */
+			G.POINT_RATE, 						/* 포인트 적립율 */
+			G.SALE_GUBUN, 						/* 매출구분(통계용) */
+			G.GOODS_BADGE, 					/* 상품유형 ( TC_COMMON_CD 테이블  GOODS_BADGE에 해당 되는 코드명 콤마 단위 구분(NEW,BEST등) ) */
+			G.MAIN_FILE,							/* 이미지 파일 */
+			G.SOLDOUT_YN,
+			G.BEST_YN,
+			G.NEW_YN,
+			G.ONLINE_YN,
+			G.OPO_YN,
+			G.TPO_YN,
+			G.POINTICON_YN,
+			G.SALEICON_YN,
+			G.AUTO_COUPON_YN
+		FROM TO_ORDER_DETAIL OD
+		JOIN VW_GOODS G ON OD.GOODS_IDX = G.GOODS_IDX 
+		<if test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+			LEFT OUTER JOIN TO_COUPON CP ON IFNULL(OD.GIFT_COUPON_IDX,0) <![CDATA[<]]> 0 AND CP.COUPON_IDX = ABS(OD.GIFT_COUPON_IDX)	/* 자동 적용 쿠폰은 쿠폰 일련번호가 - 임 */
+			LEFT OUTER JOIN TO_COUPON_MEMBER CPM ON IFNULL(OD.GIFT_COUPON_IDX,0) <![CDATA[>]]> 0 AND CPM.COUPON_MEMBER_IDX = OD.GIFT_COUPON_IDX	/* 다운로드 쿠폰 */
+		</if>
+		WHERE ORDER_CD = #{ORDERCD}
+		ORDER BY OD.ORDER_DETAIL_IDX
+	</select>
+
+	<!-- 주문 마스터 정보 -->
+	<select id="getOrderInfo" parameterType="hashmap" resultType="sqlMap">
+		/** orderDAO.getOrderInfo **/
+		SELECT
+			O.ORDER_IDX,								/* 주문 마스터 일련번호 (100000 번부터 시작) */
+			O.ORDER_CD,									/*	주문코드	YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+			O.MEMBER_ORDER_YN,					/*	회원/비회원 구분 (Y : 회원주문, N : 비회원주문) */
+			O.MEMBER_IDX,								/* 회원 일련번호 (TM_MEMBER 일련번호) */
+			O.MEMBER_ID,								/* 회원 아이디 */	
+			O.MEMBER_GRADE_IDX,					/* 회원등급 일련번호 (TM_MEMBER_GRADE 일련번호) */
+			O.MEMBER_NM,								/* 회원명(주문자명) (비회원일때는 주문자명) */
+			O.SESSION_ID,								/* 세션ID	(비회원일때만 사용됨) */
+			O.PAY_TYPE,									/* 결제수단 (공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : Npay, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+			O.BILLKEY_IDX,								/* 빌키 일련번호 (원클릭 결제시 결제된 빌키 일련번호) */
+			FN_DECRYPT(O.ACCOUNT) ACCOUNT,									/* 입금 계좌번호 (무통장(가상계좌)일때 사용) */
+			O.DEPOSITOR,								/* 입금 예금주명 (무통장(가상계좌)일때 사용) */
+			O.DEPOSIT_DEADLINE_DT,				/* 입금 기한 (무통장(가상계좌)일때 사용) */
+			O.TOTAL_ORDER_PRICE,					/* 총 주문금액 (총 상품금액) */
+			O.FREE_SHIPPING_COUPON_IDX,		/* 무료배송 쿠폰 일련번호	(결제 페이지에서 임시 적용된 무료배송 쿠폰 일련번호) */
+			O.FREE_SHIPPING_COUPON_PRICE,	/* 무료배송 쿠폰 할인 금액 */
+			O.TOTAL_GIFT_COUPON_PRICE,		/* 총 상품 쿠폰 할인 금액  */
+			O.CART_COUPON_IDX,						/* 장바구니 쿠폰 일련번호	(결제 페이지에서 임시 적용된 장바구니 쿠폰 일련번호) */
+			O.TOTAL_CART_COUPON_PRICE,		/* 총 장바구니 쿠폰 할인 금액	 */
+			O.PROMOTIONCODE,						/* 프로모션코드 (결제 페이지에서 임시 적용된 프로모션코드) */
+			O.RANDOMCODE_YN,						/* 랜덤코드여부 (Y:랜덤) */
+			O.TOTAL_PROMOTIONCODE_PRICE,	/* 총 프로모션 코드 할인 금액	 */
+			O.TOTAL_COUPON_PRICE,				/* 총 쿠폰/프로모션코드 할인 금액	(무료배송 쿠폰 할인 금액 + 총 상품 쿠폰 할인금액 + 총 장바구니 쿠폰 할인금액 + 총 프로모션 코드 할인금액) */
+			O.SHIPPING_PRICE,							/* 배송비 (무료배송쿠폰이 적용되면 0) */
+			O.TOTAL_POINT_PRICE,					/* 포인트 결제 금액 */
+			O.TOTAL_PRE_POINT_PRICE,				/* 선포인트 결제 금액 */
+			O.TOTAL_PAY_PRICE,						/* 결제금액 (실제 PG사 결제금액) */
+			O.TOTAL_SAVE_POINT,						/* 적립 예정 포인트 (원래 적립 예정 포인트 - 선포인트 결제 금액) */
+			O.SENDER_NM,								/* 보내는 사람 이름 (비회원 주문시 필수) */
+			FN_DECRYPT(O.SENDER_ADDR) SENDER_ADDR,							/* 보내는 사람 주소 (도로명주소) */
+			FN_DECRYPT(O.SENDER_ADDR_DETAIL) SENDER_ADDR_DETAIL,					/* 보내는 사람 상세주소 (도로명, 지번 공통) */
+			O.SENDER_ZIP_CD,							/* 보내는 사람 우편번호 (신우편번호) */
+			FN_DECRYPT(O.SENDER_OLD_ADDR) SENDER_OLD_ADDR,						/* 보내는 사람 주소 (지번주소) */
+			O.SENDER_OLD_ZIP_CD,					/* 보내는 사람 (구)우편번호 ((-) 포함) */
+			FN_DECRYPT(O.SENDER_TEL_NO) SENDER_TEL_NO,							/* 보내는 사람 전화번호 */
+			FN_DECRYPT(O.SENDER_PHONE_NO) SENDER_PHONE_NO,					/* 보내는 사람 휴대폰번호	(비회원 주문시 필수) */
+			FN_DECRYPT(O.SENDER_EMAIL) SENDER_EMAIL,							/* 보내는 사람 이메일 */
+			O.SHIPPING_NM,								/* 주소록명 */
+			O.RECEIVER_NM,								/* 받는 사람 이름 */
+			FN_DECRYPT(O.RECEIVER_ADDR) RECEIVER_ADDR,							/* 받는 사람 주소 (도로명주소) */
+			FN_DECRYPT(O.RECEIVER_ADDR_DETAIL) RECEIVER_ADDR_DETAIL,				/* 받는 사람 상세주소 (도로명, 지번 공통) */
+			O.RECEIVER_ZIP_CD,						/* 받는 사람 우편번호 (신우편번호) */
+			FN_DECRYPT(O.RECEIVER_OLD_ADDR) RECEIVER_OLD_ADDR,					/* 받는 사람 주소 (지번주소) */
+			O.RECEIVER_OLD_ZIP_CD,				/* 받는 사람 (구)우편번호	((-) 포함) */
+			FN_DECRYPT(O.RECEIVER_TEL_NO) RECEIVER_TEL_NO,						/* 받는 사람 전화번호 */
+			FN_DECRYPT(O.RECEIVER_PHONE_NO) RECEIVER_PHONE_NO,					/* 받는 사람 휴대폰번호 */
+			O.ORDER_MEMO,								/* 배송시 요청사항	 */
+			O.GIFT_PACKING_YN,						/* 선물 포장 여부 (Y : 선물 포장, N : 선물 포장 안 함) */
+			O.EDIT_DT,									/*	수정일자 */			
+			CASE WHEN OD.CNT <![CDATA[<=]]> 1 THEN OD.GOODS_NM ELSE CONCAT(OD.GOODS_NM,' 외 ',OD.CNT-1,'건') END AS PRODUCT_INFO,	/* 주문 상품명 외 X 건 */
+			OD.GOODS_CD AS PRODUCT_CODE,			
+			<!-- 상태 유지용 필드 시작 -->
+			O.SAME_AS_ORDER_INFO,				/* 회원정보와 동일인지 새로입력인지 (상태유지용 필드, Y : 회원정보와 동일, N : 새로입력) */
+			O.ADDRESS_TAB_ID,						/* 선택한 배송지 탭 ID (상태유지용 필드, addressID1 : 배송지 목록 탭, addressID2 : 새로 입력 탭) */
+			O.SELECT_ADDRESS_IDX,					/* 선택한 배송지 목록 일련번호 (상태유지용 필드) */
+			O.SAME_ORDER_INFO,						/* 주문자 정보와 상품을 받는 분이 같습니다 (상태유지용 필드) */
+			O.ADD_TO_ADDRESS,						/* 배송지 목록에 추가 (상태유지용 필드) */
+			O.SET_AS_DEFAULT_ADDRESS,			/* 기본 배송지로 설정 (상태유지용 필드) */
+			O.ORDER_MEMO_VAL,						/* 선택한 배송시 요청사항 SELECTBOX value (상태유지용 필드) */
+			O.GIFT_TAB_ID,								/* 선택한 사은품 탭 ID (상태유지용 필드, allGift : 무료 사은품 탭, over4Gift…) */
+			O.SELECT_PRICE_GIFT_IDX,				/* 선택한 구매금액별 사은품 일련번호 (상태유지용 필드) */
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				CASE WHEN O.EDIT_DT IS NULL THEN DP.BANK_CODE ELSE O.BANK_CODE END AS BANK_CODE,														/* 입금 은행코드 (공통코드 무통장(가상계좌)일때 사용) */
+				CASE WHEN O.EDIT_DT IS NULL THEN IFNULL(DP.ESCROW_YN,'N') ELSE O.ESCROW_YN END AS ESCROW_YN,									/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+				CASE WHEN O.EDIT_DT IS NULL THEN IFNULL(DP.CASH_RECEIPT_GUBUN,'0') ELSE O.CASH_RECEIPT_GUBUN END AS CASH_RECEIPT_GUBUN,				/* 현금영수증 여부 (0 : 미신청, 1 : 개인, 2 : 사업자) */
+				CASE WHEN O.EDIT_DT IS NULL THEN DP.CASH_RECEIPT_NO ELSE O.CASH_RECEIPT_NO END AS CASH_RECEIPT_NO,							/* 현금영수증 번호 (CASH_RECEIPT_GUBUN가 '0'이 아닐때만 사용, 개인은 휴대폰번호, 사업자는 사업자등록번호) */
+
+				CASE WHEN O.EDIT_DT IS NULL THEN IFNULL(DP.SELECT_PAY_TYPE,'BILLKEY') ELSE O.SELECT_PAY_TYPE END AS SELECT_PAY_TYPE,	/* 선택한 결제 수단 (상태유지용 필드, BILLKEY : 원클릭 결제, SC0010 : 신용카드) */
+				CASE WHEN O.EDIT_DT IS NULL THEN DP.SELECT_BILLKEY_VAL ELSE O.SELECT_BILLKEY_VAL END AS SELECT_BILLKEY_VAL,				/* 선택한 빌키 SELECTBOX value (상태유지용 필드) */
+				CASE WHEN O.EDIT_DT IS NULL THEN DP.SELECT_CARD_CODE ELSE O.SELECT_CARD_CODE END AS SELECT_CARD_CODE,					/* 선택한 카드 코드 (상태유지용 필드) */
+				CASE WHEN O.EDIT_DT IS NULL THEN IFNULL(DP.ETC_CARD_VAL,'') ELSE O.ETC_CARD_VAL END AS ETC_CARD_VAL,							/* 선택한 기타 카드 SELECTBOX value (상태유지용 필드) */
+				CASE WHEN O.EDIT_DT IS NULL THEN DP.ESCROW_YN1_VAL ELSE O.ESCROW_YN1_VAL END AS ESCROW_YN1_VAL,							/* 실시간 계좌 이체시 선택한 에스크로 value (상태유지용 필드) */
+				CASE WHEN O.EDIT_DT IS NULL THEN DP.ESCROW_YN2_VAL ELSE O.ESCROW_YN2_VAL END AS ESCROW_YN2_VAL,							/* 가상계좌 입금시 선택한 에스크로 value (상태유지용 필드) */
+				CASE WHEN O.EDIT_DT IS NULL AND DP.MEMBER_IDX IS NOT NULL THEN 'Y' ELSE O.USE_THIS_PAY_TYPE_TO_NEXT END AS USE_THIS_PAY_TYPE_TO_NEXT,						/* 지금 선택하신 결제수단을 다음에도 사용 (상태유지용 필드) */
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				O.BANK_CODE,								/* 입금 은행코드 (공통코드 무통장(가상계좌)일때 사용) */
+				O.ESCROW_YN,								/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+				O.CASH_RECEIPT_GUBUN,				/* 현금영수증 여부 (0 : 미신청, 1 : 개인, 2 : 사업자) */
+				O.CASH_RECEIPT_NO,						/* 현금영수증 번호 (CASH_RECEIPT_GUBUN가 '0'이 아닐때만 사용, 개인은 휴대폰번호, 사업자는 사업자등록번호) */
+
+				O.SELECT_PAY_TYPE,						/* 선택한 결제 수단 (상태유지용 필드, SC0010 : 신용카드) */
+				O.SELECT_BILLKEY_VAL,					/* 선택한 빌키 SELECTBOX value (상태유지용 필드) */
+				O.SELECT_CARD_CODE,					/* 선택한 카드 코드 (상태유지용 필드) */
+				O.ETC_CARD_VAL,							/* 선택한 기타 카드 SELECTBOX value (상태유지용 필드) */
+				O.ESCROW_YN1_VAL,						/* 실시간 계좌 이체시 선택한 에스크로 value (상태유지용 필드) */
+				O.ESCROW_YN2_VAL,						/* 가상계좌 입금시 선택한 에스크로 value (상태유지용 필드) */
+				O.USE_THIS_PAY_TYPE_TO_NEXT,		/* 지금 선택하신 결제수단을 다음에도 사용 (상태유지용 필드) */
+			</otherwise>
+		</choose>				
+			O.AGREEMENT,									/* 위 상품의 판매조건을 명확히 확인하였으며, 구매 진행에 동의합니다. (상태유지용 필드) */
+			<!-- 상태 유지용 필드 끝 -->
+
+			CASE
+              WHEN (O.PROMOTIONCODE is not null AND O.PROMOTIONCODE != '')
+              THEN (
+                 CASE WHEN (SELECT COUNT(*) FROM TO_PROMOTIONCODE_ISSUE ISSUE where ISSUE.PROMOTIONCODE = O.PROMOTIONCODE ) <![CDATA[>]]> 0 
+                 THEN
+                 	(SELECT PC.PMCODE_DESC  
+                    FROM TO_PROMOTIONCODE PC
+                         INNER JOIN TO_PROMOTIONCODE_ISSUE PI
+                         ON     PC.PMCODE_IDX = PI.PMCODE_IDX
+                         WHERE PI.PROMOTIONCODE = O.PROMOTIONCODE
+                         )
+                 ELSE
+                 	(SELECT PC.PMCODE_DESC
+                    FROM TO_PROMOTIONCODE PC
+                         WHERE PC.PMCODE_NM = O.PROMOTIONCODE
+                         )              		
+                 END 
+                  )
+              ELSE ''
+       		END AS PROMOTIONCODE_NAME,	
+       		CASE
+              WHEN (O.CART_COUPON_IDX is not null AND O.CART_COUPON_IDX != ''  AND O.CART_COUPON_IDX != 0)
+              THEN (
+              		CASE WHEN O.CART_COUPON_IDX <![CDATA[<]]> 0 THEN
+              			(
+	              			SELECT CP.COUPON_NM  
+	                    	FROM TO_COUPON CP
+	                        WHERE CP.COUPON_IDX = O.CART_COUPON_IDX*-1
+	                    )
+	                 ELSE
+	                 	(
+	              			SELECT CP.COUPON_NM  
+	                    	FROM TO_COUPON CP
+	                        WHERE CP.COUPON_IDX = O.CART_COUPON_IDX
+	                    )
+	                 END    
+                  )
+              ELSE ''
+       		END AS CARTCOUPON_NAME,
+       		CASE
+              WHEN (O.FREE_SHIPPING_COUPON_IDX is not null AND O.FREE_SHIPPING_COUPON_IDX != ''  AND O.FREE_SHIPPING_COUPON_IDX != 0)
+              THEN (
+              		CASE WHEN O.FREE_SHIPPING_COUPON_IDX <![CDATA[<]]> 0 THEN
+              			(
+	              			SELECT CP.COUPON_NM  
+	                    	FROM TO_COUPON CP
+	                        WHERE CP.COUPON_IDX = O.FREE_SHIPPING_COUPON_IDX*-1
+	                    )
+	                 ELSE
+	                 	(
+	              			SELECT CP.COUPON_NM  
+	                    	FROM TO_COUPON CP
+	                        WHERE CP.COUPON_IDX = O.FREE_SHIPPING_COUPON_IDX
+	                    )
+	                 END    
+                  )
+              ELSE ''
+       		END AS SHIPPING_COUPON_NAME	
+       				
+		FROM TO_ORDER O
+		JOIN (
+			SELECT ORDER_IDX, GOODS_NM, GOODS_CD, COUNT(*) AS CNT
+			FROM TO_ORDER_DETAIL
+			WHERE ORDER_CD = #{ORDERCD}
+			GROUP BY ORDER_IDX
+		) OD ON O.ORDER_IDX = OD.ORDER_IDX
+		<if test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+			LEFT OUTER JOIN (
+				SELECT
+					MEMBER_IDX,
+					DEVICE,
+					SELECT_PAY_TYPE,
+					SELECT_BILLKEY_VAL,
+					SELECT_CARD_CODE,
+					ETC_CARD_VAL,
+					ESCROW_YN1_VAL,
+					ESCROW_YN2_VAL,
+					BANK_CODE,
+					ESCROW_YN,
+					CASH_RECEIPT_GUBUN,
+					CASH_RECEIPT_NO
+				FROM TO_DEFAULT_PAYMENT
+				WHERE MEMBER_IDX = #{MEMBERIDX}
+			) DP ON O.MEMBER_IDX = DP.MEMBER_IDX
+		</if>
+		WHERE O.ORDER_CD = #{ORDERCD}
+		<if test="ORDERSTATUSCD != null and ORDERSTATUSCD != '' ">
+			AND O.ORDER_STATUS_CD = #{ORDERSTATUSCD}
+		</if>
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				AND O.MEMBER_IDX = #{MEMBERIDX}
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				<if test="SESSIONID != null and SESSIONID != '' ">
+					AND O.SESSION_ID = #{SESSIONID}
+					AND O.MEMBER_IDX IS NULL
+				</if>
+			</otherwise>
+		</choose>
+	</select>
+
+	<!-- 주문 번호 반환 -->
+	<select id="getOrderIdx" parameterType="hashmap" resultType="String">
+		/** orderDAO.getOrderIdx **/
+		SELECT
+			ORDER_IDX					/* 주문 마스터 일련번호 (100000 번부터 시작) */
+		FROM TO_ORDER
+		WHERE ORDER_CD = #{ORDERCD}
+			AND ORDER_STATUS_CD = '000'	/* 주문전건만 */
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				AND MEMBER_IDX = #{MEMBERIDX}
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				<if test="SESSIONID != null and SESSIONID != '' ">
+					AND SESSION_ID = #{SESSIONID}
+					AND MEMBER_IDX IS NULL
+				</if>
+			</otherwise>
+		</choose>
+	</select>
+
+	<!-- 주문 코드 반환 -->
+	<select id="getOrderCd" parameterType="hashmap" resultType="String">
+		/** orderDAO.getOrderCd **/
+		SELECT
+			ORDER_CD
+		FROM TO_ORDER
+		WHERE ORDER_IDX = #{ORDERIDX}
+	</select>
+
+	<!-- 배송지 리스트 -->
+	<select id="getAddressList" parameterType="hashmap" resultType="sqlMap">
+		/** orderDAO.getAddressList **/
+		SELECT
+		* 
+		FROM (
+			SELECT
+				'RECENT' AS TYPE,
+				-ORDER_IDX AS ADDRESS_IDX,					/* 주소록 일련번호 (주문번호라 - 붙여서 표시) */
+				MEMBER_IDX,											/* 회원 일련번호 */
+				SHIPPING_NM,										/* 주소록명 */
+				RECEIVER_NM,										/* 받는 사람 이름 */
+				FN_DECRYPT(RECEIVER_ADDR) AS ADDR,						/* 도로명주소 */
+				FN_DECRYPT(RECEIVER_ADDR_DETAIL) AS ADDR_DETAIL,	/* 상세주소 */
+				RECEIVER_ZIP_CD AS ZIP_CD,					/* 우편번호 */
+				FN_DECRYPT(RECEIVER_OLD_ADDR) AS OLD_ADDR,			/* 지번주소 */
+				RECEIVER_OLD_ZIP_CD AS OLD_ZIP_CD,	/* (구)우편번호 */
+				FN_DECRYPT(RECEIVER_TEL_NO) AS TEL_NO,					/* 전화번호 */
+				FN_DECRYPT(RECEIVER_PHONE_NO) AS PHONE_NO,		/* 핸드폰번호 */
+				'N' AS DEFAULT_YN									/* 기본 배송지 여부 */
+			FROM TO_ORDER
+			WHERE MEMBER_IDX = #{MEMBERIDX}
+				AND ORDER_STATUS_CD IN ('200','300','400','500','600','650','670','690','700','750','770','800','900')
+				AND RECEIVER_NM IS NOT NULL
+			ORDER BY ORDER_IDX DESC
+			LIMIT 1
+		) A 
+		
+		UNION 
+		
+		SELECT *
+		FROM (
+			SELECT
+				'ETC' AS TYPE,
+				ADDRESS_IDX,	/* 주소록 일련번호 */
+				MEMBER_IDX,	/* 회원 일련번호 */
+				SHIPPING_NM,	/* 주소록명 */
+				RECEIVER_NM,	/* 받는 사람 이름 */
+				FN_DECRYPT(ADDR) ADDR,				/* 도로명주소 */
+				FN_DECRYPT(ADDR_DETAIL) ADDR_DETAIL,	/* 상세주소 */
+				ZIP_CD,			/* 우편번호 */
+				FN_DECRYPT(OLD_ADDR) OLD_ADDR,		/* 지번주소 */
+				OLD_ZIP_CD,	/* (구)우편번호 */
+				FN_DECRYPT(TEL_NO) TEL_NO,			/* 전화번호 */
+				FN_DECRYPT(PHONE_NO) PHONE_NO,		/* 핸드폰번호 */
+				DEFAULT_YN	/* 기본 배송지 여부 */
+			FROM TO_ADDRESS
+			WHERE MEMBER_IDX = #{MEMBERIDX}
+		) B
+		
+		ORDER BY TYPE DESC, DEFAULT_YN DESC, ADDRESS_IDX DESC
+	</select>
+
+	<!-- 회원 상세 -->
+	<select id="getMemberDetail" parameterType="hashmap" resultType="sqlMap">
+		/** orderDAO.getMemberDetail **/
+		SELECT 
+			A.MEMBER_IDX, 
+			A.MEMBER_ID, 
+			DATE_FORMAT(A.REG_DT,'%Y-%m-%d') AS REG_DT, 
+			B.MEMBER_NM, 
+			B.LEVEL_IDX,
+            IFNULL(C.POINT_RATE,0) POINT_RATE,
+			C.GRADE_NM, 
+			FN_DECRYPT(B.EMAIL) EMAIL, 
+			FN_DECRYPT(B.PHONE_NO) PHONE_NO,
+			IFNULL(MI.POINT_PRICE,0) POINT_PRICE
+		FROM TM_MEMBER A
+		LEFT OUTER JOIN TM_MEMBER_DETAIL B ON A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+		LEFT OUTER JOIN TM_MEMBER_GRADE C ON B.LEVEL_IDX = C.MEMBER_GRADE_IDX
+		LEFT JOIN TM_MEMBER_INFO MI ON A.MEMBER_IDX = MI.MEMBER_INFO_IDX
+		WHERE A.MEMBER_IDX = #{MEMBERIDX}
+		AND A.MEMBER_TYPE = 'M' 
+	</select>
+
+	<!-- 쿠폰 리스트 -->
+	<select id="getCouponList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** cartDAO.getCouponList **/
+		SELECT
+			C.COUPON_IDX,
+			C.DISCOUNT_TYPE,			/* 할인종류 (R : 정률할인, A : 정액할인) */
+			C.DISCOUNT,					/* 할인액(률) (DISCOUNT_RATE(할인종류)가 R(정률)이면 할인률, A(정액)이면 할인액) */
+			C.MAX_DISCOUNT,			/* 최대할인금액 (DISCOUNT_RATE(할인종류)가 R(정률)일때만 사용됨) */
+			C.ORDER_AMT_LIMIT_YN,	/* 적용주문금액 제한여부 (Y : 제한적용, N : 제한없음) */
+			C.MIN_ORDER_AMT			/* 최소주문금액 (ORDER_AMT_LIMIT(적용주문금액)가 Y(제한적용)일때만 사용됨) */
+		FROM TO_COUPON C
+		WHERE C.USE_YN = 'Y'
+			AND C.GUBUN = #{GUBUN}		/* 쿠폰 구분 (G : 상품쿠폰, C : 장바구니쿠폰, S : 무료배송쿠폰) */           	 
+		<if test="DEVICE != null and DEVICE != '' ">
+			AND (C.DEVICE = 'A' OR C.DEVICE = #{DEVICE})
+		</if>
+			AND (CURDATE() <![CDATA[>=]]> DATE(DOWN_START_DT) OR DOWN_START_DT IS NULL)	/* 다운로드 시작일 */
+			AND (CURDATE() <![CDATA[<=]]> DATE(DOWN_END_DT) OR DOWN_END_DT IS NULL) 		/* 다운로드 종료일 */
+			AND (USE_DATE_LIMIT_YN IN ('N','P') OR (USE_DATE_LIMIT_YN = 'Y' AND (CURDATE() <![CDATA[>=]]> DATE(USE_START_DT) OR USE_START_DT IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(USE_END_DT) OR USE_END_DT IS NULL)))	/* 사용기한 제한여부 */
+			AND (C.TARGET_MEMBER = 'A' 
+						OR (C.TARGET_MEMBER = 'G' AND C.TARGET_GRADE = #{MEMBERGRADE}) 
+						OR (C.TARGET_MEMBER = 'M' AND 
+								EXISTS ( /* 대상 회원에 포함되어 있는지 */
+											SELECT COUPON_IDX 
+											FROM TO_COUPON_TARGET_MEMBER
+											WHERE COUPON_IDX = C.COUPON_IDX
+											AND MEMBER_IDX = #{MEMBERIDX}
+											)
+							)
+				  )
+			AND (C.TARGET_GOODS = 'A' 
+						OR (C.TARGET_GOODS = 'G' AND 
+								EXISTS ( /* 대상 상품에 포함되어 있는지 */
+											SELECT COUPON_IDX 
+											FROM TO_COUPON_TARGET_GOODS
+											WHERE COUPON_IDX = C.COUPON_IDX
+											AND GOODS_IDX = #{GOODSIDX}
+										)
+							)
+						OR (C.TARGET_GOODS = 'C' AND 
+								EXISTS ( /* 대상 카테고리에 포함되어 있는지 */
+											SELECT COUPON_IDX 
+											FROM TO_COUPON_TARGET_CATEGORY
+											WHERE COUPON_IDX = C.COUPON_IDX
+											AND CATE_IDX IN (SELECT CATE_IDX FROM TP_GOODS_BRAND_CATE WHERE GOODS_IDX = #{GOODSIDX})
+										)
+							)
+				  )
+			AND (C.ISSUE_CNT_LIMIT_YN = 'N' OR (C.ISSUE_CNT_LIMIT_YN = 'Y' AND (IFNULL(C.MAX_ISSUE_CNT,0) = 0 OR (IFNULL(C.MAX_ISSUE_CNT,0) <![CDATA[>]]> 0 AND IFNULL(C.MAX_ISSUE_CNT,0) <![CDATA[>]]> (SELECT COUNT(*) FROM TO_COUPON_MEMBER WHERE COUPON_IDX = C.COUPON_IDX)))))	/* 최대 발급수량 조건 */
+		ORDER BY C.DISCOUNT DESC 
+	</select>
+
+	<!-- 주문 정보 (주문 완료 페이지) -->
+	<select id="getOrderCompleteInfo" parameterType="hashmap" resultType="sqlMap">
+		/** orderDAO.getOrderCompleteInfo **/
+		SELECT
+			ORDER_IDX,					/* 주문 마스터 일련번호 (100000 번부터 시작) */
+			ORDER_CD,					/* 주문코드 (YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP)) */
+			MEMBER_ORDER_YN,		/* 회원/비회원 구분 (Y : 회원주문, N : 비회원주문) */
+			MEMBER_IDX,					/* 회원 일련번호 (TM_MEMBER 일련번호) */
+			MEMBER_ID,					/* 회원 아이디 */	
+			MEMBER_GRADE_IDX,		/* 회원등급 일련번호 (TM_MEMBER_GRADE 일련번호) */
+			MEMBER_NM,					/* 회원명(주문자명) (비회원일때는 주문자명) */
+			SESSION_ID,					/* 세션ID	비회원일때만 사용됨 */
+			SENDER_NM,					/* 보내는 사람 이름 (비회원 주문시 필수) */
+			FN_DECRYPT(SENDER_PHONE_NO) SENDER_PHONE_NO,		/* 보내는 사람 휴대폰번호	(비회원 주문시 필수) */
+			FN_DECRYPT(SENDER_EMAIL) SENDER_EMAIL,				/* 보내는 사람 이메일 */
+			DATE_FORMAT(ORDER_DT,'%Y-%m-%d') AS ORDER_DT,	/* 주문일자 */	
+			DATE_FORMAT(PAY_DT,'%Y%m%d') AS PAY_DT,	/* 결제일자 (PG사 결제성공일시) */
+			PAY_TYPE, 						/* 결제수단 (공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : Npay, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+			BILLKEY_IDX,					/* 빌키 일련번호 (원클릭 결제시 결제된 빌키 일련번호) */			
+			BANK_CODE,  					/* 입금 은행코드 (공통코드 무통장(가상계좌)일때 사용) */
+			FN_COMMON_NM(BANK_CODE) AS BANK_NM,	/* 입금 은행명 */
+			ACCOUNT,  					/* 입금 계좌번호 (무통장(가상계좌)일때 사용) */
+			DEPOSITOR,  					/* 입금 예금주명 (무통장(가상계좌)일때 사용) */
+			DATE_FORMAT(DEPOSIT_DEADLINE_DT,'%Y년 %m월 %d일까지') AS DEPOSIT_DEADLINE_DT,	/* 입금 기한 (무통장(가상계좌)일때 사용) */
+			ESCROW_YN,					/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+			TOTAL_PAY_PRICE			/* 결제금액 (실제 PG사 결제금액) */		
+		FROM TO_ORDER
+		WHERE ORDER_CD = #{ORDERCD}
+			AND ORDER_STATUS_CD IN ('100','200')	/* 주문 접수(입금 대기)나 결제 완료만 */
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				AND MEMBER_IDX = #{MEMBERIDX}
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				<if test="SESSIONID != null and SESSIONID != '' ">
+					AND SESSION_ID = #{SESSIONID}
+					AND MEMBER_IDX IS NULL
+				</if>
+			</otherwise>
+		</choose>
+	</select>
+
+	<!-- 주문 페이지 - 주문 마스터 수정 -->
+	<update id="updateTempOrderMaster" parameterType="hashmap">
+		/** orderDAO.updateTempOrderMaster **/
+		UPDATE TO_ORDER
+		SET
+		<if test="DEVICE != null and DEVICE != '' ">
+			DEVICE = #{DEVICE}, 																	/* 디바이스 (P : PC, M : MOBILE, A : APP) */
+		</if>
+		<if test="ORDERSTATUSCD != null and ORDERSTATUSCD != '' ">
+			ORDER_STATUS_CD = #{ORDERSTATUSCD},  										/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+		</if>
+		<if test="PAYDT != null and PAYDT != '' ">
+			PAY_DT = #{PAYDT}, 																		/* 결제일자 (PG사 결제성공일시) */
+		</if>
+		<if test="PAYTYPE != null and PAYTYPE != '' ">
+			PAY_TYPE = #{PAYTYPE}, 																/* 결제수단 (공통코드 PAY_TYPE10 : 신용카드, PAY_TYPE15 : 빌키, PAY_TYPE20 : 실시간계좌, PAY_TYPE25 : 가상계좌, PAY_TYPE30 : 휴대폰, PAY_TYPE35 : PAYCO, PAY_TYPE40 : 카카오페이, PAY_TYPE45 : Npay, PAY_TYPE50 : PAYNOW, PAY_TYPE90 : 포인트) */
+		</if>
+		<if test="BILLKEYIDX != null and BILLKEYIDX != '' ">
+			BILLKEY_IDX = #{BILLKEYIDX},														/* 빌키 일련번호 (원클릭 결제시 결제된 빌키 일련번호) */
+		</if>
+		<if test="BANKCODE != null and BANKCODE != '' ">
+			BANK_CODE = #{BANKCODE},  														/* 입금 은행코드 (공통코드 무통장(가상계좌)일때 사용) */
+		</if>
+		<if test="ACCOUNT != null and ACCOUNT != '' ">
+			ACCOUNT = FN_ENCRYPT(#{ACCOUNT}),  																/* 입금 계좌번호 (무통장(가상계좌)일때 사용) */
+		</if>
+		<if test="DEPOSITOR != null and DEPOSITOR != '' ">
+			DEPOSITOR = #{DEPOSITOR},  														/* 입금 예금주명 (무통장(가상계좌)일때 사용) */
+		</if>
+		<if test="DEPOSITDEADLINEDT != null and DEPOSITDEADLINEDT != '' ">
+			DEPOSIT_DEADLINE_DT = #{DEPOSITDEADLINEDT},							/* 입금 기한 (무통장(가상계좌)일때 사용) */
+		</if>		
+		<if test="ESCROWYN != null and ESCROWYN != '' ">
+			ESCROW_YN = #{ESCROWYN},														/* 에스크로 여부 (Y : 에스크로 사용, N : 에스크로 사용 안 함) */
+		</if>
+		<if test="CASHRECEIPTGUBUN != null and CASHRECEIPTGUBUN != '' ">
+			CASH_RECEIPT_GUBUN = #{CASHRECEIPTGUBUN},								/* 현금영수증 여부 (0 : 미신청, 1 : 개인, 2 : 사업자) */
+		</if>
+		<if test="CASHRECEIPTNO != null and CASHRECEIPTNO != '' ">
+			CASH_RECEIPT_NO = #{CASHRECEIPTNO},										/* 현금영수증 번호 (CASH_RECEIPT_GUBUN가 '0'이 아닐때만 사용, 개인은 휴대폰번호, 사업자는 사업자등록번호) */
+		</if>
+		<if test="TOTALORDERPRICE != null and TOTALORDERPRICE != '' ">
+			TOTAL_ORDER_PRICE = #{TOTALORDERPRICE}, 									/* 총 주문금액 (총 상품금액) */
+		</if>
+		<if test="FREESHIPPINGCOUPONIDX != null and FREESHIPPINGCOUPONIDX != '' ">
+			FREE_SHIPPING_COUPON_IDX = #{FREESHIPPINGCOUPONIDX}, 			/* 무료배송 쿠폰 일련번호 */
+		</if>
+		<if test="FREESHIPPINGCOUPONPRICE != null and FREESHIPPINGCOUPONPRICE != '' ">
+			FREE_SHIPPING_COUPON_PRICE = #{FREESHIPPINGCOUPONPRICE}, 	/* 무료배송 쿠폰 할인 금액 */
+		</if>
+		<if test="TOTALGIFTCOUPONPRICE != null and TOTALGIFTCOUPONPRICE != '' ">
+			TOTAL_GIFT_COUPON_PRICE = #{TOTALGIFTCOUPONPRICE},  				/* 총 상품 쿠폰 할인 금액 */
+		</if>
+		<if test="CARTCOUPONIDX != null and CARTCOUPONIDX != '' ">
+			CART_COUPON_IDX = #{CARTCOUPONIDX},  									/* 장바구니 쿠폰 일련번호 (결제 페이지에서 임시 적용된 장바구니 쿠폰 일련번호) */
+		</if>
+		<if test="TOTALCARTCOUPONPRICE != null and TOTALCARTCOUPONPRICE != '' ">
+			TOTAL_CART_COUPON_PRICE = #{TOTALCARTCOUPONPRICE},				/* 총 장바구니 쿠폰 할인 금액 */
+		</if>
+		<if test="PROMOTIONCODE != null and PROMOTIONCODE != '' ">
+			PROMOTIONCODE = #{PROMOTIONCODE}, 										/* 프로모션 코드 (결제 페이지에서 임시 적용된 프로모션코드) */
+		</if>
+		<if test="TOTALPROMOTIONCODEPRICE != null and TOTALPROMOTIONCODEPRICE != '' ">
+			TOTAL_PROMOTIONCODE_PRICE = #{TOTALPROMOTIONCODEPRICE}, 	/* 총 프로모션 코드 할인 금액 */
+		</if>
+		<if test="TOTALCOUPONPRICE != null and TOTALCOUPONPRICE != '' ">
+			TOTAL_COUPON_PRICE = #{TOTALCOUPONPRICE}, 							/* 총 쿠폰/프로모션코드 할인 금액 (무료배송 쿠폰 할인 금액 + 총 상품 쿠폰 할인금액 + 총 장바구니 쿠폰 할인금액 + 총 프로모션 코드 할인금액) */
+		</if>
+		<if test="SHIPPINGPRICE != null and SHIPPINGPRICE != '' ">
+			SHIPPING_PRICE = #{SHIPPINGPRICE}, 											/* 배송비 (무료배송쿠폰이 적용되면 0) */
+		</if>
+		<if test="TOTALPOINTPRICE != null and TOTALPOINTPRICE != '' ">
+			TOTAL_POINT_PRICE = #{TOTALPOINTPRICE},  									/* 포인트 결제 금액 */
+		</if>
+		<if test="TOTALPREPOINTPRICE != null and TOTALPREPOINTPRICE != '' ">
+			TOTAL_PRE_POINT_PRICE = #{TOTALPREPOINTPRICE},  						/* 선포인트 결제 금액 */
+		</if>
+		<if test="TOTALPAYPRICE != null and TOTALPAYPRICE != '' ">
+			TOTAL_PAY_PRICE = #{TOTALPAYPRICE},  										/* 결제금액 (실제 PG사 결제금액) */
+		</if>
+		<if test="TOTALSAVEPOINT != null and TOTALSAVEPOINT != '' ">
+			TOTAL_SAVE_POINT = #{TOTALSAVEPOINT}, 										/* 적립 예정 포인트 (원래 적립 예정 포인트 - 선포인트 결제 금액) */
+		</if>
+		<if test="SENDERNM != null and SENDERNM != '' ">									<!-- 주문자 정보 수정시 -->
+			SENDER_NM = #{SENDERNM},  														/* 보내는 사람 이름 (비회원 주문시 필수) */
+			SENDER_EMAIL = FN_ENCRYPT(#{SENDEREMAIL}), 													/* 보내는 사람 이메일 */
+			SENDER_PHONE_NO = FN_ENCRYPT(#{SENDERPHONENO}),  									/* 보내는 사람 휴대폰번호	(비회원 주문시 필수) */
+		</if>
+		<if test="SENDERADDR != null and SENDERADDR != '' ">
+			SENDER_ADDR = FN_ENCRYPT(#{SENDERADDR}),  													/* 보내는 사람 주소 (도로명주소) */
+			SENDER_ADDR_DETAIL = FN_ENCRYPT(#{SENDERADDRDETAIL}), 								/* 보내는 사람 상세주소 (도로명, 지번 공통) */
+			SENDER_ZIP_CD = #{SENDERZIPCD},  												/* 보내는 사람 우편번호 (신우편번호) */
+			SENDER_OLD_ADDR = FN_ENCRYPT(#{SENDEROLDADDR}),  									/* 보내는 사람 주소 (지번주소) */
+			SENDER_OLD_ZIP_CD = #{SENDEROLDZIPCD},  									/* 보내는 사람 (구)우편번호 ((-) 포함) */
+			SENDER_TEL_NO = FN_ENCRYPT(#{SENDERTELNO}),  												/* 보내는 사람 전화번호 */
+		</if>
+		<if test="SHIPPINGNM != null and SHIPPINGNM != '' ">
+			SHIPPING_NM = #{SHIPPINGNM},  													/* 주소록명 (새로입력시 입력한 배송지명) */
+		</if>
+		<if test="RECEIVERNM != null and RECEIVERNM != '' ">
+			RECEIVER_NM = #{RECEIVERNM},  													/* 받는 사람 이름 */
+			RECEIVER_ADDR = FN_ENCRYPT(#{RECEIVERADDR}),  											/* 받는 사람 주소 (도로명주소) */
+			RECEIVER_ADDR_DETAIL = FN_ENCRYPT(#{RECEIVERADDRDETAIL}), 						/* 받는 사람 상세주소	(도로명, 지번 공통) */
+			RECEIVER_ZIP_CD = #{RECEIVERZIPCD},  										/* 받는 사람 우편번호	(신우편번호) */
+			RECEIVER_OLD_ADDR = FN_ENCRYPT(#{RECEIVEROLDADDR}),  								/* 받는 사람 주소 (지번주소) */
+			RECEIVER_OLD_ZIP_CD = #{RECEIVEROLDZIPCD}, 							/* 받는 사람 (구)우편번호	((-) 포함) */
+			RECEIVER_PHONE_NO = FN_ENCRYPT(#{RECEIVERPHONENO}),  								/* 받는 사람 휴대폰번호 */
+		</if>
+			RECEIVER_TEL_NO = FN_ENCRYPT(#{RECEIVERTELNO}),  										/* 받는 사람 전화번호	 */
+
+			ORDER_MEMO = #{ORDERMEMO}, 													/* 배송시 요청사항	 */
+		
+			<!-- 상태 유지용 필드 시작 -->
+			SAME_AS_ORDER_INFO = #{SAMEASORDERINFO},								/* 회원정보와 동일인지 새로입력인지 (상태유지용 필드, Y : 회원정보와 동일, N : 새로입력) */
+			ADDRESS_TAB_ID = #{ADDRESSTABID},											/* 선택한 배송지 탭 ID (상태유지용 필드, addressID1 : 배송지 목록 탭, addressID2 : 새로 입력 탭) */
+			SELECT_ADDRESS_IDX = #{SELECTADDRESSIDX},								/* 선택한 배송지 목록 일련번호 (상태유지용 필드) */
+			SAME_ORDER_INFO = #{SAMEORDERINFO},										/* 주문자 정보와 상품을 받는 분이 같습니다 (상태유지용 필드) */
+			ADD_TO_ADDRESS = #{ADDTOADDRESS},											/* 배송지 목록에 추가 (상태유지용 필드) */
+			SET_AS_DEFAULT_ADDRESS = #{SETASDEFAULTADDRESS},					/* 기본 배송지로 설정 (상태유지용 필드) */
+			ORDER_MEMO_VAL = #{ORDERMEMOVAL},											/* 선택한 배송시 요청사항 SELECTBOX value (상태유지용 필드) */
+			GIFT_TAB_ID = #{GIFTTABID},															/* 선택한 사은품 탭 ID (상태유지용 필드, allGift : 무료 사은품 탭, over4Gift…) */
+			SELECT_PRICE_GIFT_IDX = #{SELECTPRICEGIFTIDX},							/* 선택한 구매금액별 사은품 일련번호 (상태유지용 필드) */
+			SELECT_PAY_TYPE = #{SELECTPAYTYPE},											/* 선택한 결제 수단 (상태유지용 필드, BILLKEY : 원클릭 결제, SC0010 : 신용카드) */
+			SELECT_BILLKEY_VAL = #{SELECTBILLKEYVAL},									/* 선택한 빌키 SELECTBOX value (상태유지용 필드) */
+			SELECT_CARD_CODE = #{SELECTCARDCODE},									/* 선택한 카드 코드 (상태유지용 필드) */
+			ETC_CARD_VAL = #{ETCCARDVAL},													/* 선택한 기타 카드 SELECTBOX value (상태유지용 필드) */
+			ESCROW_YN1_VAL = #{ESCROWYN1VAL},											/* 실시간 계좌 이체시 선택한 에스크로 value (상태유지용 필드) */
+			ESCROW_YN2_VAL = #{ESCROWYN2VAL},											/* 가상계좌 입금시 선택한 에스크로 value (상태유지용 필드) */
+			USE_THIS_PAY_TYPE_TO_NEXT = #{USETHISPAYTYPETONEXT},			/* 지금 선택하신 결제수단을 다음에도 사용 (상태유지용 필드) */
+			AGREEMENT = #{AGREEMENT},															/* 위 상품의 판매조건을 명확히 확인하였으며, 구매 진행에 동의합니다. (상태유지용 필드) */
+			<!-- 상태 유지용 필드 끝 -->
+			
+			EDIT_IDX = #{EDITIDX},
+			EDIT_HTTP_USER_AGENT = #{EDITHTTPUSERAGENT},
+			EDIT_IP = #{EDITIP},
+			EDIT_DT = NOW()
+		WHERE ORDER_CD = #{ORDERCD}			
+			AND ORDER_STATUS_CD = '000'	/* 주문전인 건들만 */
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				AND MEMBER_IDX = #{MEMBERIDX}
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				AND SESSION_ID = #{SESSIONID}
+				AND MEMBER_IDX IS NULL
+			</otherwise>
+		</choose>
+	</update>
+
+	<!-- 주문 페이지 - 주문 디테일 수정 -->
+	<update id="updateTempOrderDetail" parameterType="hashmap">
+		/** orderDAO.updateTempOrderDetail **/
+		UPDATE TO_ORDER_DETAIL
+		SET
+		<if test="ORDERSTATUSCD != null and ORDERSTATUSCD != '' ">
+			ORDER_STATUS_CD = #{ORDERSTATUSCD},  		/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+		</if>
+		<if test="ORDERCNT != null and ORDERCNT != '' ">
+			ORDER_CNT = #{ORDERCNT},  					/* 상품 개수 */
+		</if>
+		<if test="GIFTCOUPONIDX != null and GIFTCOUPONIDX != '' ">
+			GIFT_COUPON_IDX = #{GIFTCOUPONIDX},  		/* 상품 쿠폰 일련번호 (결제 페이지에서 임시 적용된 상품 쿠폰 일련번호) */
+		</if>
+		<if test="GIFTCOUPONPRICE != null and GIFTCOUPONPRICE != '' ">
+			GIFT_COUPON_PRICE = #{GIFTCOUPONPRICE},  	/* 상품 쿠폰 할인 금액 (상품 쿠폰 여러 개 적용됐으면 금액 합) */
+		</if>
+		<if test="CARTCOUPONPRICE != null and CARTCOUPONPRICE != '' ">
+			CART_COUPON_PRICE = #{CARTCOUPONPRICE},  	/* 장바구니 쿠폰 할인 금액 (비율로 나눠서 저장) */
+		</if>
+		<if test="PROMOTIONCODEPRICE != null and PROMOTIONCODEPRICE != '' ">
+			PROMOTIONCODE_PRICE = #{PROMOTIONCODEPRICE},	/* 프로모션 코드 할인 금액 (비율로 나눠서 저장) */
+		</if>
+		<if test="POINTPRICE != null and POINTPRICE != '' ">
+			POINT_PRICE = #{POINTPRICE},  				/* 포인트 결제 금액 (비율로 나눠서 저장) */
+		</if>
+		<if test="PREPOINTPRICE != null and PREPOINTPRICE != '' ">
+			PRE_POINT_PRICE = #{PREPOINTPRICE},  		/* 선포인트 결제 금액 (비율로 나눠서 저장) */
+		</if>
+		<if test="PAYPRICE != null and PAYPRICE != '' ">
+			PAY_PRICE = #{PAYPRICE}, 					/* 결제금액 (실제 PG사 결제금액, 비율로 나눠서 저장) */
+		</if>
+		<if test="SAVEPOINT != null and SAVEPOINT != '' ">
+			SAVE_POINT = #{SAVEPOINT}, 					/* 적립 예정 포인트 */
+		</if>
+		<if test="DELIVERYCOMPCD != null and DELIVERYCOMPCD != '' ">
+			DELIVERY_COMP_CD = #{DELIVERYCOMPCD}, 		/* 배송업체 코드공통코드 */
+			INVOICE_NO = #{INVOICENO}, 					/* 송장번호 */
+			SHIPPING_DT = #{SHIPPINGDT},  				/* 발송일 */
+		</if>
+		<if test="DELIVEREDDT != null and DELIVEREDDT != '' ">
+			DELIVERED_DT = #{DELIVEREDDT}, 				/* 배송완료일 */
+		</if>
+		<if test="PURCHASEDT != null and PURCHASEDT != '' ">
+			PURCHASE_DT = #{PURCHASEDT},  				/* 구매확정일 */
+		</if>
+		<if test="CATEIDX != null and CATEIDX != '' ">
+			CATE_IDX = #{CATEIDX}, 						/* 카테고리 일련번호 (카테고리별 가격이 다른 쇼핑몰에서 사용, TP_CATEGORY 일련번호) */
+		</if>
+		<if test="PARTNERIDX != null and PARTNERIDX != '' ">
+			PARTNER_IDX = #{PARTNERIDX},  				/* 파트너 데이타 일련번호 (네이버EP용, TO_PARTNER_DATA 일련번호) */
+		</if>
+			REG_IDX = #{REGIDX},
+			REG_HTTP_USER_AGENT = #{REGHTTPUSERAGENT},
+			REG_IP = #{REGIP},
+			REG_DT = NOW()		
+		WHERE ORDER_CD = #{ORDERCD}
+			AND GOODS_IDX = #{GOODSIDX}
+			AND ORDER_STATUS_CD = '000'	/* 주문전인 건들만 */
+		<choose>
+			<when test="MEMBERIDX != null and MEMBERIDX != '' ">	<!-- 회원 -->
+				AND MEMBER_IDX = #{MEMBERIDX}
+			</when>
+			<otherwise>																<!-- 비회원 -->
+				AND SESSION_ID = #{SESSIONID}
+				AND MEMBER_IDX IS NULL
+			</otherwise>
+		</choose>
+	
+	</update>
+	
+	<!-- 결제 전 주문 유효성 체크 -->
+	<select id="procSpPgCheckBefore" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="sqlMap">
+		{ CALL SP_PG_CHECK_BEFORE(#{ORDERIDX, mode=IN, jdbcType=INTEGER}) }
+	</select>
+
+	<!-- 결제 후 주문 유효성 체크 & 주문 상태 변경 -->
+	<select id="procSpPgCheckAfter" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="sqlMap">
+		{ CALL SP_PG_CHECK_AFTER(#{ORDERIDX, mode=IN, jdbcType=INTEGER}) }
+	</select>
+
+	<!-- 주문 디테일 금액 나누어 저장 -->
+	<select id="procSpPriceDiv" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="sqlMap">
+		{ CALL SP_PRICE_DIV(#{ORDERIDX, mode=IN, jdbcType=INTEGER}) }
+	</select>
+		
+	<!-- 빌키 저장 -->
+	<insert id="insertBillKey" parameterType="com.gxenSoft.mall.lgdacom.vo.XPayBillKeyVO">
+		/** orderDAO.insertBillKey **/
+	INSERT
+	INTO   TO_BILLKEY
+       (
+              MEMBER_IDX,
+              MID,
+              CARD_NM,
+              MAIN_YN,
+              BILLKEY,
+              PAYTYPE,
+              PAYDATE,
+              FINANCECODE,
+              FINANCENAME,
+              TID,
+              CARDNUM,
+              BUYERSSN,
+              CARDINSTALLMONTH,
+              EXPMON,
+              EXPYEAR,
+              CARDNOINTYN,
+              VANCODE,
+              REG_DT
+       )
+       VALUES
+       (	
+              #{MEMBER_IDX},
+              #{LGD_MID},
+              #{CARD_NM},
+              #{MAIN_YN},
+              #{LGD_BILLKEY},
+              #{LGD_PAYTYPE},
+              #{LGD_PAYDATE},
+              #{LGD_FINANCECODE},
+              #{LGD_FINANCENAME},
+              #{LGD_TID},
+              #{LGD_CARDNUM},
+              #{LGD_BUYERSSN},
+              #{LGD_CARDINSTALLMONTH},
+              #{LGD_EXPMON},
+              #{LGD_EXPYEAR},
+              #{LGD_CARDNOINTYN},
+              #{LGD_VANCODE},
+              NOW()
+       )
+	</insert>
+		
+	<!-- 빌키 삭제 -->
+	<delete id="deleteBillKey" parameterType="hashmap">
+		/** orderDAO.deleteBillKey **/
+		DELETE FROM TO_BILLKEY
+		WHERE MEMBER_IDX = #{MEMBERIDX} 
+			AND BILLKEY_IDX = #{BILLKEYIDX} 
+	</delete>
+	
+	<!-- 빌키 리스트  -->
+	<select id="getBillkeyList" parameterType="hashmap" resultType="sqlMap">
+		/** orderDAO.getBillkeyList **/
+		SELECT
+			BILLKEY_IDX, CARD_NM, MAIN_YN, BILLKEY, CARDNUM, FINANCENAME, REG_DT	
+		FROM TO_BILLKEY
+		WHERE  MEMBER_IDX = #{MEMBERIDX}
+		ORDER BY MAIN_YN ASC, BILLKEY_IDX ASC
+	</select>
+	
+	<!-- 메인 빌키 선택  -->
+	<select id="selectMainBillkey" parameterType="hashmap" resultType="sqlMap">
+		/** orderDAO.selectMainBillkey **/
+		SELECT
+			BILLKEY_IDX, CARD_NM, BILLKEY, CARDNUM, FINANCENAME	
+		FROM TO_BILLKEY
+		WHERE  MEMBER_IDX = #{MEMBERIDX}
+		AND MAIN_YN = 'Y' 
+		LIMIT 1
+	</select>
+	
+	
+	<!-- 빌키 변경-->
+	<update id="modifyBillKey" parameterType="hashmap">
+		/** orderDAO.modifyBillKey **/		     
+		UPDATE TO_BILLKEY SET  
+			CARD_NM     = #{CARDNM}
+			,MAIN_YN     = #{MAINYN}
+		WHERE   MEMBER_IDX  = #{MEMBERIDX}
+		AND BILLKEY_IDX = #{BILLKEYIDX}
+	</update>
+	
+	<!-- 최근등록한것을 메인 빌키 변경-->
+	<update id="updateTopMainBillkey" parameterType="hashmap">
+		/** orderDAO.updateTopMainBillkey **/		     
+		UPDATE TO_BILLKEY SET  
+		MAIN_YN     = 'Y'
+		WHERE   MEMBER_IDX  = #{MEMBERIDX}
+		ORDER BY REG_DT DESC 
+		LIMIT 1
+	</update>
+	
+	<!-- 메인 빌키 변경-->
+	<update id="updateMainBillkey" parameterType="hashmap">
+		/** orderDAO.updateMainBillkey **/
+		UPDATE TO_BILLKEY
+		SET MAIN_YN = 'N'
+		WHERE  MEMBER_IDX = #{MEMBERIDX}
+	</update>
+	
+	<!-- 가상계좌 입금 확인시 - 마스터, 디테일 주문 상태 결제 완료로 수정 -->
+	<update id="updateCasNoteUrlOrderMaster" parameterType="hashmap">
+		/** orderDAO.updateCasNoteUrlOrderMaster **/
+		UPDATE TO_ORDER O
+		JOIN TO_ORDER_DETAIL OD ON O.ORDER_IDX = OD.ORDER_IDX
+		SET
+			O.ORDER_STATUS_CD = '200',	/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+			O.PAY_DT = #{PAYDT}, 			/* 결제일자 (PG사 결제성공일시) */
+			OD.ORDER_STATUS_CD = '200'	/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */			
+		WHERE O.ORDER_CD = #{ORDERCD}			
+			AND O.ORDER_STATUS_CD = '100'	/* 주문 접수(입금 대기) 건들만 */
+	</update>
+
+	<!-- 가상계좌 입금 확인시 - 서브 디테일 주문 상태 결제 완료로 수정 -->
+	<update id="updateCasNoteUrlOrderSubDetail" parameterType="hashmap">
+		/** orderDAO.updateCasNoteUrlOrderSubDetail **/
+		UPDATE TO_ORDER_SUB_DETAIL
+		SET
+			ORDER_STATUS_CD = '200'	/* 주문상태코드 (000 : 주문 전, 100 : 주문 접수(입금 대기), 200 : 결제 완료, 300 : 상품 준비중, 400 : 발송 완료(배송중), 500 : 배송 완료, 600 : 교환 신청, 650 : 교환 처리중, 670 : 교환 불가, 690 : 교환 완료, 700 : 반품 신청, 750 : 반품 처리중, 770 : 반품 불가, 790 : 반품 완료, 800 : 취소 신청, 890 : 주문 취소, 900 : 구매 확정) */
+		WHERE ORDER_CD = #{ORDERCD}			
+			AND ORDER_STATUS_CD = '100'	/* 주문 접수(입금 대기) 건들만 */
+	</update>
+
+
+	<!-- LG U+ 결제 결과 저장 (성공건만 저장됨) -->
+	<insert id="insertXPayResult" parameterType="hashmap">
+		/** orderDAO.insertXPayResult **/
+		INSERT INTO TO_XPAY_RESULT
+		(
+			ORDER_CD,						/* 주문코드 */
+			LGD_OID,							/* 이용업체 거래번호(주문번호) */
+			LGD_RESPCODE,					/* 응답코드 */
+			LGD_RESPMSG,					/* 응답메세지 */
+			LGD_MID,							/* LG유플러스 발급 아이디 */
+			LGD_AMOUNT,					/* 결제금액 */
+			LGD_TID,							/* LG유플러스 거래번호 */
+			LGD_PAYTYPE,					/* 결제수단 */
+			LGD_PAYDATE,					/* 결제일시	yyyyMMddHHmmss 형식 */
+			LGD_HASHDATA,					/* 해쉬데이타 */
+			LGD_TIMESTAMP,					/* 타임스탬프	결제요청시 값 리턴 (없을경우 자동생성) */
+			LGD_BUYER,						/* 구매자명 */
+			LGD_PRODUCTINFO,			/* 구매내역 */
+			LGD_BUYERID,					/* 구매자아이디 */
+			LGD_BUYERADDRESS,			/* 구매자주소 */
+			LGD_BUYERPHONE,				/* 구매자휴대폰번호 */
+			LGD_BUYEREMAIL,				/* 구매자메일 */
+			LGD_PRODUCTCODE,			/* 상품코드 */
+			LGD_RECEIVER,					/* 수취인 */
+			LGD_RECEIVERPHONE,			/* 수취인전화번호 */
+			LGD_DELIVERYINFO,			/* 배송정보 */
+			LGD_FINANCECODE,				/* 결제기관코드 */
+			LGD_FINANCENAME,				/* 결제기관명 */
+			LGD_FINANCEAUTHNUM,		/* 결제기관승인번호 */
+			LGD_ESCROWYN,				/* 에스크로적용유무 */
+			LGD_CASHRECEIPTNUM,		/* 현금영수증승인번호 */
+			LGD_CASHRECEIPTSELFYN,	/* 현금영수증자진발급제유무	Y: 자진발급 */
+			LGD_CASHRECEIPTKIND,		/* 현금영수증종류	0:소득공제, 1:지출증빙 */
+			LGD_CARDNUM,					/* 신용카드번호 */
+			LGD_CARDINSTALLMONTH,	/* 신용카드할부개월	save 포인트 : 할부개월 + 40, 포인트 결제 : 할부개월 + 60, 현대카드 포인트 : 할부개월 + 80 */
+			LGD_CARDNOINTYN,			/* 신용카드무이자여부	0:일반할부,  1:무이자할부 */
+			LGD_AFFILIATECODE,			/* 신용카드제휴코드	ISP만 제공됨 */
+			LGD_CARDGUBUN1,				/* 신용카드추가정보1	0:개인, 1:법인, 9:미확인 */
+			LGD_CARDGUBUN2,				/* 신용카드추가정보2	0:신용, 1:체크, 2:기프트, 9:미확인 */
+			LGD_CARDACQUIRER,			/* 신용카드매입사코드 */
+			LGD_PCANCELFLAG,				/* 신용카드부분취소가능여부	0: 부분취소불가능,  1: 부분취소가능 */
+			LGD_PCANCELSTR,				/* 신용카드부분취소불가능사유	부분취소가능시는 "0" 으로 리턴 */
+			LGD_DISCOUNTUSEYN,			/* 신용카드 즉시할인 여부	즉시할인여부 0:할인안됨, 1:할인됨 */
+			LGD_DISCOUNTUSEAMOUNT,/* 신용카드 즉시할인 금액	즉시할인된 금액 */
+			LGD_ACCOUNTNUM,				/* 가상계좌발급번호 */
+			LGD_ACCOUNTOWNER,		/* 계좌주명 */
+			LGD_PAYER,						/* 가상계좌입금자명 */
+			LGD_CASTAMOUNT,				/* 입금누적금액 */
+			LGD_CASCAMOUNT,				/* 현입금금액 */
+			LGD_CASFLAG,					/* 거래종류(R:할당,I:입금,C:취소) */
+			LGD_CASSEQNO,					/* 가상계좌일련번호 */
+			LGD_SAOWNER,					/* 가상계좌 입금계좌주명	상점명이 디폴트로 리턴 */
+			LGD_TELNO,						/* 결제휴대폰번호 */
+			LGD_PAYKEY,						/* LG유플러스인증키 */
+			<if test="PG_TYPE != null and PG_TYPE != '' ">
+			PG_TYPE,
+			</if>
+			<if test="NOINF_TYPE != null and NOINF_TYPE != '' ">
+			NOINF_TYPE,
+			</if>
+			<if test="CARD_MNY != null and CARD_MNY != '' ">
+			CARD_MNY,
+			</if>
+			<if test="PAYCO_POINT_MNY != null and PAYCO_POINT_MNY != '' ">
+			PAYCO_POINT_MNY,
+			</if>
+			<if test="PNT_AMOUNT != null and PNT_AMOUNT != '' ">
+			PNT_AMOUNT,
+			</if>
+			<if test="PNT_ISSUE != null and PNT_ISSUE != '' ">
+			PNT_ISSUE,
+			</if>
+			<if test="PNT_APP_NO != null and PNT_APP_NO != '' ">
+			PNT_APP_NO,
+			</if>
+			<if test="PNT_APP_TIME != null and PNT_APP_TIME != '' ">
+			PNT_APP_TIME,
+			</if>
+			<if test="PNT_RECEIPT_GUBN != null and PNT_RECEIPT_GUBN != '' ">
+			PNT_RECEIPT_GUBN,
+			</if>
+			<if test="ADD_PNT != null and ADD_PNT != '' ">
+			ADD_PNT,
+			</if>
+			<if test="USE_PNT != null and USE_PNT != '' ">
+			USE_PNT,
+			</if>
+			<if test="RSV_PNT != null and RSV_PNT != '' ">
+			RSV_PNT,
+			</if>
+			<if test="VAN_CD != null and VAN_CD != '' ">
+			VAN_CD,
+			</if>
+			<if test="VAN_ID != null and VAN_ID != '' ">
+			VAN_ID,
+			</if>
+			<if test="COMMID != null and COMMID != '' ">
+			COMMID,
+			</if>
+			<if test="MOBILE_NO != null and MOBILE_NO != '' ">
+			MOBILE_NO,
+			</if>
+<!-- 
+			LGD_TRANSAMOUNT,			/* 환율적용금액 */
+			LGD_EXCHANGERATE,			/* 적용환율 */
+			LGD_BUYERSSN,					/* 구매자 생년월일 (YYMMDD) 또는 구매자주민번호 */
+			LGD_CARDNOINTEREST_YN,
+			LGD_VANCODE,
+ -->
+			REG_DT								/* 작성일자 */
+		)
+		VALUES
+		(
+			#{LGD_OID},
+			#{LGD_OID},
+			#{LGD_RESPCODE},
+			#{LGD_RESPMSG},
+			#{LGD_MID},
+			#{LGD_AMOUNT},
+			#{LGD_TID},
+			#{LGD_PAYTYPE},
+			#{LGD_PAYDATE},
+			#{LGD_HASHDATA},
+			#{LGD_TIMESTAMP},
+			#{LGD_BUYER},
+			#{LGD_PRODUCTINFO},
+			#{LGD_BUYERID},
+			FN_ENCRYPT(#{LGD_BUYERADDRESS}),
+			FN_ENCRYPT(#{LGD_BUYERPHONE}),
+			FN_ENCRYPT(#{LGD_BUYEREMAIL}),
+			#{LGD_PRODUCTCODE},
+			#{LGD_RECEIVER},
+			#{LGD_RECEIVERPHONE},
+			#{LGD_DELIVERYINFO},
+			#{LGD_FINANCECODE},
+			#{LGD_FINANCENAME},
+			#{LGD_FINANCEAUTHNUM},
+			#{LGD_ESCROWYN},
+			#{LGD_CASHRECEIPTNUM},
+			#{LGD_CASHRECEIPTSELFYN},
+			#{LGD_CASHRECEIPTKIND},
+			#{LGD_CARDNUM},
+			#{LGD_CARDINSTALLMONTH},
+			#{LGD_CARDNOINTYN},
+			#{LGD_AFFILIATECODE},
+			#{LGD_CARDGUBUN1},
+			#{LGD_CARDGUBUN2},
+			#{LGD_CARDACQUIRER},
+			#{LGD_PCANCELFLAG},
+			#{LGD_PCANCELSTR},
+			#{LGD_DISCOUNTUSEYN},
+			#{LGD_DISCOUNTUSEAMOUNT},
+			#{LGD_ACCOUNTNUM},
+			#{LGD_ACCOUNTOWNER},
+			#{LGD_PAYER},
+			#{LGD_CASTAMOUNT},
+			#{LGD_CASCAMOUNT},
+			#{LGD_CASFLAG},
+			#{LGD_CASSEQNO},
+			#{LGD_SAOWNER},
+			#{LGD_TELNO},
+			#{LGD_PAYKEY},
+			<if test="PG_TYPE != null and PG_TYPE != '' ">
+			#{PG_TYPE},
+			</if>
+			<if test="NOINF_TYPE != null and NOINF_TYPE != '' ">
+			#{NOINF_TYPE},
+			</if>
+			<if test="CARD_MNY != null and CARD_MNY != '' ">
+			#{CARD_MNY},
+			</if>
+			<if test="PAYCO_POINT_MNY != null and PAYCO_POINT_MNY != '' ">
+			#{PAYCO_POINT_MNY},
+			</if>
+			<if test="PNT_AMOUNT != null and PNT_AMOUNT != '' ">
+			#{PNT_AMOUNT},
+			</if>
+			<if test="PNT_ISSUE != null and PNT_ISSUE != '' ">
+			#{PNT_ISSUE},
+			</if>
+			<if test="PNT_APP_NO != null and PNT_APP_NO != '' ">
+			#{PNT_APP_NO},
+			</if>
+			<if test="PNT_APP_TIME != null and PNT_APP_TIME != '' ">
+			#{PNT_APP_TIME},
+			</if>
+			<if test="PNT_RECEIPT_GUBN != null and PNT_RECEIPT_GUBN != '' ">
+			#{PNT_RECEIPT_GUBN},
+			</if>
+			<if test="ADD_PNT != null and ADD_PNT != '' ">
+			#{ADD_PNT},
+			</if>
+			<if test="USE_PNT != null and USE_PNT != '' ">
+			#{USE_PNT},
+			</if>
+			<if test="RSV_PNT != null and RSV_PNT != '' ">
+			#{RSV_PNT},
+			</if>
+			<if test="VAN_CD != null and VAN_CD != '' ">
+			#{VAN_CD},
+			</if>
+			<if test="VAN_ID != null and VAN_ID != '' ">
+			#{VAN_ID},
+			</if>
+			<if test="COMMID != null and COMMID != '' ">
+			#{COMMID},
+			</if>
+			<if test="MOBILE_NO != null and MOBILE_NO != '' ">
+			#{MOBILE_NO},
+			</if>
+<!-- 
+			#{LGD_TRANSAMOUNT},
+			#{LGD_EXCHANGERATE},
+			#{LGD_BUYERSSN},
+			#{LGD_CARDNOINTEREST_YN},
+			#{LGD_VANCODE},
+ -->
+			NOW()
+		)
+	</insert>
+
+	<!-- LG U+ 결제 결과 로그 저장 (성공/실패 모두 저장됨) -->
+	<insert id="insertXPayResultLog" parameterType="hashmap">
+		/** orderDAO.insertXPayResultLog **/
+		INSERT INTO TO_XPAY_RESULT_LOG
+		(
+			ORDER_CD,						/* 주문코드 */
+			LGD_OID,							/* 이용업체 거래번호(주문번호) */
+			LGD_RESPCODE,					/* 응답코드 */
+			LGD_RESPMSG,					/* 응답메세지 */
+			LGD_MID,							/* LG유플러스 발급 아이디 */
+			LGD_AMOUNT,					/* 결제금액 */
+			LGD_TID,							/* LG유플러스 거래번호 */
+			LGD_PAYTYPE,					/* 결제수단 */
+			LGD_PAYDATE,					/* 결제일시	yyyyMMddHHmmss 형식 */
+			LGD_HASHDATA,					/* 해쉬데이타 */
+			LGD_TIMESTAMP,					/* 타임스탬프	결제요청시 값 리턴 (없을경우 자동생성) */
+			LGD_BUYER,						/* 구매자명 */
+			LGD_PRODUCTINFO,			/* 구매내역 */
+			LGD_BUYERID,					/* 구매자아이디 */
+			LGD_BUYERADDRESS,			/* 구매자주소 */
+			LGD_BUYERPHONE,				/* 구매자휴대폰번호 */
+			LGD_BUYEREMAIL,				/* 구매자메일 */
+			LGD_PRODUCTCODE,			/* 상품코드 */
+			LGD_RECEIVER,					/* 수취인 */
+			LGD_RECEIVERPHONE,			/* 수취인전화번호 */
+			LGD_DELIVERYINFO,			/* 배송정보 */
+			LGD_FINANCECODE,				/* 결제기관코드 */
+			LGD_FINANCENAME,				/* 결제기관명 */
+			LGD_FINANCEAUTHNUM,		/* 결제기관승인번호 */
+			LGD_ESCROWYN,				/* 에스크로적용유무 */
+			LGD_CASHRECEIPTNUM,		/* 현금영수증승인번호 */
+			LGD_CASHRECEIPTSELFYN,	/* 현금영수증자진발급제유무	Y: 자진발급 */
+			LGD_CASHRECEIPTKIND,		/* 현금영수증종류	0:소득공제, 1:지출증빙 */
+			LGD_CARDNUM,					/* 신용카드번호 */
+			LGD_CARDINSTALLMONTH,	/* 신용카드할부개월	save 포인트 : 할부개월 + 40, 포인트 결제 : 할부개월 + 60, 현대카드 포인트 : 할부개월 + 80 */
+			LGD_CARDNOINTYN,			/* 신용카드무이자여부	0:일반할부,  1:무이자할부 */
+			LGD_AFFILIATECODE,			/* 신용카드제휴코드	ISP만 제공됨 */
+			LGD_CARDGUBUN1,				/* 신용카드추가정보1	0:개인, 1:법인, 9:미확인 */
+			LGD_CARDGUBUN2,				/* 신용카드추가정보2	0:신용, 1:체크, 2:기프트, 9:미확인 */
+			LGD_CARDACQUIRER,			/* 신용카드매입사코드 */
+			LGD_PCANCELFLAG,				/* 신용카드부분취소가능여부	0: 부분취소불가능,  1: 부분취소가능 */
+			LGD_PCANCELSTR,				/* 신용카드부분취소불가능사유	부분취소가능시는 "0" 으로 리턴 */
+			LGD_DISCOUNTUSEYN,			/* 신용카드 즉시할인 여부	즉시할인여부 0:할인안됨, 1:할인됨 */
+			LGD_DISCOUNTUSEAMOUNT,/* 신용카드 즉시할인 금액	즉시할인된 금액 */
+			LGD_ACCOUNTNUM,				/* 가상계좌발급번호 */
+			LGD_ACCOUNTOWNER,		/* 계좌주명 */
+			LGD_PAYER,						/* 가상계좌입금자명 */
+			LGD_CASTAMOUNT,				/* 입금누적금액 */
+			LGD_CASCAMOUNT,				/* 현입금금액 */
+			LGD_CASFLAG,					/* 거래종류(R:할당,I:입금,C:취소) */
+			LGD_CASSEQNO,					/* 가상계좌일련번호 */
+			LGD_SAOWNER,					/* 가상계좌 입금계좌주명	상점명이 디폴트로 리턴 */
+			LGD_TELNO,						/* 결제휴대폰번호 */
+			LGD_PAYKEY,						/* LG유플러스인증키 */
+<!-- 
+			LGD_TRANSAMOUNT,			/* 환율적용금액 */
+			LGD_EXCHANGERATE,			/* 적용환율 */
+			LGD_BUYERSSN,					/* 구매자 생년월일 (YYMMDD) 또는 구매자주민번호 */
+			LGD_CARDNOINTEREST_YN,
+			LGD_VANCODE,
+ -->
+			REG_DT								/* 작성일자 */
+		)
+		VALUES
+		(
+			#{LGD_OID},
+			#{LGD_OID},
+			#{LGD_RESPCODE},
+			#{LGD_RESPMSG},
+			#{LGD_MID},
+			#{LGD_AMOUNT},
+			#{LGD_TID},
+			#{LGD_PAYTYPE},
+			#{LGD_PAYDATE},
+			#{LGD_HASHDATA},
+			#{LGD_TIMESTAMP},
+			#{LGD_BUYER},
+			#{LGD_PRODUCTINFO},
+			#{LGD_BUYERID},
+			FN_ENCRYPT(#{LGD_BUYERADDRESS}),
+			FN_ENCRYPT(#{LGD_BUYERPHONE}),
+			FN_ENCRYPT(#{LGD_BUYEREMAIL}),
+			#{LGD_PRODUCTCODE},
+			#{LGD_RECEIVER},
+			#{LGD_RECEIVERPHONE},
+			#{LGD_DELIVERYINFO},
+			#{LGD_FINANCECODE},
+			#{LGD_FINANCENAME},
+			#{LGD_FINANCEAUTHNUM},
+			#{LGD_ESCROWYN},
+			#{LGD_CASHRECEIPTNUM},
+			#{LGD_CASHRECEIPTSELFYN},
+			#{LGD_CASHRECEIPTKIND},
+			#{LGD_CARDNUM},
+			#{LGD_CARDINSTALLMONTH},
+			#{LGD_CARDNOINTYN},
+			#{LGD_AFFILIATECODE},
+			#{LGD_CARDGUBUN1},
+			#{LGD_CARDGUBUN2},
+			#{LGD_CARDACQUIRER},
+			#{LGD_PCANCELFLAG},
+			#{LGD_PCANCELSTR},
+			#{LGD_DISCOUNTUSEYN},
+			#{LGD_DISCOUNTUSEAMOUNT},
+			#{LGD_ACCOUNTNUM},
+			#{LGD_ACCOUNTOWNER},
+			#{LGD_PAYER},
+			#{LGD_CASTAMOUNT},
+			#{LGD_CASCAMOUNT},
+			#{LGD_CASFLAG},
+			#{LGD_CASSEQNO},
+			#{LGD_SAOWNER},
+			#{LGD_TELNO},
+			#{LGD_PAYKEY},
+<!-- 
+			#{LGD_TRANSAMOUNT},
+			#{LGD_EXCHANGERATE},
+			#{LGD_BUYERSSN},
+			#{LGD_CARDNOINTEREST_YN},
+			#{LGD_VANCODE},
+ -->
+			NOW()
+		)
+	</insert>
+
+
+	<!-- PAYCO 주문예약 로그 저장 -->
+	<insert id="insertPaycoReserve" parameterType="hashmap">
+		/** orderDAO.insertPaycoReserve **/
+		insert
+		into   to_payco_reserve
+        (
+              ORDER_CD,
+              sellerKey,
+              sellerOrderReferenceKey,
+              sellerOrderReferenceKeyType,
+              currency,
+              totalDeliveryFeeAmt,
+              totalSellerDiscountAmt,
+              totalPaymentAmt,
+              totalTaxfreeAmt,
+              totalTaxableAmt,
+              totalVatAmt,
+              orderTitle,
+              returnUrl,
+              returnUrlParam,
+              nonBankbookDepositInformUrl,
+              orderMethod,
+              orderChannel,
+              inAppYn,
+              orderSheetUiType,
+              payMode,
+              reserveOrderNo,
+              orderSheetUrl,
+              REG_DT
+       )
+       values
+       (
+              #{sellerOrderReferenceKey},
+              #{sellerKey},
+              #{sellerOrderReferenceKey},
+              #{sellerOrderReferenceKeyType},
+              #{currency},
+              #{totalDeliveryFeeAmt},
+              #{totalSellerDiscountAmt},
+              #{totalPaymentAmt},
+              #{totalTaxfreeAmt},
+              #{totalTaxableAmt},
+              #{totalVatAmt},
+              #{orderTitle},
+              #{returnUrl},
+              #{returnUrlParam},
+              #{nonBankbookDepositInformUrl},
+              #{orderMethod},
+              #{orderChannel},
+              #{inAppYn},
+              #{orderSheetUiType},
+              #{payMode},
+              #{reserveOrderNo},
+              #{orderSheetUrl},
+              NOW()
+       )
+	</insert>
+	
+	
+	<!-- PAYCO 결제 결과 마스터 저장 -->
+	<insert id="insertPaycoApproval" parameterType="com.gxenSoft.mall.lgdacom.vo.PaycoApprovalVO">
+		/** orderDAO.insertPaycoApproval **/
+	insert
+	into   to_payco_approval
+       (
+              ORDER_IDX,
+              sellerKey,
+              reserveOrderNo,
+              orderNo,
+              sellerOrderReferenceKey,
+              orderCertifyKey,
+              memberName,
+              memberEmail,
+              orderChannel,
+              totalOrderAmt,
+              totalDeliveryFeeAmt,
+              totalRemoteAreaDeliveryFeeAmt,
+              totalPaymentAmt,
+              receiptPaycoPointAmt,
+              receiptPaycoPointTaxfreeAmt,
+              receiptPaycoPointTaxableAmt,
+              receiptPaycoPointVatAmt,
+              receiptPaycoPointServiceAmt,
+              paymentCompletionYn,
+              paymentCompleteYmdt,
+              orderProducts,
+              REG_DT
+       )
+       values
+       (
+              #{orderIdx},
+              #{sellerKey},
+              #{reserveOrderNo},
+              #{orderNo},
+              #{sellerOrderReferenceKey},
+              #{orderCertifyKey},
+              #{memberName},
+              #{memberEmail},
+              #{orderChannel},
+              #{totalOrderAmt},
+              #{totalDeliveryFeeAmt},
+              #{totalRemoteAreaDeliveryFeeAmt},
+              #{totalPaymentAmt},
+              #{receiptPaycoPointAmt},
+              #{receiptPaycoPointTaxfreeAmt},
+              #{receiptPaycoPointTaxableAmt},
+              #{receiptPaycoPointVatAmt},
+              #{receiptPaycoPointServiceAmt},
+              #{paymentCompletionYn},
+              #{paymentCompleteYmdt},
+              #{orderProducts},
+              NOW()
+       )
+       
+		<selectKey keyProperty="approvalIdx" resultType="int" order="AFTER">
+			    SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>
+	
+	
+	<!-- PAYCO 결제 결과 상세 저장 -->
+	<insert id="insertPaycoPayment" parameterType="com.gxenSoft.mall.lgdacom.vo.PaycoPaymentVO">
+		/** orderDAO.insertPaycoPayment **/
+	insert
+	into   to_payco_approval_payment
+       (
+              APPROVAL_IDX,
+              paymentTradeNo,
+              paymentMethodCode,
+              paymentMethodName,
+              paymentAmt,
+              tradeYmdt,
+              pgAdmissionNo,
+              pgAdmissionYmdt,
+              easyPaymentYn,
+              cardCompanyName,
+              cardCompanyCode,
+              cardNo,
+              cardInstallmentMonthNumber,
+              cardAdmissionNo,
+              cardInterestFreeYn,
+              corporateCardYn,
+              partCancelPossibleYn,
+              companyName,
+              cellphoneNo,
+              bankName,
+              bankCode,
+              accountNo,
+              paymentExpirationYmd,
+              discountAmt,
+              discountConditionAmt,
+              REG_DT
+       )
+       values
+       (
+              #{approvalIdx},
+              #{paymentTradeNo},
+              #{paymentMethodCode},
+              #{paymentMethodName},
+              #{paymentAmt},
+              #{tradeYmdt},
+              #{pgAdmissionNo},
+              #{pgAdmissionYmdt},
+              #{easyPaymentYn},
+              #{cardCompanyName},
+              #{cardCompanyCode},
+              #{cardNo},
+              #{cardInstallmentMonthNumber},
+              #{cardAdmissionNo},
+              #{cardInterestFreeYn},
+              #{corporateCardYn},
+              #{partCancelPossibleYn},
+              #{companyName},
+              #{cellphoneNo},
+              #{bankName},
+              #{bankCode},
+              #{accountNo},
+              #{paymentExpirationYmd},
+              #{discountAmt},
+              #{discountConditionAmt},
+              NOW()
+       )       
+	</insert>
+	
+	<!-- 기본 배송지 정보 -->
+	<select id="getDefaultAddressInfo" parameterType="hashmap" resultType="sqlMap">
+		/** orderDAO.getDefaultAddressInfo **/
+		SELECT
+			ADDRESS_IDX,		/* 주소록 일련번호 */
+			MEMBER_IDX,			/* 회원 일련번호 (TM_MEMBER 일련번호) */
+			SHIPPING_NM,		/* 주소록명 */
+			RECEIVER_NM,		/*받는 사람 이름 */
+			FN_DECRYPT(ADDR) ADDR,					/* 도로명주소 */
+			FN_DECRYPT(ADDR_DETAIL) ADDR_DETAIL,		/* 상세주소 (도로명, 지번 공통) */
+			ZIP_CD,					/* 우편번호 (신우편번호) */
+			FN_DECRYPT(OLD_ADDR) OLD_ADDR,			/* 지번주소 */
+			OLD_ZIP_CD,			/* (구)우편번호 ((-) 포함) */
+			FN_DECRYPT(TEL_NO) TEL_NO,					/* 전화번호 */
+			FN_DECRYPT(PHONE_NO) PHONE_NO,			/* 핸드폰번호 */
+			DEFAULT_YN			/* 기본 배송지 여부 (Y : 기본 배송지, N : 기본 배송지 아님) */ 
+		FROM TO_ADDRESS
+		WHERE MEMBER_IDX = #{MEMBERIDX}
+			AND DEFAULT_YN = 'Y'
+		LIMIT 1
+	</select>
+		
+	<!-- 배송비 반환 -->
+	<select id="getShippingPrice" parameterType="hashmap" resultType="double">
+		/** orderDAO.getShippingPrice **/
+		SELECT IFNULL(SHIPPING_PRICE,0) AS SHIPPING_PRICE 
+		FROM (
+			SELECT SHIPPING_PRICE, COUNT(*)
+			FROM TO_SHIPPING_PRICE
+			WHERE #{ORDERPRICESUM} BETWEEN MIN_PRICE AND MAX_PRICE
+		) A
+	</select>
+	
+	<!-- 구매금액별 사은품 랜덤하게 1개 반환 -->
+	<select id="getRandomPriceGiftInfo" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** orderDAO.getRandomPriceGiftInfo **/
+		/* 모든 브랜드용(0) */
+		SELECT
+			T.TERM_IDX,				/* 사은품구간일련번호 */
+			T.FREE_YN,					/* 무료구분 */
+			T.BRAND_IDX,	  			/* 브랜드 (0이면 전체) */
+			T.TERM_NM,				/* 구간명 */
+			T.PRICE_START,			/* 구간시작금액 */
+			T.PRICE_END,				/* 구간끝금액 */
+			DATE_FORMAT(T.GIFT_START_DATE,'%Y-%m-%d') AS GIFT_START_DATE,	/* 사은품 증정 시작일자 */
+            DATE_FORMAT(T.GIFT_END_DATE,'%Y-%m-%d') AS GIFT_END_DATE,			/* 사은품 증정 종료일자 */
+            T.SEL_YN,					/* 선택여부 (Y : 선택사은품, N : 브랜드, 금액 해당되면 모두증정) */
+			G.GIFT_IDX,				/* 일련번호 */
+			G.GIFT_NM,				/* 사은품명 */
+			G.GIFT_IMG,				/* 사은품 이미지 */
+			G.GIFT_REAL_IMG,		/* 사은품 실제 이미지 */
+			G.GIFT_FLAG,				/* 사은품 구분 (P : 금액별 G : 상품별(상품별사용안함)) */			
+			1 AS GIFT_CNT
+		FROM TP_GIFT_TERM T
+		JOIN TP_GIFT G ON T.TERM_IDX = G.TERM_IDX AND T.USE_YN = 'Y' AND G.USE_YN = 'Y'
+			AND (CURDATE() <![CDATA[>=]]> DATE(T.GIFT_START_DATE) OR T.GIFT_START_DATE IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(T.GIFT_END_DATE) OR T.GIFT_END_DATE IS NULL)
+		LEFT OUTER JOIN (	<!-- 재고 조건 -->
+			SELECT
+				OG.GIFT_IDX, 
+				COUNT(*) AS CNT
+			FROM TO_ORDER O
+			JOIN TO_ORDER_GIFT OG ON O.ORDER_IDX = OG.ORDER_IDX
+				AND O.ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','670','690','700','750','770','800','900')
+			GROUP BY OG.GIFT_IDX
+		) OGC ON G.GIFT_IDX = OGC.GIFT_IDX
+        JOIN (	/* 구매금액 총합 */
+			SELECT SUM(OD.PAY_PRICE) AS PAY_PRICE 
+			FROM TO_ORDER_DETAIL OD
+			LEFT JOIN TP_GOODS_BRAND GB ON OD.GOODS_IDX = GB.GOODS_IDX
+			WHERE OD.ORDER_CD = #{ORDERCD}
+        ) S ON T.BRAND_IDX = 0
+		WHERE CONVERT(G.STOCK_CNT,SIGNED)-IFNULL(OGC.CNT,0) <![CDATA[>]]> 0
+       		<!-- 금액 구간(기본 3만원 이상) 포함되는 파우치(SEL_YN = 'Y') -->
+       		AND T.GOODS_YN = 'N' /* 구간사은품 */
+			AND T.SEL_YN = 'Y'
+			AND T.FREE_YN = 'N' AND S.PAY_PRICE BETWEEN T.PRICE_START AND T.PRICE_END
+			
+		UNION ALL
+		/* Gatsby, Bifesta, Lucido-L */
+		SELECT
+			T.TERM_IDX,				/* 사은품구간일련번호 */
+			T.FREE_YN,					/* 무료구분 */
+			T.BRAND_IDX,	  			/* 브랜드 (0이면 전체) */
+			T.TERM_NM,				/* 구간명 */
+			T.PRICE_START,			/* 구간시작금액 */
+			T.PRICE_END,				/* 구간끝금액 */
+			DATE_FORMAT(T.GIFT_START_DATE,'%Y-%m-%d') AS GIFT_START_DATE,	/* 사은품 증정 시작일자 */
+            DATE_FORMAT(T.GIFT_END_DATE,'%Y-%m-%d') AS GIFT_END_DATE,			/* 사은품 증정 종료일자 */
+            T.SEL_YN,					/* 선택여부 (Y : 선택사은품, N : 브랜드, 금액 해당되면 모두증정) */
+			G.GIFT_IDX,				/* 일련번호 */
+			G.GIFT_NM,				/* 사은품명 */
+			G.GIFT_IMG,				/* 사은품 이미지 */
+			G.GIFT_REAL_IMG,		/* 사은품 실제 이미지 */
+			G.GIFT_FLAG,				/* 사은품 구분 (P : 금액별 G : 상품별(상품별사용안함)) */
+			1 AS GIFT_CNT			
+		FROM TP_GIFT_TERM T
+		JOIN TP_GIFT G ON T.TERM_IDX = G.TERM_IDX AND T.USE_YN = 'Y' AND G.USE_YN = 'Y'
+			AND (CURDATE() <![CDATA[>=]]> DATE(T.GIFT_START_DATE) OR T.GIFT_START_DATE IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(T.GIFT_END_DATE) OR T.GIFT_END_DATE IS NULL)
+		LEFT OUTER JOIN (	<!-- 재고 조건 -->
+			SELECT
+				OG.GIFT_IDX, 
+				COUNT(*) AS CNT
+			FROM TO_ORDER O
+			JOIN TO_ORDER_GIFT OG ON O.ORDER_IDX = OG.ORDER_IDX
+				AND O.ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','670','690','700','750','770','800','900')
+			GROUP BY OG.GIFT_IDX
+		) OGC ON G.GIFT_IDX = OGC.GIFT_IDX
+        JOIN (	/* 브랜드별 구매금액 */
+			SELECT GB.BRAND_IDX, SUM(OD.PAY_PRICE) AS PAY_PRICE 
+			FROM TO_ORDER_DETAIL OD
+			LEFT JOIN TP_GOODS_BRAND GB ON OD.GOODS_IDX = GB.GOODS_IDX
+			WHERE OD.ORDER_CD = #{ORDERCD}
+			GROUP BY GB.BRAND_IDX
+        ) S ON T.BRAND_IDX = S.BRAND_IDX
+		WHERE CONVERT(G.STOCK_CNT,SIGNED)-IFNULL(OGC.CNT,0) <![CDATA[>]]> 0
+       		<!-- 금액 구간(기본 3만원 이상) 포함되는 파우치(SEL_YN = 'Y') -->
+       		AND T.GOODS_YN = 'N'   /* 구간사은품 */ 
+			AND T.SEL_YN = 'Y'
+			AND T.FREE_YN = 'N' AND S.PAY_PRICE BETWEEN T.PRICE_START AND T.PRICE_END
+		ORDER BY RAND() LIMIT 1
+	</select>
+	
+	<!-- 주문 사은품 정보 삭제 -->
+	<delete id="deleteOrderGift" parameterType="hashmap">
+		/** orderDAO.deleteOrderGift **/
+		DELETE FROM TO_ORDER_GIFT
+		WHERE ORDER_CD = #{ORDERCD} 
+			AND SEL_YN = #{SELYN}
+	</delete>
+	
+	<!-- 선택한 구매금액별 사은품 내역 저장 -->
+	<insert id="insertSelectedOrderGift" parameterType="hashmap">
+		/** orderDAO.insertSelectedOrderGift **/
+		INSERT INTO TO_ORDER_GIFT
+		(
+			ORDER_IDX,			/* 주문 마스터 일련번호 (TO_ORDER 일련번호) */
+			ORDER_CD, 			/* 주문코드 YYYYMMDDHHNNSSFFF + [P|M|A] + 랜덤값2자리 (P : PC, M : MOBILE, A : APP) */
+			GIFT_IDX,				/* 사은품 일련번호 (TP_GIFT 일련번호) */
+			GIFT_NM,				/* 사은품명 */	
+			GIFT_IMG,				/* 사은품 이미지 */	
+			GIFT_REAL_IMG,		/* 사은품 실제 이미지 */	
+			GIFT_FLAG,				/* 사은품 구분 (P : 금액별 G : 상품별(상품별사용안함)) */
+			TERM_IDX,				/* 사은품구간일련번호 (TP_GIFT_TERM 일련번호) */
+			FREE_YN,				/* 무료구분 (Y : 무료사은품, N:구간사은품) */
+			BRAND_IDX,			/* 브랜드 (0이면 전체) */
+			TERM_NM,				/* 구간명 */	
+			PRICE_START,			/* 구간시작금액 (구간사은품인경우 1이상) */
+			PRICE_END,			/* 구간끝금액 */	
+			GIFT_START_DATE,	/* 사은품 증정 시작일자 */	
+			GIFT_END_DATE,		/* 사은품 증정 종료일자 */
+			SEL_YN,					/* 선택여부 (Y : 선택사은품, N : 브랜드, 금액 해당되면 모두증정) */	
+			STATUS					/* 상태 (0: 발송전, 1:발송완료(송장번호입력시), 9:취소) */
+		)
+		SELECT
+			#{ORDERIDX},
+			#{ORDERCD},
+			G.GIFT_IDX,				/* 일련번호 */
+			G.GIFT_NM,				/* 사은품명 */
+			G.GIFT_IMG,				/* 사은품 이미지 */
+			G.GIFT_REAL_IMG,		/* 사은품 실제 이미지 */
+			G.GIFT_FLAG,				/* 사은품 구분 (P : 금액별 G : 상품별(상품별사용안함)) */			
+			T.TERM_IDX,				/* 사은품구간일련번호 */
+			T.FREE_YN,					/* 무료구분 */
+			T.BRAND_IDX,				/* 브랜드 (0이면 전체) */
+			T.TERM_NM,				/* 구간명 */
+			T.PRICE_START,			/* 구간시작금액 */
+			T.PRICE_END,				/* 구간끝금액 */
+			DATE_FORMAT(T.GIFT_START_DATE,'%Y-%m-%d') AS GIFT_START_DATE,	/* 사은품 증정 시작일자 */
+            DATE_FORMAT(T.GIFT_END_DATE,'%Y-%m-%d') AS GIFT_END_DATE,			/* 사은품 증정 종료일자 */
+            T.SEL_YN,					/* 선택여부 (Y : 선택사은품, N : 브랜드, 금액 해당되면 모두증정) */
+            0			
+		FROM TP_GIFT G 
+		LEFT OUTER JOIN TP_GIFT_TERM T ON T.TERM_IDX = G.TERM_IDX AND T.USE_YN = 'Y' 
+			AND (CURDATE() <![CDATA[>=]]> DATE(T.GIFT_START_DATE) OR T.GIFT_START_DATE IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(T.GIFT_END_DATE) OR T.GIFT_END_DATE IS NULL)
+			AND T.FREE_YN = 'N'
+		WHERE G.GIFT_IDX = #{GIFTIDX}
+			AND G.USE_YN = 'Y'
+	</insert>
+
+	<!-- 배송지 모두 기본 배송지 아님으로 수정 -->
+	<update id="updateAllAddressToNotDefaultYn" parameterType="hashmap">
+		/** orderDAO.updateAllAddressToNotDefaultYn **/
+		UPDATE TO_ADDRESS
+		SET DEFAULT_YN = 'N'
+		WHERE MEMBER_IDX = #{MEMBERIDX}
+	</update>
+	
+	<!-- 배송지 목록에 저장 -->
+	<insert id="insertAddress" parameterType="hashmap">
+		/** orderDAO.insertAddress **/
+		INSERT INTO TO_ADDRESS
+		(
+			MEMBER_IDX,					/* 회원 일련번호 (TM_MEMBER 일련번호) */
+			SHIPPING_NM,				/* 주소록명 */	
+			RECEIVER_NM,				/* 받는 사람 이름 */	
+			ADDR,							/* 도로명주소 */	
+			ADDR_DETAIL,				/* 상세주소 (도로명, 지번 공통) */
+			ZIP_CD,							/* 우편번호 (신우편번호) */
+			OLD_ADDR,					/* 지번주소 */	
+			OLD_ZIP_CD,					/* (구)우편번호 ((-) 포함) */
+			TEL_NO,							/* 전화번호 */	
+			PHONE_NO,					/* 핸드폰번호 */	
+			DEFAULT_YN,					/* 기본 배송지 여부 (Y : 기본 배송지, N : 기본 배송지 아님) */
+			REG_IDX,						/* 작성자 일련번호 */	
+			REG_HTTP_USER_AGENT,	/* 작성자 USER_AGENT */	
+			REG_IP,							/* 작성자 IP */	
+			REG_DT							/* 작성일자 */	
+		)
+		VALUES
+		(
+			#{MEMBERIDX},
+			#{SHIPPINGNM},
+			#{RECEIVERNM},
+			FN_ENCRYPT(#{ADDR}),
+			FN_ENCRYPT(#{ADDRDETAIL}),
+			#{ZIPCD},
+			FN_ENCRYPT(#{OLDADDR}),
+			#{OLDZIPCD},
+			FN_ENCRYPT(#{TELNO}),
+			FN_ENCRYPT(#{PHONENO}),
+			#{DEFAULTYN},
+			#{REGIDX},
+			#{REGHTTPUSERAGENT},
+			#{REGIP},
+			NOW()
+		)
+	</insert>
+	
+	<!-- 배송지 삭제 -->
+	<delete id="deleteAddress" parameterType="hashmap">
+		/** orderDAO.deleteAddress **/
+		DELETE FROM TO_ADDRESS
+		WHERE MEMBER_IDX = #{MEMBERIDX}
+			AND ADDRESS_IDX = #{ADDRESSIDX}
+	</delete>
+	
+	<!-- 배송지 수정 -->
+	<update id="updateAddress" parameterType="hashmap">
+		/** orderDAO.updateAddress **/
+		UPDATE TO_ADDRESS
+		SET			
+			SHIPPING_NM = #{SHIPPINGNM},		/* 주소록명 */	
+			RECEIVER_NM = #{RECEIVERNM},		/* 받는 사람 이름 */	
+			ADDR = FN_ENCRYPT(#{ADDR}),							/* 도로명주소 */	
+			ADDR_DETAIL = FN_ENCRYPT(#{ADDRDETAIL}),		/* 상세주소 (도로명, 지번 공통) */
+			ZIP_CD = #{ZIPCD},						/* 우편번호 (신우편번호) */
+			OLD_ADDR = FN_ENCRYPT(#{OLDADDR}),				/* 지번주소 */	
+			OLD_ZIP_CD = #{OLDZIPCD},			/* (구)우편번호 ((-) 포함) */
+			TEL_NO = FN_ENCRYPT(#{TELNO}),						/* 전화번호 */	
+			PHONE_NO = FN_ENCRYPT(#{PHONENO}),				/* 핸드폰번호 */	
+			DEFAULT_YN = #{DEFAULTYN},			/* 기본 배송지 여부 (Y : 기본 배송지, N : 기본 배송지 아님) */
+			EDIT_IDX = #{EDITIDX},					/* 수정자 일련번호 */	
+			EDIT_HTTP_USER_AGENT = #{EDITHTTPUSERAGENT},	/* 수정자 USER_AGENT */	
+			EDIT_IP = #{EDITIP},						/* 수정자 IP */	
+			EDIT_DT	 = NOW()							/* 수정일자 */
+		WHERE MEMBER_IDX = #{MEMBERIDX}
+			AND ADDRESS_IDX = #{ADDRESSIDX}
+	</update>
+
+	<!-- 프로모션코드랜덤 사용여부 개수 -->
+	<select id="selectPromotionCodeRandom" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** orderDAO.selectPromotionCodeRandom **/
+		SELECT A.PMCODE_IDX, A.PMCODE_NM, A.DEVICE, A.DISCOUNT_RATE,
+        	CASE WHEN A.USE_START_DT <![CDATA[<=]]> NOW() AND A.USE_END_DT <![CDATA[>=]]> NOW() THEN 'ING' ELSE 'END' END AS GUBUN 
+        FROM TO_PROMOTIONCODE A INNER JOIN TO_PROMOTIONCODE_ISSUE B ON A.PMCODE_IDX = B.PMCODE_IDX
+        where b.PROMOTIONCODE = #{PROMOTIONCODERANDOM} 
+		AND (b.USE_MEMBER_IDX IS  NULL OR b.USE_MEMBER_IDX = '')
+        AND a.USE_YN = 'Y'        
+	</select>
+
+	<!-- 프로모션코드 사용체크 -->
+	<select id="selectPromotionCode" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** orderDAO.selectPromotionCode **/
+		SELECT A.PMCODE_IDX, A.PMCODE_NM,A.PMCODE_DESC, A.DEVICE, A.DISCOUNT_RATE,
+        	CASE WHEN DATE(A.USE_START_DT) <![CDATA[<=]]> CURDATE() AND DATE(A.USE_END_DT) <![CDATA[>=]]> CURDATE() THEN 'ING' ELSE 'END' END AS GUBUN
+        FROM TO_PROMOTIONCODE A
+        where a.PMCODE_NM = #{PROMOTIONCODE} 
+        AND a.USE_YN = 'Y'        
+	</select>
+	
+	<!-- 프로모션코드 변경 -->
+	<update id="updatePromotionCode" parameterType="hashmap">
+		/** orderDAO.updatePromotionCode **/
+		UPDATE TO_ORDER
+		SET
+			PROMOTIONCODE = #{PROMOTIONCODE} ,
+			TOTAL_PROMOTIONCODE_PRICE = FLOOR(((TOTAL_ORDER_PRICE - IFNULL(TOTAL_GIFT_COUPON_PRICE,0)) / 100) * ${DISCOUNTRATE}),
+			CART_COUPON_IDX = 0,						/* 장바구니쿠폰초기화 */
+		   	TOTAL_CART_COUPON_PRICE = 0,			/* 장바구니쿠폰 초기화 */
+			TOTAL_POINT_PRICE = 0,						/* 포인트 할인 초기화 */
+			TOTAL_PRE_POINT_PRICE = 0,				/* 선포인트 결제 초기화 */
+			FREE_SHIPPING_COUPON_IDX = 0,		/* 무료배송 쿠폰 초기화 */
+			FREE_SHIPPING_COUPON_PRICE = 0,		/* 무료배송 쿠폰 초기화 */
+			RANDOMCODE_YN = #{RANDOMCODEYN}			
+		WHERE ORDER_IDX = #{ORDER_IDX}			
+			AND ORDER_STATUS_CD = '000'
+	</update>
+	
+	<!-- 사용가능한 쿠폰 목록 -->
+	<!-- 
+			파라미터 설명
+			P_ORDER_IDX			INT					주문 마스터 일련번호
+			P_ORDER_DETAIL_IDX	INT					주문 디테일 일련번호	 상품쿠폰일때만 설정하면 된다. 다른쿠폰일때에는 0으로 설정.
+			P_COUPON_GUBUN		CHAR(1)				G : 상품쿠폰, C : 장바구니쿠폰, S : 무료배송쿠폰
+	 -->
+	<select id="procUsableCouponList" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="com.gxenSoft.mall.order.vo.ProcCouponVO">
+		{ CALL SP_COUPON_LIST(#{P_ORDER_IDX, mode=IN, jdbcType=INTEGER}, #{P_ORDER_DETAIL_IDX, mode=IN, jdbcType=INTEGER}, #{P_COUPON_GUBUN, mode=IN, jdbcType=CHAR}) }
+	</select>
+	
+	<!-- 쿠폰 사용 -->
+	<!-- 
+		파라미터 설명
+		P_ORDER_IDX			INT					주문 마스터 일련번호
+		P_ORDER_DETAIL_IDX	INT					주문 디테일 일련번호  :  상품쿠폰일때만 설정하면 된다. 다른쿠폰일때에는 0으로 설정.
+		P_COUPON_GUBUN		CHAR(1)				G : 상품쿠폰, C : 장바구니쿠폰, S : 무료배송쿠폰
+		P_COUPON_IDX		INT					쿠폰마스터 테이블의 IDX값.  (자동발급쿠폰일때에만 의미를 갖는다)   /  기존에 적용된 쿠폰을 제거할때는 0으로 설정한다
+		P_COUPON_MEMBER_IDX	INT					회원별 쿠폰발급테이블의 IDX값.  (회원이 이미 다운로드 한 쿠폰을 사용했을때 의미를 갖는다)   /  기존에 적용된 쿠폰을 제거할때는 0으로 설정한다
+ 	-->
+	<select id="procCouponUse" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="sqlMap">
+		{ CALL SP_COUPON_USE(#{P_ORDER_IDX, mode=IN, jdbcType=INTEGER}, #{P_ORDER_DETAIL_IDX, mode=IN, jdbcType=INTEGER},#{P_COUPON_GUBUN, mode=IN, jdbcType=CHAR},#{P_COUPON_IDX, mode=IN, jdbcType=INTEGER},#{P_COUPON_MEMBER_IDX, mode=IN, jdbcType=INTEGER}) }
+	</select>
+	
+	<!-- 포인트 결제 적용 -->
+	<update id="updatePointPrice" parameterType="hashmap">
+		/** orderDAO.updatePointPrice **/
+		UPDATE TO_ORDER
+		SET
+			TOTAL_POINT_PRICE = #{TOTAL_POINT_PRICE},
+			FREE_SHIPPING_COUPON_IDX = 0,	/* 무료배송 쿠폰 초기화 */
+			FREE_SHIPPING_COUPON_PRICE = 0	/* 무료배송 쿠폰 초기화 */
+		WHERE ORDER_IDX = #{ORDER_IDX}			
+	</update>
+	
+	<!-- 기본 결제수단 삭제 -->
+	<delete id="deleteDefaultPayment" parameterType="hashmap">
+		/** orderDAO.deleteDefaultPayment **/
+		DELETE FROM TO_DEFAULT_PAYMENT
+		WHERE MEMBER_IDX = #{MEMBERIDX}
+	</delete>
+
+	<!-- 기본 결제수단 저장 -->
+	<insert id="insertDefaultPayment" parameterType="hashmap">
+		/** orderDAO.insertDefaultPayment **/
+		INSERT INTO TO_DEFAULT_PAYMENT
+		(
+			MEMBER_IDX,
+			DEVICE,
+			SELECT_PAY_TYPE,
+			SELECT_BILLKEY_VAL,
+			SELECT_CARD_CODE,
+			ETC_CARD_VAL,
+			ESCROW_YN1_VAL,
+			ESCROW_YN2_VAL,
+			BANK_CODE,
+		<if test="ESCROWYN != null and ESCROWYN != '' ">
+			ESCROW_YN,
+		</if>
+		<if test="CASHRECEIPTGUBUN != null and CASHRECEIPTGUBUN != '' ">
+			CASH_RECEIPT_GUBUN,
+		</if>
+		<if test="CASHRECEIPTNO != null and CASHRECEIPTNO != '' ">
+			CASH_RECEIPT_NO,
+		</if>
+			REG_IDX,
+			REG_HTTP_USER_AGENT,
+			REG_IP,
+			REG_DT
+		)
+		VALUES(
+			#{MEMBERIDX},
+			#{DEVICE},
+			#{SELECTPAYTYPE},
+			#{SELECTBILLKEYVAL},
+			#{SELECTCARDCODE},
+			#{ETCCARDVAL},
+			#{ESCROWYN1VAL},
+			#{ESCROWYN2VAL},
+			#{BANKCODE},
+		<if test="ESCROWYN != null and ESCROWYN != '' ">
+			#{ESCROWYN},
+		</if>
+		<if test="CASHRECEIPTGUBUN != null and CASHRECEIPTGUBUN != '' ">
+			#{CASHRECEIPTGUBUN},
+		</if>
+		<if test="CASHRECEIPTNO != null and CASHRECEIPTNO != '' ">
+			#{CASHRECEIPTNO},
+		</if>
+			#{REGIDX},
+			#{REGHTTPUSERAGENT},
+			#{REGIP},
+			NOW()
+		)
+		ON DUPLICATE KEY UPDATE 
+			DEVICE = #{DEVICE},
+			SELECT_PAY_TYPE = #{SELECTPAYTYPE},
+			SELECT_BILLKEY_VAL = #{SELECTBILLKEYVAL},
+			SELECT_CARD_CODE = #{SELECTCARDCODE},
+			ETC_CARD_VAL = #{ETCCARDVAL},
+			ESCROW_YN1_VAL = #{ESCROWYN1VAL},
+			ESCROW_YN2_VAL = #{ESCROWYN2VAL},
+			BANK_CODE = #{BANKCODE},
+		<if test="ESCROWYN != null and ESCROWYN != '' ">
+			ESCROW_YN = #{ESCROWYN},
+		</if>
+		<if test="CASHRECEIPTGUBUN != null and CASHRECEIPTGUBUN != '' ">
+			CASH_RECEIPT_GUBUN = #{CASHRECEIPTGUBUN},
+		</if>
+		<if test="CASHRECEIPTNO != null and CASHRECEIPTNO != '' ">
+			CASH_RECEIPT_NO = #{CASHRECEIPTNO},
+		</if>
+			REG_IDX = #{REGIDX},
+			REG_HTTP_USER_AGENT = #{REGHTTPUSERAGENT},
+			REG_IP = #{REGIP},
+			REG_DT = NOW()
+	</insert>
+	
+	<!-- PAYCO 무통장 결제 결과 적용 -->
+	<update id="updatePaycoNonBankResult" parameterType="hashmap">
+		/** orderDAO.updatePaycoNonBankResult **/
+		UPDATE TO_PAYCO_APPROVAL A
+		JOIN TO_PAYCO_APPROVAL_PAYMENT AP ON A.APPROVAL_IDX = AP.APPROVAL_IDX
+		SET 
+			A.paymentCompletionYn = #{paymentCompletionYn}, 
+			A.paymentCompleteYmdt = #{paymentCompleteYmdt}, 
+			AP.paymentTradeNo = #{paymentTradeNo}, 
+			AP.tradeYmdt = #{tradeYmdt}, 
+			AP.pgAdmissionNo = #{pgAdmissionNo}, 
+			AP.pgAdmissionYmdt = #{pgAdmissionYmdt}
+		WHERE A.SELLERORDERREFERENCEKEY = #{ORDERCD}
+			AND AP.paymentMethodCode = #{paymentMethodCode}
+	</update>
+	
+	<!-- 가상계좌 결제 - 주문 마스터 가상계좌 정보 수정 -->
+	<update id="updateOrderMasterCyberAccountInfo" parameterType="hashmap">
+		/** orderDAO.updateOrderMasterCyberAccountInfo **/
+		UPDATE TO_ORDER
+		SET
+			<if test="TYPE eq 'PAYCO'.toString()">	<!-- PCYCO 일때만 코드를 우리 코드(LG U+ 코드)로 변환하는 함수 실행, LG U+는 결제시 이미 bankcode 값을 넣었음 -->
+				BANK_CODE = FN_CHANGE_BANKCODE(#{BANKCODE}),		/* 입금 은행코드 (공통코드 무통장(가상계좌)일때 사용) */
+			</if>
+				<if test="TYPE eq 'KCP'.toString()">
+				BANK_CODE = #{BANKCODE},		/* 입금 은행코드 (공통코드 무통장(가상계좌)일때 사용) */
+			</if>
+			ACCOUNT = FN_ENCRYPT(#{ACCOUNT}),  												/* 입금 계좌번호 (무통장(가상계좌)일때 사용) */
+			DEPOSITOR = #{DEPOSITOR},  										/* 입금 예금주명 (무통장(가상계좌)일때 사용) */
+			DEPOSIT_DEADLINE_DT = #{DEPOSITDEADLINEDT}			/* 입금 기한 (무통장(가상계좌)일때 사용) */
+		WHERE ORDER_CD = #{ORDERCD}
+			AND ORDER_STATUS_CD = '000'						/* 주문전인 건들만 */
+			AND PAY_TYPE IN ('PAY_TYPE25','PAY_TYPE35')	/* 가상계좌나 PAYCO일때만 (PAY_TYPE25 : 가상계좌, PAY_TYPE35 : PAYCO) */ 
+	</update>
+	
+	<!-- 가상계좌 입금 완료시 주문 상태 로그 저장 -->
+	<insert id="insertCyberAccountOrderStatusLog" parameterType="hashmap">
+		/** orderDAO.insertCyberAccountOrderStatusLog **/
+		INSERT INTO TO_ORDER_STATUS_LOG
+		(
+			ORDER_IDX,				/* 주문 마스터 일련번호 */
+			ORDER_DETAIL_IDX,	/* 주문 디테일 일련번호 */
+			ORDER_STATUS_CD,		/* 변경 주문상태코드 */
+			REASON,					/* 변경 사유 */
+			DEVICE,						/* 디바이스 */
+			REG_IDX,					/* 작성자 일련번호 */
+			REG_DT						/* 작성일자 */
+		)
+		SELECT
+			O.ORDER_IDX,
+			OD.ORDER_DETAIL_IDX,
+			'200',
+			'가상계좌 입금 완료',
+			O.DEVICE,
+			O.REG_IDX,
+			NOW()
+		FROM TO_ORDER O
+		JOIN TO_ORDER_DETAIL OD ON O.ORDER_IDX = OD.ORDER_IDX
+		WHERE O.ORDER_CD = #{ORDERCD}
+	</insert>
+	
+	<!--주문 SMS -->
+	<select id="callSPSmsSendAndEmail" parameterType="java.util.HashMap" statementType="CALLABLE" resultType="sqlMap">
+		{ CALL SP_SMS_SEND(#{TEMPLATE_CD, mode=IN, jdbcType=VARCHAR}, 0, #{ORDER_IDX, mode=IN, jdbcType=INTEGER}, '','','') }
+	</select>
+	
+	<!-- 주문 마스터 정보 -->
+	<select id="getOrderStatusCd" parameterType="hashmap" resultType="String">
+		/** orderDAO.getOrderStatusCd **/
+		SELECT ORDER_STATUS_CD       				
+		FROM TO_ORDER
+		WHERE ORDER_CD = #{ORDERCD}
+	</select>
+
+	<!-- LG U+ 에스크로 결과 로그 저장 -->
+	<insert id="insertXPayEscrowResultLog" parameterType="hashmap">
+		/** orderDAO.insertXPayEscrowResultLog **/
+		INSERT INTO TO_XPAY_ESCROW_RESULT_LOG
+		(
+			mid,			/* 상점ID */
+			oid,			/* 상점주문번호 */
+			tid,			/* LG유플러스 거래번호 */
+			txtype,		/* 결과구분 (C:수령확인결과, R:구매취소요청, D:구매취소결과, S:택배사배송완료, N:N/C처리완료 (Negative Confirm)) */
+			productid,	/* 상품ID (기본값=‘1’, Reserved 칼럼 향후 사용 예정) */
+			ssn,			/* 작업자 주민번호 (구매취소결과일때는 공백임 * 개인정보보호법에 의거하여 “.” 리턴함) */
+			ip,				/* 작업자 PC의 IP주소 (구매취소결과일때는 공백임 * 개인정보보호법에 의거하여 “.” 리턴함) */
+			mac,			/* 작업자 PC의 MAC주소 (구매취소결과일때는 공백임 * 개인정보보호법에 의거하여 “.” 리턴함) */
+			resdate,		/* 처리일시 (YYYYMMDDHHMISS 14자리 포맷) */
+			hashdata,	/* 보안을 위한 인증키 ([인증키 생성방법] ① 다음 호출 파라미터의 값을 순서대로 조합한 문자열을 MD5로 Encoding한 문자열값 ② “상점ID + 상점주문번호 + LG유플러스거래번호 + 결과구분 + 상품ID + 주민번호 + IP + MAC주소 + 처리일시 + 상점키” */
+			REG_DT		/* 작성일자 */
+		)
+		VALUES
+		(
+			#{mid},
+			#{oid},
+			#{tid},
+			#{txtype},
+			#{productid},
+			#{ssn},
+			#{ip},
+			#{mac},
+			#{resdate},
+			#{hashdata},
+			NOW()
+		)
+	</insert>
+	
+	<!-- 에스크로 택배사배송완료 수신 - 배송완료일 저장 -->
+	<update id="updateOrderDetailDeliveredDt" parameterType="hashmap">
+		/** orderDAO.updateOrderDetailDeliveredDt **/
+		UPDATE TO_ORDER O
+		JOIN TO_ORDER_DETAIL OD ON O.ORDER_IDX = OD.ORDER_IDX
+		SET
+			OD.DELIVERED_DT = CAST(#{DELIVEREDDT} AS DATETIME) 				/* 배송완료일 */
+		WHERE O.ORDER_CD = #{ORDERCD}
+			AND OD.SHIPPING_DT IS NOT NULL
+	</update>
+
+	<insert id="saveSmilePayResult"  parameterType="hashmap">
+		INSERT INTO TO_SMILEPAY_RESULT (  ORDER_CD , RESULT_CODE , RESULT_MSG , ERROR_CODE
+															, ERROR_MSG , TID , MOID , MID , PAY_METHOD , AMT , DISCOUNT_AMT , AUTH_DATE
+															, AUTH_CODE , CARD_CODE , ACQU_CARD_CODE , CARD_NAME , CARD_QUOTA
+															, CARD_INTEREST , CARD_CI , CARD_BIN , CARD_POINT , VAN_CODE , FN_NO , CARD_NO
+														   )
+												VALUES(
+															  #{ORDERCD}	, #{RESULTCODE}	, #{RESULTMSG}	, #{ERRORCD}	, 
+															  #{ERRORMSG}	, #{TID}	, #{MOID}	, #{MID}	, #{PAYMETHOD}	, #{AMT}	, #{DISCOUNTAMT}	, #{AUTHDATE}	, 
+															  #{AUTHCODE}	, #{CARDCODE}	, #{ACQUCARDCODE}	, #{CARDNAME}	, #{CARDQUOTA}	, 
+															  #{CARDINTEREST}	, #{CARDCL}	, #{CARDBIN}	, #{CARDPOINT}	, #{VANCODE}	, #{FNNO}	, #{CARDNO}	
+															)
+	</insert>
+	
+	<insert id="saveSamilPayCancelResult" parameterType="hashmap">
+		INSERT INTO TO_SMILEPAY_CANCEL_RESULT (	ORDER_CD , MID , TID , RESULT_CODE , RESULT_MSG 
+																			, ERROR_CODE , ERROR_MSG , CANCEL_AMT , CANCEL_DATE
+																			, CANCEL_TIME , PAY_METHOD , STATE_CODE , CANCEL_NUM , VAN_CODE
+																	   )
+															VALUES (
+																			#{ORDERCD} , #{MID} , #{TID} ,  #{RESULTCODE} , #{RESULTMSG} 
+																			, #{ERRORCD} , #{ERRORMSG} , #{CANCELAMT} , #{CANCELDATE} 
+																			, #{CANCELTIME} , #{PAYMETHOD} , #{STATECD} , #{CANCELNUM} , #{VANCODE}  
+																		)
+	</insert>
+	
+	<!-- 주문 페이지 구매금액별 사은품 리스트 -->
+	<select id="getGiftList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** orderDAO.getGiftList **/
+		/* 모든 브랜드용(0) */
+		SELECT
+			T.TERM_IDX,				/* 사은품구간일련번호 */
+			T.FREE_YN,					/* 무료구분 */
+			T.BRAND_IDX,	  			/* 브랜드 (0이면 전체) */
+			T.TERM_NM,				/* 구간명 */
+			T.PRICE_START,			/* 구간시작금액 */
+			T.PRICE_END,				/* 구간끝금액 */
+			DATE_FORMAT(T.GIFT_START_DATE,'%Y-%m-%d') AS GIFT_START_DATE,	/* 사은품 증정 시작일자 */
+            DATE_FORMAT(T.GIFT_END_DATE,'%Y-%m-%d') AS GIFT_END_DATE,			/* 사은품 증정 종료일자 */
+            T.SEL_YN,					/* 선택여부 (Y : 선택사은품, N : 브랜드, 금액 해당되면 모두증정) */
+			G.GIFT_IDX,				/* 일련번호 */
+			G.GIFT_NM,				/* 사은품명 */
+			G.GIFT_IMG,				/* 사은품 이미지 */
+			G.GIFT_REAL_IMG,		/* 사은품 실제 이미지 */
+			G.GIFT_FLAG,				/* 사은품 구분 (P : 금액별 G : 상품별(상품별사용안함)) */
+			1 AS GIFT_CNT      /* 사은품개수 */			
+		FROM TP_GIFT_TERM T
+		JOIN TP_GIFT G ON T.TERM_IDX = G.TERM_IDX AND T.USE_YN = 'Y' AND G.USE_YN = 'Y'
+			AND (CURDATE() <![CDATA[>=]]> DATE(T.GIFT_START_DATE) OR T.GIFT_START_DATE IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(T.GIFT_END_DATE) OR T.GIFT_END_DATE IS NULL)
+		LEFT OUTER JOIN (	<!-- 재고 조건 -->
+			SELECT
+				OG.GIFT_IDX, 
+				COUNT(*) AS CNT
+			FROM TO_ORDER O
+			JOIN TO_ORDER_GIFT OG ON O.ORDER_IDX = OG.ORDER_IDX
+				AND O.ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','670','690','700','750','770','800','900')
+			GROUP BY OG.GIFT_IDX
+		) OGC ON G.GIFT_IDX = OGC.GIFT_IDX
+        JOIN (	/* 구매금액 총합 */
+			SELECT SUM(OD.PAY_PRICE) AS PAY_PRICE 
+			FROM TO_ORDER_DETAIL OD
+			LEFT JOIN TP_GOODS_BRAND GB ON OD.GOODS_IDX = GB.GOODS_IDX
+			WHERE OD.ORDER_CD = #{ORDERCD}
+        ) S ON T.BRAND_IDX = 0
+		WHERE CONVERT(G.STOCK_CNT,SIGNED)-IFNULL(OGC.CNT,0) <![CDATA[>]]> 0
+		AND T.GOODS_YN = 'N'  <!--  구간 사은품 -->
+        	<if test="FREEYN eq 'Y'.toString()">	<!-- 금액 구간에 포함되거나 무료인 사은품 -->
+				AND T.SEL_YN = 'N'
+				AND (T.FREE_YN = 'Y' OR (T.FREE_YN = 'N' AND S.PAY_PRICE BETWEEN T.PRICE_START AND T.PRICE_END))
+        	</if> 
+        	<if test="FREEYN eq 'N'.toString()">	<!-- 금액 구간(기본 3만원 이상) 포함되는 파우치(SEL_YN = 'Y') -->
+				AND T.SEL_YN = 'Y'
+				AND T.FREE_YN = 'N' AND S.PAY_PRICE BETWEEN T.PRICE_START AND T.PRICE_END
+        	</if> 
+			
+		UNION ALL
+		
+		/* Gatsby, Bifesta, Lucido-L */
+		SELECT
+			T.TERM_IDX,				/* 사은품구간일련번호 */
+			T.FREE_YN,					/* 무료구분 */
+			T.BRAND_IDX,	  			/* 브랜드 (0이면 전체) */
+			T.TERM_NM,				/* 구간명 */
+			T.PRICE_START,			/* 구간시작금액 */
+			T.PRICE_END,				/* 구간끝금액 */
+			DATE_FORMAT(T.GIFT_START_DATE,'%Y-%m-%d') AS GIFT_START_DATE,	/* 사은품 증정 시작일자 */
+            DATE_FORMAT(T.GIFT_END_DATE,'%Y-%m-%d') AS GIFT_END_DATE,			/* 사은품 증정 종료일자 */
+            T.SEL_YN,					/* 선택여부 (Y : 선택사은품, N : 브랜드, 금액 해당되면 모두증정) */
+			G.GIFT_IDX,				/* 일련번호 */
+			G.GIFT_NM,				/* 사은품명 */
+			G.GIFT_IMG,				/* 사은품 이미지 */
+			G.GIFT_REAL_IMG,		/* 사은품 실제 이미지 */
+			G.GIFT_FLAG,				/* 사은품 구분 (P : 금액별 G : 상품별(상품별사용안함)) */
+			1 AS GIFT_CNT      /* 사은품개수 */			
+		FROM TP_GIFT_TERM T
+		JOIN TP_GIFT G ON T.TERM_IDX = G.TERM_IDX AND T.USE_YN = 'Y' AND G.USE_YN = 'Y'
+			AND (CURDATE() <![CDATA[>=]]> DATE(T.GIFT_START_DATE) OR T.GIFT_START_DATE IS NULL) AND (CURDATE() <![CDATA[<=]]> DATE(T.GIFT_END_DATE) OR T.GIFT_END_DATE IS NULL)
+		LEFT OUTER JOIN (	<!-- 재고 조건 -->
+			SELECT
+				OG.GIFT_IDX, 
+				COUNT(*) AS CNT
+			FROM TO_ORDER O
+			JOIN TO_ORDER_GIFT OG ON O.ORDER_IDX = OG.ORDER_IDX
+				AND O.ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','670','690','700','750','770','800','900')
+			GROUP BY OG.GIFT_IDX
+		) OGC ON G.GIFT_IDX = OGC.GIFT_IDX
+        JOIN (	/* 브랜드별 구매금액 */
+			SELECT GB.BRAND_IDX, SUM(OD.PAY_PRICE) AS PAY_PRICE 
+			FROM TO_ORDER_DETAIL OD
+			LEFT JOIN TP_GOODS_BRAND GB ON OD.GOODS_IDX = GB.GOODS_IDX
+			WHERE OD.ORDER_CD = #{ORDERCD}
+			GROUP BY GB.BRAND_IDX
+        ) S ON T.BRAND_IDX = S.BRAND_IDX
+		WHERE CONVERT(G.STOCK_CNT,SIGNED)-IFNULL(OGC.CNT,0) <![CDATA[>]]> 0
+		AND T.GOODS_YN = 'N'  <!--  구간 사은품 -->
+        	<if test="FREEYN eq 'Y'.toString()">	<!-- 금액 구간에 포함되거나 무료인 사은품 -->
+				AND T.SEL_YN = 'N'
+				AND (T.FREE_YN = 'Y' OR (T.FREE_YN = 'N' AND S.PAY_PRICE BETWEEN T.PRICE_START AND T.PRICE_END))
+        	</if> 
+        	<if test="FREEYN eq 'N'.toString()">	<!-- 금액 구간(기본 3만원 이상) 포함되는 파우치(SEL_YN = 'Y') -->
+				AND T.SEL_YN = 'Y'
+				AND T.FREE_YN = 'N' AND S.PAY_PRICE BETWEEN T.PRICE_START AND T.PRICE_END
+        	</if> 
+		
+		<if test="FREEYN eq 'Y'.toString()">	<!--  무료 사은품 일경우 상품사은품 추가 -->	
+		UNION ALL
+			  /* 상품 사은품 */
+			SELECT
+				T.TERM_IDX,				/* 사은품구간일련번호 */
+				T.FREE_YN,					/* 무료구분 */
+				T.BRAND_IDX,	  			/* 브랜드 (0이면 전체) */
+				T.TERM_NM,				/* 구간명 */
+				T.PRICE_START,			/* 구간시작금액 */
+				T.PRICE_END,				/* 구간끝금액 */
+				DATE_FORMAT(T.GIFT_START_DATE,'%Y-%m-%d') AS GIFT_START_DATE,	/* 사은품 증정 시작일자 */
+	            DATE_FORMAT(T.GIFT_END_DATE,'%Y-%m-%d') AS GIFT_END_DATE,			/* 사은품 증정 종료일자 */
+	            T.SEL_YN,					/* 선택여부 (Y : 선택사은품, N : 브랜드, 금액 해당되면 모두증정) */
+				G.GIFT_IDX,				/* 일련번호 */
+				G.GIFT_NM,				/* 사은품명 */
+				G.GIFT_IMG,				/* 사은품 이미지 */
+				G.GIFT_REAL_IMG,		/* 사은품 실제 이미지 */
+				G.GIFT_FLAG,				/* 사은품 구분 (P : 금액별 G : 상품별(상품별사용안함)) */
+	            S.GIFT_CNT			    /* 사은품 개수 (상품사은품은 구매한 상품수 만큼 준다)  */
+			FROM TP_GIFT_TERM T
+			JOIN TP_GIFT G ON T.TERM_IDX = G.TERM_IDX AND T.USE_YN = 'Y' AND G.USE_YN = 'Y'
+				AND (CURDATE()  <![CDATA[>=]]> DATE(T.GIFT_START_DATE) OR T.GIFT_START_DATE IS NULL) AND (CURDATE()  <![CDATA[<=]]> DATE(T.GIFT_END_DATE) OR T.GIFT_END_DATE IS NULL)
+			LEFT OUTER JOIN (	
+				SELECT
+					OG.GIFT_IDX, 
+					COUNT(*) AS CNT
+				FROM TO_ORDER O
+				JOIN TO_ORDER_GIFT OG ON O.ORDER_IDX = OG.ORDER_IDX
+					AND O.ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','670','690','700','750','770','800','900')
+				GROUP BY OG.GIFT_IDX
+			) OGC ON G.GIFT_IDX = OGC.GIFT_IDX
+	        LEFT JOIN  (	/* 브랜드별 구매개수 */
+				SELECT GG.TERM_IDX, SUM(OD.ORDER_CNT) AS GIFT_CNT 
+				FROM TO_ORDER_DETAIL OD INNER JOIN TP_GIFT_GOODS GG ON OD.GOODS_IDX = GG.GOODS_IDX
+				WHERE OD.ORDER_CD =  #{ORDERCD}
+				GROUP BY GG.TERM_IDX
+	        ) S ON T.TERM_IDX = S.TERM_IDX
+			WHERE CONVERT(G.STOCK_CNT,SIGNED)-IFNULL(OGC.CNT,0)  <![CDATA[>]]> 0
+			AND T.GOODS_YN = 'Y'  /* 상품사은품 */
+	        AND T.SEL_YN = 'N'
+	        AND T.FREE_YN = 'Y'
+	        AND ifnull(S.GIFT_CNT,0)  <![CDATA[>]]> 0
+        	</if> 
+        	ORDER BY PRICE_START, GIFT_NM
+	</select>
+	
+	<!-- 주문 페이지 사은품 선택 안함 1개 -->
+	<select id="getNoGiftSelectList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** orderDAO.getNoGiftSelectList **/
+		SELECT
+			G.GIFT_IDX,				/* 일련번호 */
+			G.GIFT_NM,				/* 사은품명 */
+			G.GIFT_IMG,				/* 사은품 이미지 */
+			G.GIFT_REAL_IMG,		/* 사은품 실제 이미지 */
+			G.GIFT_FLAG				/* 사은품 구분 (P : 금액별 G : 상품별(상품별사용안함)) */			
+		FROM TP_GIFT G 
+		LEFT OUTER JOIN (	<!-- 재고 조건 -->
+			SELECT
+				OG.GIFT_IDX, 
+				COUNT(*) AS CNT
+			FROM TO_ORDER O
+			JOIN TO_ORDER_GIFT OG ON O.ORDER_IDX = OG.ORDER_IDX
+				AND O.ORDER_STATUS_CD IN ('100','200','300','400','500','600','650','670','690','700','750','770','800','900')
+			GROUP BY OG.GIFT_IDX
+		) OGC ON G.GIFT_IDX = OGC.GIFT_IDX
+		WHERE G.GIFT_CD = '0000000000'	/* 사은품 선택 안함 */
+			AND G.USE_YN = 'Y'
+			AND CONVERT(G.STOCK_CNT,SIGNED)-IFNULL(OGC.CNT,0) <![CDATA[>]]> 0
+		ORDER BY G.GIFT_IDX DESC
+		LIMIT 1
+	</select>
+	
+	
+	<insert id="insertKcpNotiReqVO"  parameterType="hashmap">
+			INSERT
+			INTO   TO_KCP_NOTI_LOG
+			       (
+			              TX_CD,
+			              SITE_CD,
+			              TNO,
+			              ORDER_NO,
+			              TX_TM,
+			              RESULT,
+			              IPGM_NAME,
+			              IPGM_MNYX,
+			              TOTL_MNYX,
+			              IPGM_TIME,
+			              BANK_CODE,
+			              ACCOUNT,
+			              NOTI_ID,
+			              OP_CD,
+			              REMITTER,
+			              CASH_A_NO,
+			              CASH_A_DT,
+			              CASH_NO,
+			              REFUND_NM,
+			              REFUND_MNY,
+			              ST_CD,
+			              CAN_MSG,
+			              WAYBILL_NO,
+			              WAYBILL_CORP
+			       )
+			       VALUES
+			       (
+			              
+			              #{TX_CD},
+			              #{SITE_CD},
+			              #{TNO},
+			              #{ORDER_NO},
+			              #{TX_TM},
+			              #{RESULT},
+			              #{IPGM_NAME},
+			              #{IPGM_MNYX},
+			              #{TOTL_MNYX},
+			              #{IPGM_TIME},
+			              #{BANK_CODE},
+			              #{ACCOUNT},
+			              #{NOTI_ID},
+			              #{OP_CD},
+			              #{REMITTER},
+			              #{CASH_A_NO},
+			              #{CASH_A_DT},
+			              #{CASH_NO},
+			              #{REFUND_NM},
+			              #{REFUND_MNY},
+			              #{ST_CD},
+			              #{CAN_MSG},
+			              #{WAYBILL_NO},
+			              #{WAYBILL_CORP}
+			       )
+       </insert>
+       
+	<insert id="saveWonderPayResult"  parameterType="hashmap">
+		INSERT
+		INTO   TO_WONDERPAY_RESULT
+	       (
+	              ORDER_CD,
+	              ORDER_IDX,
+	              RES_CD,
+	              REQ_MSG,
+	              GOOD_MNY,
+	              TID,
+	              SITE_CD,
+	              APP_TIME,
+	              PAY_METHOD,
+	              PG_CODE,
+	              BK_MNY,
+	              BANK_CD,
+	              CASH_RECEIPT_FLAG,
+	              CARD_MNY,
+	              CARD_CD,
+	              QUOTA,
+	              NOINF,
+	              COUPON_MNY
+	       )
+	       VALUES
+	       (
+	              #{ORDERCD},
+	              #{ORDERIDX},
+	              #{RESCD},
+	              #{REQMSG},
+	              #{GOODMNY},
+	              #{TID},
+	              #{SITECD},
+	              #{APPTIME},
+	              #{PAYMETHOD},
+	              #{PGCODE},
+	              #{BKMNY},
+	              #{BANKCD},
+	              #{CASHRECEIPTFLAG},
+	              #{CARDMNY},
+	              #{CARDCD},
+	              #{QUOTA},
+	              #{NOINF},
+	              #{COUPONMNY}
+	       )
+	</insert>
+       
+</mapper>

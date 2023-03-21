@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="snsDAO">
+	
+	<!-- SNS 로그인 체크 -->
+	<select id="snsLoginCheck" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TM_MEMBER A, TM_MEMBER_SNS B
+		WHERE A.MEMBER_IDX = B.MEMBER_IDX
+		AND A.MEMBER_ID = #{MEMBERID} 
+	</select>
+
+	<!-- SNS 계정 정보 -->
+	<select id="getSnsInfo" parameterType="hashmap" resultType="sqlMap">
+		SELECT A.MEMBER_IDX, B.SNS_EMAIL, B.SNS_TYPE, DATE_FORMAT(B.REG_DT,'%Y-%m-%d %I:%i:%s') AS REG_DT
+		FROM TM_MEMBER A
+		JOIN TM_MEMBER_SNS B
+		ON A.MEMBER_IDX = B.MEMBER_IDX
+		WHERE 1=1
+		AND B.SNS_TYPE = #{SNSTYPE}
+		<if test="MEMBERIDX != '' and MEMBERIDX != 0 ">
+			AND A.MEMBER_IDX = #{MEMBERIDX}
+		</if>		
+	</select>
+	
+	<!-- SNS 연동 회원 정보 -->
+	<select id="getSnsMemberInfo" parameterType="hashmap" resultType="sqlMap">
+	    SELECT A.MEMBER_ID, B.SNS_TYPE
+	    FROM TM_MEMBER A
+	    JOIN TM_MEMBER_SNS B
+	    ON A.MEMBER_IDX = B.MEMBER_IDX
+	    AND B.SNS_CD = #{SNSCD} 
+	</select>
+	
+	<!-- SNS 계정 정보 -->
+	<delete id="snsConnectDelete" parameterType="hashmap">
+		DELETE FROM TM_MEMBER_SNS WHERE SNS_CD = #{SNSCD}
+	</delete>
+	
+	<!-- SNS 계정 연동 체크 -->
+	<select id="snsConnectCheck" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TM_MEMBER_SNS 
+		WHERE SNS_CD =  #{SNSCD}
+	</select>
+	
+	<!-- SNS 재가입 체크 -->
+	<select id="snsReJoinCheck" parameterType="hashmap" resultType="int">
+		SELECT COUNT(*)
+		FROM TM_MEMBER A, TM_MEMBER_DETAIL B
+		WHERE A.MEMBER_IDX = B.MEMBER_DETAIL_IDX
+		AND B.MEMBER_STATE = 900
+		AND A.MEMBER_ID = #{SNSCD} 
+	</select>
+	
+</mapper>

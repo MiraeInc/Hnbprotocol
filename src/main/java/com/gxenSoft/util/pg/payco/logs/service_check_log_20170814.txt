@@ -1,0 +1,4 @@
+[20170814 15:48:24][주문취소요청] [callUrl :https://alpha-api-bill.payco.com/outseller/order/cancel ] {"requestMemo":"고객직접취소","orderNo":"201707262002283508","orderCertifyKey":"IB7oDTkFDL1dFQT7xKM3RXG0B9HFZgLWBd7CGhBBDdukCC","cancelTotalAmt":8800,"sellerKey":"S0FSJE"}
+[20170814 15:48:24][주문취소결과] {"pgErrorCode":"8132","code":7004,"message":"신용카드 원거래없음"}
+[20170814 15:48:30][주문취소요청] [callUrl :https://alpha-api-bill.payco.com/outseller/order/cancel ] {"requestMemo":"고객직접취소","orderNo":"201707262002283507","orderCertifyKey":"pr6I9BrlOHhrmWa8yAAAtnR5l5X9fQAAr3C69jSBl79zUCC","cancelTotalAmt":10420,"sellerKey":"S0FSJE"}
+[20170814 15:48:30][주문취소결과] {"result":{"orderNo":"201707262002283507","cancelTradeSeq":2000278380,"totalCancelPaymentAmt":10420.0,"remainCancelPossibleAmt":0.0,"cancelYmdt":"20170801090029"},"code":0,"message":"success"}
