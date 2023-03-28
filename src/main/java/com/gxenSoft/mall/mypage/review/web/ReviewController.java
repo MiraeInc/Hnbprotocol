@@ -36,17 +36,6 @@ import com.gxenSoft.util.page.Page;
 import com.gxenSoft.util.page.SearchVO;
 import com.gxenSoft.util.pathUtil.PathUtil;
 
-/**
- *************************************
- * PROJECT   : GatsbyMall
- * PROGRAM ID  : ReviewController
- * PACKAGE NM : com.gxenSoft.mall.mypage.review.web
- * AUTHOR	 : 유  준  철
- * CREATED DATE  : 2017. 7. 26. 
- * HISTORY :
- 
- *************************************
- */
 @Controller
 public class ReviewController extends CommonMethod{
 	
@@ -56,13 +45,7 @@ public class ReviewController extends CommonMethod{
 	private ReviewService reviewService;
 	@Autowired
 	private CommonService commonService;
-	
-	/**
-	 * @Method : reviewListAjax
-	 * @Date		: 2017. 7. 26.
-	 * @Author	:  유  준  철 
-	 * @Description	:	리뷰 리스트
-	 */
+
 	@RequestMapping("/ajax/mypage/review/reviewListAjax") 
 	public ModelAndView reviewListAjax(ReviewVO vo, SchProductVO schProductVo, HttpServletRequest request , HttpServletResponse response)throws Exception{
 		schProductVo.setPageBlock(5);
@@ -94,13 +77,7 @@ public class ReviewController extends CommonMethod{
 		
 		return mav;
 	}
-	
-	/**
-	 * @Method : reviewDetailAjax
-	 * @Date		: 2017. 7. 31.
-	 * @Author	:  유  준  철 
-	 * @Description	:	리뷰 상세 (레이어)
-	 */
+
 	@RequestMapping("/ajax/mypage/review/reviewDetailAjax") 
 	public ModelAndView reviewDetailAjax(ReviewVO vo, HttpServletRequest request , HttpServletResponse response)throws Exception{
 		ModelAndView mav = new ModelAndView();
@@ -116,13 +93,7 @@ public class ReviewController extends CommonMethod{
 		
 		return mav;
 	}
-	
-	/**
-	    * @Method : reviewDetail
-	    * @Date: 2017. 8. 22.
-	    * @Author : 임  재  형
-	    * @Description	:	리뷰 상세 (페이지)
-	   */
+
 	@RequestMapping("/mypage/review/reviewDetail") 
 	public String reviewDetail(ReviewVO vo, HttpServletRequest request, HttpServletResponse response, Model model)throws Exception{
 		SqlMap detail = reviewService.getReviewDetail(vo);
@@ -135,13 +106,7 @@ public class ReviewController extends CommonMethod{
 		
 		return PathUtil.getCtx()+"/mypage/review/reviewDetail";
 	}
-	
-	/**
-	    * @Method : reviewFileupload
-	    * @Date: 2017. 8. 7.
-	    * @Author : 임  재  형
-	    * @Description	:	리뷰 파일 업로드
-	   */
+
 	@RequestMapping(value = "/ajax/mypage/review/reviewFileupload", produces="application/json")
 	@ResponseBody
 	public String reviewFileupload(MultipartFile[] fileData, HttpServletRequest request )throws  Exception{
@@ -169,13 +134,7 @@ public class ReviewController extends CommonMethod{
 		ObjectMapper mapper = new ObjectMapper();
 		return mapper.writeValueAsString(result);
 	}
-	
-	/**
-	    * @Method : inquirySave
-	    * @Date: 2017. 8. 7.
-	    * @Author : 임  재  형
-	    * @Description	:	리뷰 등록 (레이어)
-	   */
+
 	@RequestMapping("/ajax/mypage/review/reviewSave")
 	public @ResponseBody int reviewSave(ReviewVO vo, HttpServletRequest request, HttpServletResponse response, Model model, HttpSession session) throws Exception {
 		if (session.getAttribute("SS_MEMBER_FLAG")  == null) {
@@ -192,13 +151,7 @@ public class ReviewController extends CommonMethod{
 		
 		return flag;
 	}
-	
-	/**
-	    * @Method : reviewSaveM
-	    * @Date: 2017. 8. 21.
-	    * @Author : 임  재  형
-	    * @Description	:	리뷰 등록 (페이지)
-	   */
+
 	@RequestMapping("/mypage/review/reviewSave")
 	public void reviewSaveM(ReviewVO vo, HttpServletRequest request, HttpServletResponse response, Model model, HttpSession session) throws Exception {
 		if (session.getAttribute("SS_MEMBER_FLAG")  == null) {
@@ -242,15 +195,8 @@ public class ReviewController extends CommonMethod{
 		}else{
 			MethodUtil.alertMsgUrl(request, response, msg+" 중 오류가 발생 하였습니다.", url);
 		}
-		
 	}
-	
-	/**
-	    * @Method : reviewNoWriteList
-	    * @Date: 2017. 8. 8.
-	    * @Author : 임  재  형
-	    * @Description	:	작성 가능한 리뷰
-	   */
+
 	@RequestMapping("/mypage/review/noWriteReviewList") 
 	public String reviewNoWriteList(ReviewVO vo, SearchVO schVO, HttpServletRequest request , HttpServletResponse response , Model model, HttpSession session)throws Exception{
 		if (session.getAttribute("SS_MEMBER_FLAG")  == null) {
@@ -276,13 +222,7 @@ public class ReviewController extends CommonMethod{
 	
 		return PathUtil.getCtx()+"/mypage/review/noWriteReviewList";
 	}
-	
-	/**
-	    * @Method : reviewWriteList
-	    * @Date: 2017. 8. 8.
-	    * @Author : 임  재  형
-	    * @Description	:	작성 한 리뷰
-	   */
+
 	@RequestMapping("/mypage/review/writeReviewList") 
 	public String reviewWriteList(ReviewVO vo, SearchVO schVO, HttpServletRequest request , HttpServletResponse response , Model model, HttpSession session)throws Exception{
 		if (session.getAttribute("SS_MEMBER_FLAG")  == null) {
@@ -311,13 +251,7 @@ public class ReviewController extends CommonMethod{
 		
 		return PathUtil.getCtx()+"/mypage/review/writeReviewList";
 	}
-	
-	/**
-	    * @Method : reviewDeleteAjax
-	    * @Date: 2017. 8. 8.
-	    * @Author : 임  재  형
-	    * @Description	:	리뷰 삭제 (레이어)
-	   */
+
 	@RequestMapping("/ajax/mypage/review/reviewDelete")
 	public @ResponseBody int reviewDeleteAjax(ReviewVO vo, HttpServletRequest request, HttpServletResponse response, Model model, HttpSession session) throws Exception {
 		if (session.getAttribute("SS_MEMBER_FLAG")  == null) {
@@ -334,13 +268,7 @@ public class ReviewController extends CommonMethod{
 		
 		return flag;
 	}
-	
-	/**
-	    * @Method : reviewDelete
-	    * @Date: 2017. 8. 22.
-	    * @Author : 임  재  형
-	    * @Description	:	리뷰 삭제 (페이지)
-	   */
+
 	@RequestMapping("/mypage/review/reviewDelete")
 	public void reviewDelete(ReviewVO vo, HttpServletRequest request, HttpServletResponse response, Model model, HttpSession session) throws Exception {
 		if (session.getAttribute("SS_MEMBER_FLAG")  == null) {
@@ -372,13 +300,7 @@ public class ReviewController extends CommonMethod{
 			MethodUtil.alertMsgUrl(request, response, "삭제 중 오류가 발생 하였습니다.", url);
 		}
 	}
-	
-	/**
-	    * @Method : reviewWriteAjax
-	    * @Date: 2017. 8. 9.
-	    * @Author : 임  재  형
-	    * @Description	:	리뷰 작성 (레이어)
-	   */
+
 	@RequestMapping("/ajax/mypage/review/reviewWriteAjax") 
 	public ModelAndView reviewWriteAjax(ReviewVO vo, HttpServletRequest request , HttpServletResponse response, HttpSession session)throws Exception{
 		ModelAndView mav = new ModelAndView();
@@ -472,13 +394,7 @@ public class ReviewController extends CommonMethod{
 		
 		return mav;
 	}
-	
-	/**
-	    * @Method : reviewWrite
-	    * @Date: 2017. 8. 21.
-	    * @Author : 임  재  형
-	    * @Description	:	리뷰 작성 (페이지)
-	   */
+
 	@RequestMapping("/mypage/review/reviewWrite") 
 	public String reviewWrite(ReviewVO vo, HttpServletRequest request, HttpServletResponse response, Model model, HttpSession session)throws Exception{
 		if (session.getAttribute("SS_MEMBER_FLAG")  == null) {
