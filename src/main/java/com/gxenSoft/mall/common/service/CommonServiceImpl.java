@@ -884,6 +884,8 @@ public class CommonServiceImpl implements CommonService {
 		map.put("GUBUN", gubun);
 		map.put("MAINGUBUN", mainGubun);
 		map.put("DEVICE", PathUtil.getDevice());
+
+		System.out.printf("rrr");
 		
 		try{
 			mainGoodsList = commonDAO.getMainGoodsList(map); // 세트, 베스트 리스트
