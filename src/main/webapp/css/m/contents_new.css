@@ -8272,8 +8272,7 @@ button,
 }
 .main-banner img {
   max-width: 100%;
-  /*height: 253px;*/
-  max-height: 500px;
+  max-height: 400px;
   margin: 0 auto;
   display: block;
 }
