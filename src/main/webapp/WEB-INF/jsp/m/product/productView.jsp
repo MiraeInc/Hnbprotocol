@@ -142,34 +142,7 @@
         $('.ui-recommend').on('click', '.list-next', function(e){
             recmProductSlider.goToNextSlide();
         });
-        
-        $(window).on('load', function(){
-        	<%-- 제니퍼에서 Uncaught TypeError: Cannot read property 'refresh' of null 에러 나서 recmProductSlider 다시 선언해 봄 --%>
-			recmProductSlider = $('[data-ui="recmProducts"]').lightSlider({
-				item:4,
-				loop:false,
-				controls:true,
-				pager:false,
-				slideMargin: 20,
-				addClass: 'recommend-list',
-				responsive : [
-					{
-						breakpoint:569,
-						settings: {
-							item:3
-						}
-					},
-					{
-						breakpoint:413,
-						settings: {
-							item:2
-						}
-					}
-				]
-			});
-			
-        	recmProductSlider.refresh();
-        });
+
 
         //상품상세 탭
         $.touchflow({
