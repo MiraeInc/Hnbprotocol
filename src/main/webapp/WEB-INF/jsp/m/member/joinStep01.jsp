@@ -39,12 +39,9 @@
 				<div class="join_benefit">
 					<strong>회원혜택</strong>
 					<ul class="clearfix" align="center">
-						<!--
 						<li class="item_1">
 							<p>회원가입 포인트<br>2,000P 즉시 지급</p>
 						</li>
-						-->
-
 						<li class="item_2">
 							<p>무료 배송 쿠폰<br>매월 지급</p>
 						</li>

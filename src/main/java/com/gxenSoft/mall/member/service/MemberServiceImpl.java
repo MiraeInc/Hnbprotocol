@@ -183,7 +183,7 @@ public class MemberServiceImpl implements MemberService {
 		memberDAO.memberDetailSave(map);
 		
 		// 3. 회원 포인트 지급 2,000P
-		String joinPoint = "0";
+		String joinPoint = "2000";
 
 		map.put("PAYMENTPRICE", joinPoint);
 		map.put("PAYDEDREASON", "POINT_REASON10");				// 공통코드 신규회원가입
