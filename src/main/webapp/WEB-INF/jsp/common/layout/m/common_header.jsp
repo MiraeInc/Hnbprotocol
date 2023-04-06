@@ -118,10 +118,10 @@
 			<h2 class="main-logo">
 				<c:choose>
 					<c:when test="${layout_type eq 'gatsby'}">
-    					<a href="${CTX}/main.do"><img src="${CTX}/images/${DEVICE}/logo/logo_top_gatsby.png" style="height: 31px;" alt="gatsby"></a>
+    					<a href="${CTX}/main.do"><img src="${CTX}/images/${DEVICE}/logo/logo_top_gatsby.png" style="height: 39px;" alt="gatsby"></a>
 					</c:when>
 					<c:otherwise>
-						<a href="${CTX}/main.do"><img src="${CTX}/images/${DEVICE}/logo/logo_top_gatsby.png" style="height: 31px;" alt="gatsby"></a>
+						<a href="${CTX}/main.do"><img src="${CTX}/images/${DEVICE}/logo/logo_top_gatsby.png" style="height: 39px;" alt="gatsby"></a>
 					</c:otherwise>
 				</c:choose>
 			</h2>
