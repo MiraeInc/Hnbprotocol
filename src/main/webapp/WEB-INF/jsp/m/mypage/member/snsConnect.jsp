@@ -100,34 +100,6 @@
 	        				</c:otherwise>
 	        			</c:choose>
 	        		</li>
-	        		<li>
-						<div class="item-sns">
-							<span class="sns-ico">
-								<img src="${CTX}/images/${DEVICE}/common/img_sns_payco.png" alt="페이코">
-							</span>
-							<c:choose>
-								<c:when test="${empty snsPaycoInfo}">
-								<div class="sns-info">
-									<p>연결된 계정이 없습니다.</p>
-								</div>
-								</c:when>
-								<c:otherwise>
-									<div class="sns-info">
-			        					<p class="email">${snsPaycoInfo.snsEmail}</p>
-			        					<p class="date"><strong>연결 날짜</strong> ${snsPaycoInfo.regDt} </p>
-			        				</div>
-								</c:otherwise>
-							</c:choose>
-						</div>
-						<c:choose>
-	        				<c:when test="${empty snsPaycoInfo}">
-								<button type="buton" class="btn outline-green" onclick="snsConnect('P');"><span class="txt">계정 연결</span></button>
-							</c:when>
-							<c:otherwise>
-								<button type="buton" class="btn" onclick="snsDisconnect('P');"><span class="txt">연결 해제</span></button>
-							</c:otherwise>
-						</c:choose>
-					</li>
 	        	</ul>
 	        </div>
 	    </div>
