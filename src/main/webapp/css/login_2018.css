@@ -6,7 +6,7 @@
  .placeholder:before{content: "*";margin-right: .2rem;font-size: .7rem;vertical-align: -.3rem;}
  #single{max-width: 750px;margin: 0 auto;padding-bottom: 1rem;overflow: hidden;}
  #single #header{padding-bottom: 1.15rem;}
- #single #logo{margin: 0 auto;padding: 1.125rem 5rem 0.625rem;font-size: 0;text-align: center;}
+ #single #logo{margin: 0 auto;padding: 1.125rem 2rem 0.625rem;font-size: 0;text-align: center;}
  #single #logo a{margin: 0 auto;padding: 0.25rem;display: inline-block;font-size: 0;}
  #single #logo a img{width: 100%;}
  #single #content{}
