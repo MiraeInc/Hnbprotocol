@@ -1017,7 +1017,7 @@ body[data-main="lucidol"] .header-main .btn-cart:after {color: #ffffff; backgrou
 
 
 /* 공통하단영역 */
-.footer {border-top: 1px solid #222; color: #999; background-color: #333; margin-top:30px;}
+.footer {border-top: 1px solid #222; color: #999; background-color: #333;}
 .footer a {color: #999;}
 .footer .btn-more {font-size: 11px;}
 
