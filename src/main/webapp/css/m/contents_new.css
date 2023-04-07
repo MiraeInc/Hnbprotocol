@@ -2510,4 +2510,14 @@ body[data-main="gpcreate"] .main-banner:before { background-color: #58c4c7; }
 .bestreview .swiper-button-next { right: 7px; margin-top: 21px; background: url("../../images/m/contents/bestreview/bestreview_arrow.png") no-repeat 100% 0; background-size: auto 21px; } 
 
 /* 2023.04.07 token_cont */
-.token_cont{}
+.token_cont{padding:0 15px 20px !important;}
+.token_cont .point-summary .desc{font-weight:400 !important;}
+.token_cont .border_top{border-top:1px solid #ddd;margin-top:10px;padding-top:10px;}
+
+.token_cont .token_input{padding-bottom:15px;}
+.token_cont .token_input input{border:1px solid #ddd;width: calc(100% - 90px);padding:5px;}
+.token_cont .token_input p+p{margin-top:10px;}
+.token_cont .token_input .tit{width:80px;display:inline-block;}
+.btn.btn_02{width:100px;}
+.btn.btn_b01{background-color:#107dff;border-color:#107dff;color:#fff;}
+.btn_box.btn_center{text-align:center;}

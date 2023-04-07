@@ -62,13 +62,24 @@ function dateClick(){
 			</div>
 
             <br>
-            <div class="token_cont">
-                <span class="date">sdf</span>
-                <span class="txt">sdf</span>
-
+            <div class="point-list token_cont">
+				<ul>
+					<li>
+						<div class="item-point">
+							<div class="token_input">
+								<p><span class="tit">신청포인트</span> <input type="text" placeholder="포인트입력"></p>
+								<p><span class="tit">HNB 토큰</span> <input type="text" placeholder=""></p>
+								<p><span class="tit">지 갑 주 소</span> <input type="text" placeholder="주소입력"></p>
+							</div>
+							<div class="btn_box btn_center">
+								<button class="btn btn_02 btn_b01">확인</button>
+							</div>
+						</div>
+					</li>
+				</ul>
             </div>
 
-			<div class="guidebox">
+			<!-- <div class="guidebox">
                	<div class="guide-title">
 					<h3 class="tit"><span class="i"><img src="${CTX}/images/${DEVICE}/common/ico_helper_alert.png" alt="" /></span> 포인트 안내</h3>
 				</div>
@@ -80,7 +91,7 @@ function dateClick(){
              				<div>
  								<ul class="bu-list">
 									<li><span class="bu">-</span> 회원 가입 시 <span class="em"> 2,000P</span> 즉시 지급</li>
-<!-- 									<li><span class="bu">-</span> 바로온 접속 시 결제금액의  <span class="em">0.5%</span> 지급</li> -->
+									<li><span class="bu">-</span> 바로온 접속 시 결제금액의  <span class="em">0.5%</span> 지급</li>
 									<li><span class="bu">-</span> 일반 후기 작성 시 <span class="em">100P</span> 지급</li>
 									<li><span class="bu">-</span> 포토 후기 작성 시 <span class="em">500P</span> 지급</li>
 									<li><span class="bu">-</span> 상품 구매시 등급별 포인트 적립</li>
@@ -108,7 +119,7 @@ function dateClick(){
 						</li>
 					</ul>
 				</div>
-			</div>
+			</div> -->
 		</div>
 	</div>
 </form>

@@ -67,7 +67,7 @@ function dateClick(){
             <br>
             <c:choose>
             	<c:when test="${fn:length(tokenList) > 0}">
-					<div class="point-list">
+					<div class="point-list token_cont">
 						<ul>
 							<c:forEach var="list" items="${tokenList}" varStatus="idx">
 							<li>
@@ -77,8 +77,10 @@ function dateClick(){
 										<p class="desc">포인트 : ${list.requestPoint}</p>
 										<p class="desc">토큰 : ${list.changeToken}</p>
 										<p class="desc">상태 : ${list.statueCode}</p>
-										<p class="desc">지갑주소 : ${list.walletAddress}</p>
+										<p class="desc border_top">지갑주소 : ${list.walletAddress}</p>
 									</div>
+									<button class="btn btn_b01">교환신청</button>
+									<button class="btn">취소가능</button>
 								</div>
 							</li>
 							</c:forEach>
