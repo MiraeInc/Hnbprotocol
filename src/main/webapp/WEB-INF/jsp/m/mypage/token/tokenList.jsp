@@ -66,40 +66,19 @@ function dateClick(){
 
             <br>
             <c:choose>
-            	<c:when test="${fn:length(pointList) > 0}">
+            	<c:when test="${fn:length(tokenList) > 0}">
 					<div class="point-list">
 						<ul>
-							<c:forEach var="list" items="${pointList}" varStatus="idx">
+							<c:forEach var="list" items="${tokenList}" varStatus="idx">
 							<li>
 								<div class="item-point">
 									<div class="point-summary">
-										<p class="date">${list.payDedDt}</p>
-										<p class="desc">${list.payDedReasonNm}</p>
+										<p class="date">날짜 : ${list.regDt}</p>
+										<p class="desc">포인트 : ${list.requestPoint}</p>
+										<p class="desc">토큰 : ${list.changeToken}</p>
+										<p class="desc">상태 : ${list.statueCode}</p>
+										<p class="desc">지갑주소 : ${list.walletAddress}</p>
 									</div>
-									<dl class="point-detail">
-										<dt>${list.payDedTypeNm}</dt>
-										<dd>
-										<c:choose>
-											<c:when test="${list.payDedType eq 'P'}">
-											<span class="em"><fmt:formatNumber value="${list.point}" pattern="#,###"/>P</span>
-											</c:when>
-											<c:otherwise>
-												<fmt:formatNumber value="${list.point}" pattern="#,###"/>P
-											</c:otherwise>
-										</c:choose>
-										</dd>
-										<c:choose>
-											<c:when test="${fn:contains(fn:replace(list.payDedReasonNm, ' ',''),'쇼핑지원금')}">
-												
-											</c:when>
-											<c:otherwise>
-												<c:if test="${list.payDedType eq 'P'}">
-													<dt>소멸 예정일</dt>
-													<dd>${list.extinctionDt}</dd>
-												</c:if>
-											</c:otherwise>
-										</c:choose>
-									</dl>
 								</div>
 							</li>
 							</c:forEach>
@@ -114,7 +93,7 @@ function dateClick(){
 					<div class="form-group">
 						<div class="form-body">
 							<div class="no-contents">
-								<p>조회 가능한 포인트 내역이 없습니다.</p>
+								<p>조회 가능한 토큰 교환 내역이 없습니다.</p>
 							</div>
 						</div>
 					</div>

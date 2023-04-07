@@ -1,6 +1,7 @@
 package com.gxenSoft.mall.mypage.token.web;
 
 import com.gxenSoft.mall.common.web.CommonMethod;
+import com.gxenSoft.mall.mypage.point.service.PointService;
 import com.gxenSoft.mall.mypage.token.service.TokenService;
 import com.gxenSoft.method.MethodUtil;
 import com.gxenSoft.sqlMap.SqlMap;
@@ -19,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -27,6 +29,9 @@ import java.util.List;
 public class TokenController extends CommonMethod {
 
     static final Logger logger = LoggerFactory.getLogger(TokenController.class);
+
+    @Autowired
+    private PointService pointService;
 
     @Autowired
     private TokenService tokenService;
@@ -60,10 +65,11 @@ public class TokenController extends CommonMethod {
             schVO.setSchEndDt(date.format(today));
         }
 
-        int totalCount = tokenService.getPointListCnt(schVO);
-        List<SqlMap> pointList = tokenService.getPointList(schVO);
-        int sumPoint = tokenService.getSumPoint(schVO, totalCount); // 페이지 적용 포인트 합
-        int totalPoint = tokenService.getTotalPoint(); // 보유 포인트
+        int totalCount = tokenService.getTokenListCnt(schVO);
+        List<SqlMap> tokenList = tokenService.getTokenList(schVO);
+
+        int sumPoint = pointService.getSumPoint(schVO, totalCount); // 페이지 적용 포인트 합
+        int totalPoint = pointService.getTotalPoint(); // 보유 포인트
 
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.MONTH, +1);
@@ -73,13 +79,13 @@ public class TokenController extends CommonMethod {
         SimpleDateFormat format2 = new SimpleDateFormat("yyyy년 MM");
         String nextMonthTxt = format2.format(cal.getTime()) + "월 01일";
 
-        SqlMap spPointDeduct = tokenService.getSpPointDeduct(nextMonth); // 포인트 조회 프로시져
+        SqlMap spPointDeduct = pointService.getSpPointDeduct(nextMonth); // 포인트 조회 프로시져
 
         Page page = new Page();
         page.pagingInfo(schVO, totalCount);
 
         model.addAttribute("totalCount", totalCount);
-        model.addAttribute("pointList", pointList);
+        model.addAttribute("tokenList", tokenList);
         model.addAttribute("sumPoint", sumPoint);
         model.addAttribute("totalPoint", totalPoint);
         model.addAttribute("spPointDeduct", spPointDeduct);
@@ -119,10 +125,16 @@ public class TokenController extends CommonMethod {
             schVO.setSchEndDt(date.format(today));
         }
 
-        int totalCount = tokenService.getPointListCnt(schVO); // 포인트 리스트 총 개수
-        List<SqlMap> pointList = tokenService.getPointList(schVO); // 포인트 리스트
-        int sumPoint = tokenService.getSumPoint(schVO, totalCount); // 페이지 적용 포인트 합
-        int totalPoint = tokenService.getTotalPoint(); // 보유 포인트
+
+
+        int totalCount = 0;
+        List<SqlMap> tokenList = new ArrayList<>();
+
+
+
+
+        int sumPoint = pointService.getSumPoint(schVO, totalCount); // 페이지 적용 포인트 합
+        int totalPoint = pointService.getTotalPoint(); // 보유 포인트
 
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.MONTH, +1);
@@ -132,13 +144,13 @@ public class TokenController extends CommonMethod {
         SimpleDateFormat format2 = new SimpleDateFormat("yyyy년 MM");
         String nextMonthTxt = format2.format(cal.getTime()) + "월 01일";
 
-        SqlMap spPointDeduct = tokenService.getSpPointDeduct(nextMonth); // 포인트 조회 프로시져
+        SqlMap spPointDeduct = pointService.getSpPointDeduct(nextMonth); // 포인트 조회 프로시져
 
         Page page = new Page();
         page.pagingInfo(schVO, totalCount);
 
         model.addAttribute("totalCount", totalCount);
-        model.addAttribute("pointList", pointList);
+        model.addAttribute("tokenList", tokenList);
         model.addAttribute("sumPoint", sumPoint);
         model.addAttribute("totalPoint", totalPoint);
         model.addAttribute("spPointDeduct", spPointDeduct);
