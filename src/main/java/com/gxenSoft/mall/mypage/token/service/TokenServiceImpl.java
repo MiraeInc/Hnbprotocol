@@ -2,6 +2,7 @@ package com.gxenSoft.mall.mypage.token.service;
 
 import com.gxenSoft.mall.common.vo.UserInfo;
 import com.gxenSoft.mall.mypage.token.dao.TokenDAO;
+import com.gxenSoft.mall.mypage.token.vo.TokenRequest;
 import com.gxenSoft.sqlMap.SqlMap;
 import com.gxenSoft.util.page.SearchVO;
 import org.slf4j.Logger;
@@ -62,6 +63,11 @@ public class TokenServiceImpl implements TokenService {
 		}
 		
 		return pointList;
+	}
+
+	@Override
+	public void tokenWriteOk(TokenRequest tokenRequest) {
+
 	}
 
 }

@@ -13,6 +13,10 @@ $(function(){
 	$(".form-datepicker").datepicker();
 });
 
+function cancel() {
+    alert('오픈 준비중입니다.');
+}
+
 // 페이지 이동
 function goPage(page){
 	$("#pageNo").val(page);
@@ -64,6 +68,7 @@ function dateClick(){
 				</div>
 			</div>
 
+            <button class="btn btn_b01" onclick="location.href='tokenWrite'">교환신청</button>
             <br>
             <c:choose>
             	<c:when test="${fn:length(tokenList) > 0}">
@@ -79,8 +84,8 @@ function dateClick(){
 										<p class="desc">상태 : ${list.statueCode}</p>
 										<p class="desc border_top">지갑주소 : ${list.walletAddress}</p>
 									</div>
-									<button class="btn btn_b01">교환신청</button>
-									<button class="btn">취소가능</button>
+
+									<button class="btn" onclick='cancel()'>취소</button>
 								</div>
 							</li>
 							</c:forEach>
@@ -101,7 +106,7 @@ function dateClick(){
 					</div>
 				</c:otherwise>
             </c:choose>
-			
+
 			<div class="guidebox">
                	<div class="guide-title">
 					<h3 class="tit"><span class="i"><img src="${CTX}/images/${DEVICE}/common/ico_helper_alert.png" alt="" /></span> 포인트 안내</h3>
