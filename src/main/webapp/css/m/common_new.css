@@ -860,7 +860,7 @@ body[data-main="lucidol"] .header-main .btn-cart:after {color: #ffffff; backgrou
 /* 하단 고정 메뉴 */
 .mandom-menu {z-index: 1500; position: fixed; left: 0; bottom: 0; width: 100%; padding: 7px 0; font-size: 0; border-top: 1px solid #dddddd; background-color: #fff;}
 /* .mandom-menu a {display: inline-block; width: 20%; text-align: center;} */
-.mandom-menu a {display: inline-block; width: 25%; text-align: center;}
+.mandom-menu a {display: inline-block; width: 20%; text-align: center;}
 .mandom-menu .anchor-icon {display: inline-block; width:26px; height: 22px; background: url('../../images/m/common/ico_menu_cate.png') 0 0 no-repeat; background-size: 26px 44px;}
 .mandom-menu .anchor-name {display: block; margin-top: 4px; line-height: 1; font-size: 11px; font-weight: bold;}
 
@@ -879,6 +879,7 @@ body[data-main="lucidol"] .header-main .btn-cart:after {color: #ffffff; backgrou
 .mandom-menu .icon-mypage {background-image: url('../../images/m/common/ico_menu_mypage.png');}
 .mandom-menu .icon-order {background-image: url('../../images/m/common/ico_menu_order.png');}
 .mandom-menu .icon-brand {background-image: url('../../images/m/common/ico_menu_brand.png');}
+.mandom-menu .icon-token {background-image: url('../../images/m/common/ico_menu_token.png');}
 
 .mandom-menu .active .anchor-name {color: #107dff;}
 .mandom-menu .active .icon-cate {background-position: left bottom; }
@@ -887,6 +888,7 @@ body[data-main="lucidol"] .header-main .btn-cart:after {color: #ffffff; backgrou
 .mandom-menu .active .icon-mypage {background-position: left bottom;}
 .mandom-menu .active .icon-order {background-position: left bottom;}
 .mandom-menu .active .icon-brand {background-position: left bottom;}
+.mandom-menu .active .icon-token {background-position: left bottom;}
 
 /* aside */
 .aside .btn_close {position: absolute; right: 15px; top: 15px; width: 18px; height: 18px; border: 0; background: url("../../images/m/common/ico_aside_close.png") 0 0 no-repeat; background-size: cover;}
