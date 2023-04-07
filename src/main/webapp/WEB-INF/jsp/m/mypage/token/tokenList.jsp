@@ -64,14 +64,13 @@ function dateClick(){
 					<p class="point"><fmt:formatNumber value="${spPointDeduct.gapPoint}" pattern="#,###"/>P</p>
 				</div>
 			</div>
-
-            <div class="btn_box btn_center mt20">
-				<button class="btn btn_b01 btn_02" onclick="location.href='tokenWrite'">교환신청</button>
-			</div>
             <br>
             <c:choose>
-            	<c:when test="${fn:length(tokenList) > 0}">
+				<c:when test="${fn:length(tokenList) > 0}">
 					<div class="point-list token_cont">
+						<div class="btn_box btn_right mb10">
+							<button class="btn btn_b01 btn_02" onclick="location.href='tokenWrite'">교환신청</button>
+						</div>
 						<ul>
 							<c:forEach var="list" items="${tokenList}" varStatus="idx">
 							<li>
