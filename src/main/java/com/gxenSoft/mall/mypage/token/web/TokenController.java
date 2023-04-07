@@ -60,8 +60,8 @@ public class TokenController extends CommonMethod {
             schVO.setSchEndDt(date.format(today));
         }
 
-        int totalCount = tokenService.getPointListCnt(schVO); // 포인트 리스트 총 개수
-        List<SqlMap> pointList = tokenService.getPointList(schVO); // 포인트 리스트
+        int totalCount = tokenService.getPointListCnt(schVO);
+        List<SqlMap> pointList = tokenService.getPointList(schVO);
         int sumPoint = tokenService.getSumPoint(schVO, totalCount); // 페이지 적용 포인트 합
         int totalPoint = tokenService.getTotalPoint(); // 보유 포인트
 

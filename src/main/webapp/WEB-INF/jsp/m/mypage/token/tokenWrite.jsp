@@ -64,58 +64,6 @@ function dateClick(){
 				</div>
 			</div>
 
-			<div class="list-filter">
-				<div class="row">
-					<div class="col col-5">
-						<div class="form-control">
-							<div class="opt_select">
-								<select class="form-control" name="schSubType" id="schSubType">
-									<option value="" <c:if test="${schVO.schSubType eq null || schVO.schSubType eq ''}">selected</c:if>>전체</option>
-									<option value="P" <c:if test="${schVO.schSubType eq 'P'}">selected</c:if>>적립 포인트</option>
-									<option value="M" <c:if test="${schVO.schSubType eq 'M'}">selected</c:if>>사용 포인트</option>
-								</select>
-							</div>
-						</div>
-					</div>
-					<div class="col col-5">
-                        <div class="form-control">
-                            <div class="opt_select">
-                                <select name="schType" id="schType" onchange="dateClick();">
-                                    <option value="0" <c:if test="${schVO.schType eq '0'}">selected</c:if>>전체</option>
-                                    <option value="2" <c:if test="${schVO.schType eq '2'}">selected</c:if>>1주일</option>
-                                    <option value="3" <c:if test="${schVO.schType eq '3'}">selected</c:if>>1개월</option>
-                                    <option value="4" <c:if test="${schVO.schType eq null or schVO.schType eq '' or schVO.schType eq '4'}">selected</c:if>>3개월</option>
-									<option value="5" <c:if test="${schVO.schType eq '5'}">selected</c:if>>6개월</option>
-									<option value="6" <c:if test="${schVO.schType eq '6'}">selected</c:if>>1년</option>
-									<option value="7" <c:if test="${schVO.schType eq '7'}">selected</c:if>>2년</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <input type="hidden" name="schStartDt" id="schStartDt" value="${schVO.schStartDt}"/>
-					<input type="hidden" name="schEndDt" id="schEndDt" value="${schVO.schEndDt}"/>
-					
-					<div class="col col-2">
-						<button type="button" class="btn-search" onclick="javascript:goSearch();"><span class="hide">검색</span></button>
-					</div>
-				</div>
-				<%-- <div class="row">
-					<div class="col col-5">
-						<div class="form-control">
-							<input type="text" name="schStartDt" id="schStartDt" class="input form-datepicker" placeholder="기간" value="${schVO.schStartDt}"/>
-						</div>
-					</div>
-					<div class="col col-5">
-						<div class="form-control">
-							<input type="text" name="schEndDt" id="schEndDt" class="input form-datepicker" placeholder="기간" value="${schVO.schEndDt}"/>
-						</div>
-					</div>
-					<div class="col col-2">
-						<button type="button" class="btn-search" onclick="javascript:goSearch();"><span class="hide">검색</span></button>
-					</div>
-				</div> --%>
-			</div>
             <c:choose>
             	<c:when test="${fn:length(pointList) > 0}">
 					<div class="point-list">
