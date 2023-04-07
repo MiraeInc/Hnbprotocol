@@ -62,71 +62,12 @@ function dateClick(){
 			</div>
 
             <br>
-            <c:choose>
-            	<c:when test="${fn:length(pointList) > 0}">
-					<div class="point-list">
-						<ul>
-							<c:forEach var="list" items="${pointList}" varStatus="idx">
-							<li>
-								<div class="item-point">
-									<div class="point-summary">
-										<p class="date">${list.payDedDt}</p>
-										<p class="desc">${list.payDedReasonNm}</p>
-									</div>
-									<dl class="point-detail">
-										<dt>${list.payDedTypeNm}</dt>
-										<dd>
-										<c:choose>
-											<c:when test="${list.payDedType eq 'P'}">
-											<span class="em"><fmt:formatNumber value="${list.point}" pattern="#,###"/>P</span>
-											</c:when>
-											<c:otherwise>
-												<fmt:formatNumber value="${list.point}" pattern="#,###"/>P
-											</c:otherwise>
-										</c:choose>
-										</dd>
-										<c:choose>
-											<c:when test="${fn:contains(fn:replace(list.payDedReasonNm, ' ',''),'쇼핑지원금')}">
-												
-											</c:when>
-											<c:otherwise>
-												<c:if test="${list.payDedType eq 'P'}">
-													<dt>소멸 예정일</dt>
-													<dd>${list.extinctionDt}</dd>
-												</c:if>
-											</c:otherwise>
-										</c:choose>
-									</dl>
-								</div>
-							</li>
-							</c:forEach>
-						</ul>
-					</div>
-					
-					<div class="pagin-nav">
-						<c:out value="${page.pageStr}" escapeXml="false"/>
-					</div>
-				</c:when>
+            <div class="token_cont">
+                <span class="date">sdf</span>
+                <span class="txt">sdf</span>
 
-				<!-- 2023.04.07 수정 -->
-				<div class="token_cont">
-					<span class="date">sdf</span>
-					<span class="txt">sdf</span>
+            </div>
 
-				</div>
-				<!-- //2023.04.07 수정 -->
-
-				<c:otherwise>
-					<div class="form-group">
-						<div class="form-body">
-							<div class="no-contents">
-								<p>조회 가능한 포인트 내역이 없습니다.</p>
-							</div>
-						</div>
-					</div>
-				</c:otherwise>
-            </c:choose>
-			
 			<div class="guidebox">
                	<div class="guide-title">
 					<h3 class="tit"><span class="i"><img src="${CTX}/images/${DEVICE}/common/ico_helper_alert.png" alt="" /></span> 포인트 안내</h3>
@@ -144,7 +85,7 @@ function dateClick(){
 									<li><span class="bu">-</span> 포토 후기 작성 시 <span class="em">500P</span> 지급</li>
 									<li><span class="bu">-</span> 상품 구매시 등급별 포인트 적립</li>
 									<li>
-										<span class="bu">-</span> 
+										<span class="bu">-</span>
 										상품 구매시 등급별 포인트 적립<br/>
 										<strong>일반회원</strong><br/> : 실 결제금액의 <span class="em">1%</span> 포인트 적립 (배송비 제외)<br/>
 										<strong>우수회원</strong><br/> : 실 결제금액의 <span class="em">2%</span> 포인트 적립 (배송비 제외)<br/>

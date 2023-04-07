@@ -128,7 +128,7 @@ public class TokenController extends CommonMethod {
 
 
         int totalCount = 0;
-        List<SqlMap> tokenList = new ArrayList<>();
+        List<SqlMap> pointList = new ArrayList<>();
 
 
 
@@ -150,7 +150,7 @@ public class TokenController extends CommonMethod {
         page.pagingInfo(schVO, totalCount);
 
         model.addAttribute("totalCount", totalCount);
-        model.addAttribute("tokenList", tokenList);
+        model.addAttribute("pointList", pointList);
         model.addAttribute("sumPoint", sumPoint);
         model.addAttribute("totalPoint", totalPoint);
         model.addAttribute("spPointDeduct", spPointDeduct);
