@@ -3573,11 +3573,12 @@
 	                            <!-- //탭 : 가상계좌 -->
 	
 	                            <!-- 탭 : 휴대폰 결제 -->
-
+                                <!--
 	                            <div id="methodMobile" class="method-item method-mobile paytype" <c:if test="${orderInfo.selectPayType eq 'SC0060'}">style="display:block;"</c:if>>
 	                                <h4 class="hide">휴대폰 결제</h4> 
 	                                * 휴대폰 결제취소는 결제한 해당월 말일까지 가능합니다.
 	                            </div>
+	                            -->
 	                            <!-- //탭 : 휴대폰 결제 -->
 								
 								<!-- 탭 : SmilePay 결제 -->
