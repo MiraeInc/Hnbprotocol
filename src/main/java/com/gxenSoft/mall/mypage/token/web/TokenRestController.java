@@ -1,6 +1,7 @@
 package com.gxenSoft.mall.mypage.token.web;
 
 import com.gxenSoft.mall.common.vo.JsonResultVO;
+import com.gxenSoft.mall.mypage.point.service.PointService;
 import com.gxenSoft.mall.mypage.token.service.TokenService;
 import com.gxenSoft.mall.mypage.token.vo.TokenRequest;
 import com.gxenSoft.method.MethodUtil;
@@ -18,6 +19,9 @@ public class TokenRestController {
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private PointService pointService;
 
     @PostMapping("/mypage/token/tokenWriteOk")
     public JsonResultVO tokenWriteOk(
@@ -38,15 +42,14 @@ public class TokenRestController {
         resultMap.setResult(true);
 
         try {
-            tokenService.tokenWriteOk(tokenRequest);
+            int totalPoint = pointService.getTotalPoint();
+            tokenService.tokenWriteOk(tokenRequest, totalPoint);
         } catch (Exception e) {
             e.printStackTrace();
 
             resultMap.setResult(false);
-            resultMap.setMsg("현금영수증 발급중 에러가 발생했습니다! (200)");
+            resultMap.setMsg(e.getMessage());
         }
-
-        System.out.println("tokenRequest = " + tokenRequest);
 
         return resultMap;
     }

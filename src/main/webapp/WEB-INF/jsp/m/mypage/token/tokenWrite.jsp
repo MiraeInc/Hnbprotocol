@@ -23,8 +23,8 @@ function checkNumber(event) {
 }
 
 function writeOk() {
-    var requestPoint = requestPoint: $("#requestPoint").val();
-    var walletAddress = requestPoint: $("#walletAddress").val();
+    var requestPoint = $("#requestPoint").val();
+    var walletAddress = $("#walletAddress").val();
 
     if (requestPoint == "") {
         alert("포인트를 입력하세요.");
@@ -49,12 +49,16 @@ function writeOk() {
         dataType: "json"
     })
     .done(function(data) {
-        console.log('success');
-        console.log(data);
+        if (data.result == false) {
+            alert(data.msg);
+        }
+        else {
+            alert('요청이 정상적으로 처리되었습니다.');
+            location.href = 'tokenList';
+        }
     })
     .fail(function(error) {
-        console.log('error');
-        console.log(error);
+        alert(error);
     });
 }
 </script>
@@ -86,8 +90,8 @@ function writeOk() {
                             <p><span class="tit">지 갑 주 소</span> <input type="text" name="walletAddress" id="walletAddress" placeholder="주소입력"></p>
                         </div>
                         <div class="btn_box btn_center">
-                            <button class="btn btn_02 btn_b01" onclick="writeOk()">확인</button>
-                            <button class="btn btn_02 btn_b01" onclick="location.href='tokenList'">목록으로</button>
+                            <button class="btn btn_02 btn_b01" onclick="writeOk()">저장</button>
+                            <button class="btn btn_02" onclick="location.href='tokenList'">목록으로</button>
                         </div>
                     </div>
                 </li>

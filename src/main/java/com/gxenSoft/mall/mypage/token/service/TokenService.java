@@ -12,6 +12,6 @@ public interface TokenService {
 
 	List<SqlMap> getTokenList(SearchVO schVO) throws Exception;
 
-	void tokenWriteOk(TokenRequest tokenRequest);
+	void tokenWriteOk(TokenRequest tokenRequest, int totalPoint) throws Exception;
 
 }

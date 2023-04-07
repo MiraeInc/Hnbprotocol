@@ -2,6 +2,7 @@ package com.gxenSoft.mall.member.dao;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Repository;
 
@@ -82,7 +83,7 @@ public class MemberDAO extends CommonDefaultDAO{
 	public int memberPointSave(HashMap<String, Object> param)throws Exception{
 		return insert("memberDAO.memberPointSave", param);
 	}
-	
+
 	/**
 	 * @Method : memberInfoSave
 	 * @Date		: 2017. 6. 20.
@@ -406,4 +407,5 @@ public class MemberDAO extends CommonDefaultDAO{
 	public int callSendSmsSmsRejectProcedure(HashMap<String, Object> param)throws Exception{
 		return (Integer)update("memberDAO.callSendSmsSmsRejectProcedure", param);
 	}
+
 }

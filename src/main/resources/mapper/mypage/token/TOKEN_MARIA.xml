@@ -35,4 +35,12 @@
 		LIMIT #{PAGESTART}, #{PAGEBLOCK}
 	</select>
 
+	<insert id="tokenWriteOk" parameterType="hashmap">
+		/** tokenDAO.tokenWriteOk **/
+		INSERT INTO hnb.token_request
+			(MEMBER_IDX, REQUEST_POINT, CHANGE_TOKEN, WALLET_ADDRESS, STATUS_CODE, REG_IDX, REG_DT)
+		values
+			(#{memberIdx}, #{requestPoint}, #{changeToken}, #{walletAddress}, #{statusCode}, #{memberIdx}, now());
+	</insert>
+
 </mapper>
