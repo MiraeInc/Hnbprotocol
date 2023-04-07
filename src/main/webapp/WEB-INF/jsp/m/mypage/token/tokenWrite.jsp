@@ -47,9 +47,6 @@ function dateClick(){
 <body>
 <form name="pointForm" id="pointForm" method="post" onsubmit="return false;">
 	<input type="hidden" name="pageNo" id="pageNo" value="${schVO.pageNo}"/>
-
-	<center><h1>토큰 교환 작성 페이지 - 확인후 삭제</h1></center>
-
 	<div class="content comm-order comm-mypage mypage-point">
 
 		<div class="page-body">
@@ -110,6 +107,15 @@ function dateClick(){
 						<c:out value="${page.pageStr}" escapeXml="false"/>
 					</div>
 				</c:when>
+
+				<!-- 2023.04.07 수정 -->
+				<div class="token_cont">
+					<span class="date">sdf</span>
+					<span class="txt">sdf</span>
+
+				</div>
+				<!-- //2023.04.07 수정 -->
+
 				<c:otherwise>
 					<div class="form-group">
 						<div class="form-body">
