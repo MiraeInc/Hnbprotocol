@@ -13,7 +13,7 @@
 <meta property="og:description" content="${detail.shortInfo}">
 <meta property="og:image" content="${IMGPATH}/goods/${detail.goodsIdx}/${detailImgSplit[0]}_M.${detailImgSplit[1]}">
 <meta name="decorator" content="mobile.main" />
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<script type="text/javascript">
 		// mobon 4.0
 		var device = "${DEVICE}".toUpperCase();
