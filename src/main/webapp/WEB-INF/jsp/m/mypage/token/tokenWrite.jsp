@@ -64,6 +64,7 @@ function dateClick(){
 				</div>
 			</div>
 
+            <br>
             <c:choose>
             	<c:when test="${fn:length(pointList) > 0}">
 					<div class="point-list">
