@@ -446,7 +446,7 @@
 				<li>
 					<a class="gnb-link" href="${CTX}/cscenter/csMain.do">고객센터</a>
 					<ul class="gnb-sub">
-						<li><a href="${CTX}/cscenter/csInfo/benefitInfo.do"><span>혜택안내</span></a></li>
+						<!-- <li><a href="${CTX}/cscenter/csInfo/benefitInfo.do"><span>혜택안내</span></a></li> -->
 						<li><a href="${CTX}/cscenter/notice/noticeList.do"><span>공지사항</span></a></li>
 						<li><a href="${CTX}/cscenter/faq/faqList.do"><span>FAQ</span></a></li>
 						<li><a href="${CTX}/mypage/inquiry/inquiryWrite.do"><span>1:1문의</span></a></li>
