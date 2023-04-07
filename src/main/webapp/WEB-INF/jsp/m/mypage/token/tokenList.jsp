@@ -68,7 +68,9 @@ function dateClick(){
 				</div>
 			</div>
 
-            <button class="btn btn_b01" onclick="location.href='tokenWrite'">교환신청</button>
+            <div class="btn_box btn_center mt20">
+				<button class="btn btn_b01 btn_02" onclick="location.href='tokenWrite'">교환신청</button>
+			</div>
             <br>
             <c:choose>
             	<c:when test="${fn:length(tokenList) > 0}">
@@ -92,7 +94,7 @@ function dateClick(){
 						</ul>
 					</div>
 					
-					<div class="pagin-nav">
+					<div class="pagin-nav nav_s01">
 						<c:out value="${page.pageStr}" escapeXml="false"/>
 					</div>
 				</c:when>
