@@ -51,9 +51,6 @@ function dateClick(){
 <body>
 <form name="pointForm" id="pointForm" method="post" onsubmit="return false;">
 	<input type="hidden" name="pageNo" id="pageNo" value="${schVO.pageNo}"/>
-
-	<center><h1>토큰 목록 페이지 - 확인후 삭제</h1></center>
-
 	<div class="content comm-order comm-mypage mypage-point">
 
 		<div class="page-body">
