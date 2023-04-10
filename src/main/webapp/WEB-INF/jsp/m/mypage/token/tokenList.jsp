@@ -17,7 +17,7 @@ function goPage(page){
 	$("#pageNo").val(page);
 
 	var frm = document.pointForm;
-	frm.action = "${CTX}/mypage/point/pointList.do";
+	frm.action = "${CTX}/mypage/token/tokenList.do";
 	frm.submit();
 }
 </script>
