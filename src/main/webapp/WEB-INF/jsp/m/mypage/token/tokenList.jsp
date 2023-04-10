@@ -8,14 +8,40 @@
 <meta name="menu_no" content="mypage_030" />
 
 <script>
-function cancel() {
-    alert('오픈 준비중입니다.');
+function cancel(idx) {
+    $.ajax({
+        type: "GET",
+        url: "/m/mypage/token/tokenCancel/" + idx
+    })
+    .done(function(data) {
+        if (data.result == false) {
+            alert(data.msg);
+        }
+        else {
+            alert('취소 요청이 정상적으로 처리되었습니다.');
+            location.href = 'tokenList';
+        }
+    })
+    .fail(function(error) {
+        alert(error);
+    });
+}
+
+// 페이지 이동
+function goPage(page){
+	$("#pageNo").val(page);
+
+	var frm = document.pointForm;
+	frm.action = "${CTX}/mypage/token/tokenList.do";
+	frm.submit();
 }
 </script>
+
 
 </head>
 <body>
 <form name="pointForm" id="pointForm" method="post" onsubmit="return false;">
+    <input type="hidden" name="pageNo" id="pageNo" value="${schVO.pageNo}"/>
 	<div class="content comm-order comm-mypage mypage-point">
 
 		<div class="page-body">
@@ -41,19 +67,23 @@ function cancel() {
 							<li>
 								<div class="item-point">
 									<div class="point-summary">
-										<p class="date">날짜 : ${list.regDt}</p>
-										<p class="desc">포인트 : ${list.requestPoint}</p>
-										<p class="desc">토큰 : ${list.changeToken}</p>
-										<p class="desc">상태 : ${list.statusValue}</p>
+										<p class="date"><span class="tit">날 짜</span> ${list.regDt}</p>
+										<p class="desc"><span class="tit">포 인 트</span> ${list.requestPoint}</p>
+										<p class="desc"><span class="tit">토 큰</span> ${list.changeToken}</p>
+										<p class="desc"><span class="tit">상 태</span> ${list.statusValue}</p>
 										<p class="desc border_top">지갑주소 : ${list.walletAddress}</p>
 									</div>
 
-									<button class="btn" onclick='cancel()'>취소</button>
+									<button class="btn" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
 								</div>
 							</li>
 							</c:forEach>
 						</ul>
 					</div>
+
+					<div class="pagin-nav nav_s01">
+                        <c:out value="${page.pageStr}" escapeXml="false"/>
+                    </div>
 
 				</c:when>
 				<c:otherwise>

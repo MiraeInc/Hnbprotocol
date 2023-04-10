@@ -12,7 +12,30 @@
 		WHERE
 			MEMBER_IDX = #{MEMBERIDX}
 	</select>
-	
+
+	<select id="findByPk" parameterType="int" resultType="java.util.HashMap">
+		SELECT
+			TOKEN_REQUEST_IDX,
+			MEMBER_IDX,
+			REQUEST_POINT,
+			CHANGE_TOKEN,
+			WALLET_ADDRESS,
+			STATUS_CODE,
+			REG_IDX,
+			REG_DT,
+			EDIT_IDX,
+			EDIT_DT
+		FROM
+			hnb.token_request
+		where
+			TOKEN_REQUEST_IDX = #{tokenRequestIdx}
+	</select>
+
+	<select id="delete" parameterType="int">
+		delete from hnb.token_request
+		where TOKEN_REQUEST_IDX = #{tokenRequestIdx}
+	</select>
+
 	<select id="getTokenList" parameterType="java.util.HashMap" resultType="sqlMap">
 		/** tokenDAO.getTokenList **/
 		SELECT

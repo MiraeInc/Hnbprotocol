@@ -16,7 +16,7 @@ $(window).on('load', function(){
 $(function(){
 	var mainBannerSwiper = new Swiper('#mainBanner', {
 		autoplay: {
-			delay: 3500	
+			delay: 4500	
 		},
 		autoplayDisableOnInteraction: false,
 		// centeredSlides: true,
@@ -102,7 +102,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 </head>
 
 <body>
-	<div class="content">
+	<div class="content hnb_main">
 
 		<%-- 메인배너 --%>
 		<div class="main-banner">

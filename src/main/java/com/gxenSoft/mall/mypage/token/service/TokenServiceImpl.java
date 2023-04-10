@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 
@@ -79,7 +80,7 @@ public class TokenServiceImpl implements TokenService {
                 .forEach(point -> {
                     StatusCode statusCode = StatusCode.fromCode(String.valueOf(point.get("statusCode")));
 
-                    point.put("statusValue", statusCode.label());
+                    point.put("statusValue", statusCode.getLabel());
                 });
     }
 
@@ -110,6 +111,40 @@ public class TokenServiceImpl implements TokenService {
 
         memberPointDraw(memberIdx, requestPoint);
         tokenDAO.tokenWriteOk(requestPoint, changeToken, walletAddress, memberIdx);
+    }
+
+    @Override
+    public void cancel(Integer idx, Integer memberIdx) throws Exception {
+        // 내 요청이 맞는지..
+        HashMap tokenMap = (HashMap) tokenDAO.selectByPk("tokenDAO.findByPk", idx);
+        if (!authToken(tokenMap, memberIdx)) {
+            throw new IllegalArgumentException("권한이 없는 요청입니다.");
+        }
+
+        StatusCode tokenStatusCode = StatusCode.fromCode((String) tokenMap.get("STATUS_CODE"));
+        if (!tokenStatusCode.isCancelEnableCode()) {
+            throw new IllegalArgumentException("이미 처리가 되어 취소할수 없습니다.");
+        }
+
+        tokenDAO.delete("tokenDAO.delete", idx);
+        memberPointAdd(memberIdx, (Integer) tokenMap.get("REQUEST_POINT"));
+    }
+
+    private boolean authToken(HashMap token, Integer memberIdx) {
+        return token.get("MEMBER_IDX").equals(Long.valueOf(memberIdx.toString()));
+    }
+
+    private void memberPointAdd(Integer memberIdx, Integer requestPoint) throws Exception {
+        HashMap<String, Object> memberPointAddParam = new HashMap<>();
+        memberPointAddParam.put("MEMBERIDX", memberIdx);
+        memberPointAddParam.put("REVIEWPOINT", requestPoint);
+        reviewDAO.memberPointAdd(memberPointAddParam);
+
+        HashMap<String, Object> memberPointAddHistoryParam = new HashMap<>();
+        memberPointAddHistoryParam.put("MEMBERIDX", memberIdx);
+        memberPointAddHistoryParam.put("PAYDEDREASON", "POINT_REASON250");    // 코인 교환 취소 요청에 따른 포인트 추가
+        memberPointAddHistoryParam.put("REVIEWPOINT", requestPoint);
+        reviewDAO.memberPointAddHistory(memberPointAddHistoryParam);
     }
 
     private void memberPointDraw(Integer memberIdx, Integer requestPoint) throws Exception {

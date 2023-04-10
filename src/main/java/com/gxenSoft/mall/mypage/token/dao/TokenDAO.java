@@ -2,6 +2,7 @@ package com.gxenSoft.mall.mypage.token.dao;
 
 import com.gxenSoft.mall.mypage.token.code.StatusCode;
 import com.gxenSoft.sqlDAO.CommonDefaultDAO;
+
 import com.gxenSoft.sqlMap.SqlMap;
 import org.springframework.stereotype.Repository;
 
@@ -32,4 +33,5 @@ public class TokenDAO extends CommonDefaultDAO {
 
         insert("tokenDAO.tokenWriteOk", param);
     }
+
 }
