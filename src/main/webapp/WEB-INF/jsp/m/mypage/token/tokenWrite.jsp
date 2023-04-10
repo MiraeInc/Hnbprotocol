@@ -108,6 +108,29 @@ function writeOk() {
                     </div>
                 </li>
             </ul>
+
+			<div class="guidebox">
+               	<div class="guide-title">
+					<h3 class="tit"><span class="i"><img src="${CTX}/images/${DEVICE}/common/ico_helper_alert.png" alt="" /></span> 포인트 안내</h3>
+				</div>
+				<div class="guide-list">
+					<ul>
+						<li>
+							<span class="i"><img src="${CTX}/images/${DEVICE}/contents/ico_briefcase.png" style="width: 50px" alt="" /></span>
+							<strong class="tit">사용 안내</strong>
+							<div>
+								<ul class="bu-list">
+									<li><span class="bu">-</span> 포인트는 상품 구매 시 언제든지 사용가능 합니다.</li>
+									<li><span class="bu">-</span> HNB로 토큰 교환은 3,000포인트 이상 시 가능합니다.</li>
+									<li><span class="bu">-</span> 1HNB는 100포인트에 해당하며 교환 신청 시 차감됩니다.</li>
+									<li><span class="bu">-</span> 토큰 교환반영은 지갑이동 특성상 Time Delay가 있습니다.</li>
+								</ul>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
+
         </div>
 
     </div>
