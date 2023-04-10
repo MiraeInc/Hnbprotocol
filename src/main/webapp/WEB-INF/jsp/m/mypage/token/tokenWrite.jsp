@@ -97,12 +97,12 @@ function writeOk() {
                 <li>
                     <div class="item-point">
                         <div class="token_input">
-                            <p><span class="tit">신청포인트</span> <input type="number" name="requestPoint" id="requestPoint" onkeypress='return checkNumber(event)' onkeyup="up()" placeholder="포인트입력"></p>
+                            <p><span class="tit">신청포인트</span> <input type="number" name="requestPoint" id="requestPoint" onkeypress='return checkNumber(event)' onkeyup="up()" placeholder="신청 포인트 입력"></p>
 			                <p><span class="tit">HNB토큰</span> <span id="hnbToken"></span></p>
-                            <p><span class="tit">지 갑 주 소</span> <input type="text" name="walletAddress" id="walletAddress" placeholder="주소입력"></p>
+                            <p><span class="tit">지 갑 주 소</span> <input type="text" name="walletAddress" id="walletAddress" placeholder="지갑주소 입력"></p>
                         </div>
                         <div class="btn_box btn_center">
-                            <button class="btn btn_02 btn_b01" onclick="writeOk()">저장</button>
+                            <button class="btn btn_02 btn_b01" onclick="writeOk()">신청</button>
                             <button class="btn btn_02" onclick="location.href='tokenList'">목록으로</button>
                         </div>
                     </div>

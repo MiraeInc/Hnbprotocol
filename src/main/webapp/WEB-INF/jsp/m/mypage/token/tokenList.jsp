@@ -60,7 +60,7 @@ function goPage(page){
             <br>
 
             <div class="btn_box btn_right mb10 mr15">
-                <button class="btn btn_b01 btn_02" onclick="location.href='tokenWrite'">교환신청</button>
+                <button class="btn btn_b01 btn_02" onclick="location.href='tokenWrite'">토큰 교환신청</button>
             </div>
 
             <c:choose>
