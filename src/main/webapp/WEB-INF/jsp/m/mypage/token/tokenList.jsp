@@ -57,7 +57,7 @@ function goPage(page){
 			</div>
             <br>
 
-            <div class="btn_box btn_right mb10">
+            <div class="btn_box btn_right mb10 mr15">
                 <button class="btn btn_b01 btn_02" onclick="location.href='tokenWrite'">교환신청</button>
             </div>
 
@@ -70,11 +70,11 @@ function goPage(page){
 							<li>
 								<div class="item-point">
 									<div class="point-summary">
-										<p class="date"><span class="tit">날 짜</span> ${list.regDt}</p>
-										<p class="desc"><span class="tit">포 인 트</span> ${list.requestPoint}</p>
-										<p class="desc"><span class="tit">토 큰</span> ${list.changeToken}</p>
-										<p class="desc"><span class="tit">상 태</span> ${list.statusValue}</p>
-										<p class="desc border_top">지갑주소 : ${list.walletAddress}</p>
+										<p class="desc"><span class="tit">날 짜</span><span class="blit">:</span><span class="txt">${list.regDt}</span></p>
+										<p class="desc"><span class="tit">포 인 트</span><span class="blit">:</span><span class="txt">${list.requestPoint}</span></p>
+										<p class="desc"><span class="tit">토 큰</span><span class="blit">:</span><span class="txt">${list.changeToken}</span></p>
+										<p class="desc"><span class="tit">상 태</span><span class="blit">:</span><span class="txt">${list.statusValue}</span></p>
+										<p class="desc border_top one_st"><span class="tit">지 갑 주 소</span><span class="blit">:</span><span class="txt">${list.walletAddress}</span></p>
 									</div>
 
 									<button class="btn" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
