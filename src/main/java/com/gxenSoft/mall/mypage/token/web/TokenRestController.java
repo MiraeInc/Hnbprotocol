@@ -52,12 +52,12 @@ public class TokenRestController {
         return resultMap;
     }
 
-    @GetMapping("/mypage/token/tokenCancel/{idx}")
+    @GetMapping("/mypage/token/tokenCancel/{tokenRequestIdx}")
     public JsonResultVO tokenCencel(
             HttpServletRequest request,
             HttpServletResponse response,
             HttpSession session,
-            @PathVariable("idx") Integer idx
+            @PathVariable("tokenRequestIdx") Integer tokenRequestIdx
     ) throws Exception {
         if (session.getAttribute("SS_MEMBER_FLAG") == null) {
             MethodUtil.alertMsgUrl(request, response, "로그인이 필요합니다.", "/login/loginPage.do");
@@ -72,7 +72,7 @@ public class TokenRestController {
 
         try {
 
-            tokenService.cancel(idx, (Integer) session.getAttribute("SS_MEMBER_IDX"));
+            tokenService.cancel(tokenRequestIdx, (Integer) session.getAttribute("SS_MEMBER_IDX"));
 
         } catch (Exception e) {
             e.printStackTrace();

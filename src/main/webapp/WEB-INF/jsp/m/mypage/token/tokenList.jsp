@@ -70,14 +70,16 @@ function goPage(page){
 							<li>
 								<div class="item-point">
 									<div class="point-summary">
-										<p class="desc"><span class="tit">날 짜</span><span class="blit">:</span><span class="txt">${list.regDt}</span></p>
+										<p class="desc"><span class="tit">날 짜</span><span class="blit">:</span><span class="txt">${list.viewDate}</span></p>
 										<p class="desc"><span class="tit">포 인 트</span><span class="blit">:</span><span class="txt">${list.requestPoint}</span></p>
 										<p class="desc"><span class="tit">토 큰</span><span class="blit">:</span><span class="txt">${list.changeToken}</span></p>
 										<p class="desc"><span class="tit">상 태</span><span class="blit">:</span><span class="txt">${list.statusValue}</span></p>
 										<p class="desc border_top one_st"><span class="tit">지 갑 주 소</span><span class="blit">:</span><span class="txt">${list.walletAddress}</span></p>
 									</div>
 
-									<button class="btn" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
+                                    <c:if test="${list.statusCode eq 'REQUEST' }" >
+									    <button class="btn" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
+									</c:if>
 								</div>
 							</li>
 							</c:forEach>
