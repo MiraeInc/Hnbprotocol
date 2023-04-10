@@ -66,4 +66,16 @@
 			(#{memberIdx}, #{requestPoint}, #{changeToken}, #{walletAddress}, #{statusCode}, #{memberIdx}, now());
 	</insert>
 
+	<update id="tokenStatusUpdate" parameterType="hashmap">
+		/** tokenDAO.tokenStatusUpdate **/
+		UPDATE
+			hnb.token_request
+		SET
+			STATUS_CODE = #{statusCode},
+			EDIT_IDX = #{editIdx},
+			EDIT_DT = now()
+		WHERE
+			token_request_idx = #{tokenRequestIdx}
+	</update>
+
 </mapper>

@@ -70,7 +70,7 @@ function goPage(page){
 							<li>
 								<div class="item-point">
 									<div class="point-summary">
-										<p class="desc"><span class="tit">날 짜</span><span class="blit">:</span><span class="txt">${list.regDt}</span></p>
+										<p class="desc"><span class="tit">날 짜</span><span class="blit">:</span><span class="txt">${list.viewDate}</span></p>
 										<p class="desc"><span class="tit">포 인 트</span><span class="blit">:</span><span class="txt">${list.requestPoint}</span></p>
 										<p class="desc"><span class="tit">토 큰</span><span class="blit">:</span><span class="txt">${list.changeToken}</span></p>
 										<p class="desc"><span class="tit">상 태</span><span class="blit">:</span><span class="txt">${list.statusValue}</span></p>

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service("tokenService")
 public class TokenServiceImpl implements TokenService {
@@ -66,6 +67,7 @@ public class TokenServiceImpl implements TokenService {
         try {
             pointList = tokenDAO.getTokenList(map); // 포인트 리스트
             addStatusValue(pointList);
+            addViewDate(pointList);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -75,13 +77,22 @@ public class TokenServiceImpl implements TokenService {
         return pointList;
     }
 
-    private void addStatusValue(List<SqlMap> pointList) {
-        pointList
-                .forEach(point -> {
-                    StatusCode statusCode = StatusCode.fromCode(String.valueOf(point.get("statusCode")));
+    private void addViewDate(List<SqlMap> pointList) {
+        pointList.forEach(point -> {
+            String viewDate = (String) (point.get("editDt") != null ?
+                    point.get("editDt") :
+                    point.get("regDt"));
 
-                    point.put("statusValue", statusCode.getLabel());
-                });
+            point.put("viewDate", viewDate);
+        });
+    }
+
+    private void addStatusValue(List<SqlMap> pointList) {
+        pointList.forEach(point -> {
+            StatusCode statusCode = StatusCode.fromCode(String.valueOf(point.get("statusCode")));
+
+            point.put("statusValue", statusCode.getLabel());
+        });
     }
 
     @Override
@@ -114,9 +125,9 @@ public class TokenServiceImpl implements TokenService {
     }
 
     @Override
-    public void cancel(Integer idx, Integer memberIdx) throws Exception {
+    public void cancel(Integer tokenRequestIdx, Integer memberIdx) throws Exception {
         // 내 요청이 맞는지..
-        HashMap tokenMap = (HashMap) tokenDAO.selectByPk("tokenDAO.findByPk", idx);
+        HashMap tokenMap = (HashMap) tokenDAO.selectByPk("tokenDAO.findByPk", tokenRequestIdx);
         if (!authToken(tokenMap, memberIdx)) {
             throw new IllegalArgumentException("권한이 없는 요청입니다.");
         }
@@ -126,8 +137,17 @@ public class TokenServiceImpl implements TokenService {
             throw new IllegalArgumentException("이미 처리가 되어 취소할수 없습니다.");
         }
 
-        tokenDAO.delete("tokenDAO.delete", idx);
+        tokenCancel(tokenRequestIdx, memberIdx);
         memberPointAdd(memberIdx, (Integer) tokenMap.get("REQUEST_POINT"));
+    }
+
+    private void tokenCancel(Integer tokenRequestIdx, Integer editIdx) {
+        Map param = new HashMap<String, Object>();
+        param.put("statusCode", StatusCode.CANCEL);
+        param.put("editIdx", editIdx);
+        param.put("tokenRequestIdx", tokenRequestIdx);
+
+        tokenDAO.update("tokenDAO.tokenStatusUpdate", param);
     }
 
     private boolean authToken(HashMap token, Integer memberIdx) {
