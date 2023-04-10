@@ -1152,8 +1152,9 @@ DOYOUAD_DATA.soldOut = "2";
 					
 					</c:if>
 
+					<!-- 2023.04.10 임시주석 처리 -->
 					<!-- s: 결제관련 옵션 -->
-					<div class="detail-payinfo">
+					<!-- <div class="detail-payinfo">
 						<dl>
                      		<dt>배송비</dt>
 	                     	<dd>2,500 (3만원 이상 구매시 무료)</dd>
@@ -1174,14 +1175,14 @@ DOYOUAD_DATA.soldOut = "2";
 		                     		<a href="javascript:" class="payinfo-link" data-toggle="popup" data-target="#popCardPlan" onclick="benefit(4);">추가 결제 혜택 안내</a>
 	                     		</c:if>
                          		<a href="javascript:" class="payinfo-link" data-toggle="popup" data-target="#popCardPlan" onclick="benefit(1);">무이자 할부 안내</a>
-	                         	<!-- <a href="javascript:" class="payinfo-link" data-toggle="popup" data-target="#popCardPlan" onclick="benefit(2);">카드 할인 혜택</a> -->
+	                         	<!-- <a href="javascript:" class="payinfo-link" data-toggle="popup" data-target="#popCardPlan" onclick="benefit(2);">카드 할인 혜택</a> --
 	                         	<a href="javascript:" class="payinfo-link" data-toggle="popup" data-target="#popCardPlan" onclick="benefit(3);">포인트 적립 안내</a>
 	                         	<a href="javascript:" class="payinfo-link nolink" data-toggle="popup" data-target="#">모든 구매 고객 및 금액대별 사은품 증정</a>
 	                     	</dd>
 	                 	</dl>
 	                 
 	                 	
-					</div>
+					</div> -->
 					<!-- e: 결제관련 옵션 -->
 					
 					<!-- s: 추천상품 -->
