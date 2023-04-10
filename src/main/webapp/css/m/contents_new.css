@@ -2519,12 +2519,14 @@ body[data-main="gpcreate"] .main-banner:before { background-color: #58c4c7; }
 .token_cont .token_input input{border:1px solid #ddd;width: calc(100% - 90px);padding:5px;}
 .token_cont .token_input p+p{margin-top:10px;}
 .token_cont .token_input .tit{width:80px;display:inline-block;}
-/* 
-.token_cont .point-summary .date{}
-.token_cont .point-summary .tit{text-align: justify;width: 50px;display: inline-block;float: left;}
+
+/* .token_cont .point-summary .desc:after{content:'';display:block;clear:both;overflow:hidden;}
+.token_cont .point-summary .tit{text-align: justify;width: 70px;height:24px;display: inline-block;float: left;}
 .token_cont .point-summary .tit:after{content:"";display:inline-block;width:100%;clear:both;}
-.token_cont .item-point{}
- */
+.token_cont .point-summary .blit{padding:0 5px;display:inline-block;float:left;}
+.token_cont .point-summary .txt{float:left;}
+.token_cont .item-point{} */
+
 
 
 
@@ -2533,10 +2535,20 @@ body[data-main="gpcreate"] .main-banner:before { background-color: #58c4c7; }
 .btn_center{text-align:center;}
 .btn_right{text-align:right;}
 
+/* martin-top */
 .mt10{margin-top:10px;}
 .mt20{margin-top:20px;}
+/* margin-bottom */
 .mb10{margin-bottom:10px;}
 .mb20{margin-bottom:20px;}
+/* margin-left */
+.ml10{margin-left:10px;}
+.ml15{margin-left:15px;}
+.ml20{margin-left:20px;}
+/* margin-right */
+.mr10{margin-right:10px;}
+.mr15{margin-right:15px;}
+.mr20{margin-right:20px;}
 
 .pagin-nav.nav_s01 li.active{top:0;}
 .pagin-nav.nav_s01 li.active a{font-size:18px;}
