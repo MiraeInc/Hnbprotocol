@@ -6,7 +6,7 @@ public enum StatusCode {
     REQUEST("요청"),
     SEND("전송중"),
     COMPLETE("완료"),
-    CANCEL("취소");
+    CANCEL("취소");       // 관리자가 취소한 내역이고 사용자가 REQUEST에서 취소한 경우는 데이터를 삭제 처리 함
 
     private String code;
     private String label;
@@ -29,11 +29,15 @@ public enum StatusCode {
 
         throw new IllegalStateException("존재하지 않는 코드입니다.");
     }
-    public String code() {
+    public String getCode() {
         return this.code;
     }
 
-    public String label() {
+    public String getLabel() {
         return this.label;
+    }
+
+    public boolean isCancelEnableCode() {
+        return StatusCode.REQUEST.getCode().equals(this.code);
     }
 }

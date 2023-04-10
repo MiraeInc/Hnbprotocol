@@ -14,4 +14,6 @@ public interface TokenService {
 
 	void tokenWriteOk(TokenRequest tokenRequest, int totalPoint) throws Exception;
 
+    void cancel(Integer idx, Integer memberIdx) throws Exception;
+
 }

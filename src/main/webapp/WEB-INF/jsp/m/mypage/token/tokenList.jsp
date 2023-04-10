@@ -8,8 +8,23 @@
 <meta name="menu_no" content="mypage_030" />
 
 <script>
-function cancel() {
-    alert('오픈 준비중입니다.');
+function cancel(idx) {
+    $.ajax({
+        type: "GET",
+        url: "/m/mypage/token/tokenCancel/" + idx
+    })
+    .done(function(data) {
+        if (data.result == false) {
+            alert(data.msg);
+        }
+        else {
+            alert('취소 요청이 정상적으로 처리되었습니다.');
+            location.href = 'tokenList';
+        }
+    })
+    .fail(function(error) {
+        alert(error);
+    });
 }
 
 // 페이지 이동
@@ -59,7 +74,7 @@ function goPage(page){
 										<p class="desc border_top">지갑주소 : ${list.walletAddress}</p>
 									</div>
 
-									<button class="btn" onclick='cancel()'>취소</button>
+									<button class="btn" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
 								</div>
 							</li>
 							</c:forEach>

@@ -32,7 +32,7 @@
     <i class="anchor-icon icon-order"></i>
     <strong class="anchor-name">주문배송</strong>
   </a>
-  <a href="${CTX}/mypage/token/tokenWrite.do" class="menu-anchor">
+  <a href="${CTX}/mypage/token/tokenList.do" class="menu-anchor">
       <i class="anchor-icon icon-token"></i>
       <strong class="anchor-name">HnB포인트</strong>
     </a>
