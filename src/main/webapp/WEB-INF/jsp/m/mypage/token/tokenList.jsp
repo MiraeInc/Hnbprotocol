@@ -80,14 +80,16 @@ function goPage(page){
 								<td colspan="3">${list.regDt}</td>
 								</tr>
 								<tr>
-									<th>포 인 트</th>
+									<th>포인트</th>
 									<td>${list.requestPoint}</td>
 									<th>토 큰</th>
 									<td>${list.changeToken}</td>
 								</tr>
 								<tr>
 									<th>상 태</th>
-									<td>${list.statusValue}</td>
+									<!-- 상태 종류: 요청, 전송중, 완료, 취소
+										요청일때만 class "color_red" 넣기 -->
+									<td class="color_red"> ${list.statusValue}</td>
 								</tr>
 							</tbody>
 							<tfoot>
