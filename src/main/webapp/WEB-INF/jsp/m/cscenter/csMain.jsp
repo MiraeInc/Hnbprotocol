@@ -111,12 +111,14 @@ function addReadCnt(faqIdx){
 
 			<div class="btn-box confirm">
 				<div class="row">
-					<div class="col col-6">
+					<!-- 2023.04.10 수정 -->
+					<div class="col col-12">
 						<button type="button" class="btn full ico-chev" onclick="goLink('inquiry');"><span class="txt">1:1 문의</span></button>
 					</div>
-					<div class="col col-6">
+					<!-- 2023.04.10 주석처리 -->
+					<!-- <div class="col col-6">
 						<button type="button" class="btn full ico-chev" onclick="goLink('benefit')"><span class="txt">혜택안내</span></button>
-					</div>
+					</div> -->
 				</div>
 				<div class="row">
 					<div class="col col-12">
