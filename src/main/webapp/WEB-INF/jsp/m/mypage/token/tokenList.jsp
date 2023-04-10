@@ -11,11 +11,22 @@
 function cancel() {
     alert('오픈 준비중입니다.');
 }
+
+// 페이지 이동
+function goPage(page){
+	$("#pageNo").val(page);
+
+	var frm = document.pointForm;
+	frm.action = "${CTX}/mypage/point/pointList.do";
+	frm.submit();
+}
 </script>
+
 
 </head>
 <body>
 <form name="pointForm" id="pointForm" method="post" onsubmit="return false;">
+    <input type="hidden" name="pageNo" id="pageNo" value="${schVO.pageNo}"/>
 	<div class="content comm-order comm-mypage mypage-point">
 
 		<div class="page-body">
@@ -54,6 +65,10 @@ function cancel() {
 							</c:forEach>
 						</ul>
 					</div>
+
+					<div class="pagin-nav nav_s01">
+                        <c:out value="${page.pageStr}" escapeXml="false"/>
+                    </div>
 
 				</c:when>
 				<c:otherwise>

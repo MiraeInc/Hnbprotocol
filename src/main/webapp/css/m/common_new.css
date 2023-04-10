@@ -33,10 +33,13 @@ button.clear-form{width: 12px !important;height: 12px !important;padding: 0;disp
 .badge-box .badge + .badge{margin-left: -1px;}
 .badge-box .type1{border-color: #107dff;background-color: #107dff;}
 .badge-box .type2{border-color: #fd3476;background-color: #fd3476;}
-.badge-box .type3{border-color: #12d1ff;background-color: #12d1ff;}
+/* .badge-box .type3{border-color: #12d1ff;background-color: #12d1ff;} */
+.badge-box .type3{color: #12d1ff;font-weight: bold;}
 .badge-box .type3 em {color: #fd3476; font-style: normal;}
-.badge-box .type4{border-color: #107dff;background-color: #107dff;}
-.badge-box .type5{border-color: #112b99;background-color: #112b99;}
+/* .badge-box .type4{border-color: #107dff;background-color: #107dff;} */
+.badge-box .type4{color: #107dff;font-weight: bold;}
+/* .badge-box .type5{border-color: #112b99;background-color: #112b99;} */
+.badge-box .type5{color: #112b99;font-weight: bold;}
 .badge-box .type-photo {border-color: #107dff;background-color: #107dff;}
 .badge-box .type-text {border-color: #444444;background-color: #444444;}
 
