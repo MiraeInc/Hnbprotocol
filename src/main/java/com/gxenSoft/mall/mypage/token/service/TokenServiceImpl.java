@@ -116,18 +116,18 @@ public class TokenServiceImpl implements TokenService {
     @Override
     public void cancel(Integer idx, Integer memberIdx) throws Exception {
         // 내 요청이 맞는지..
-        HashMap token = (HashMap) tokenDAO.selectByPk("tokenDAO.findByPk", idx);
-        if (!authToken(token, memberIdx)) {
+        HashMap tokenMap = (HashMap) tokenDAO.selectByPk("tokenDAO.findByPk", idx);
+        if (!authToken(tokenMap, memberIdx)) {
             throw new IllegalArgumentException("권한이 없는 요청입니다.");
         }
 
-        if (!StatusCode.fromCode((String) token.get("STATUS_CODE"))
-                .isCancelEnableCode()) {
+        StatusCode tokenStatusCode = StatusCode.fromCode((String) tokenMap.get("STATUS_CODE"));
+        if (!tokenStatusCode.isCancelEnableCode()) {
             throw new IllegalArgumentException("이미 처리가 되어 취소할수 없습니다.");
         }
 
         tokenDAO.delete("tokenDAO.delete", idx);
-        memberPointAdd(memberIdx, (Integer) token.get("REQUEST_POINT"));
+        memberPointAdd(memberIdx, (Integer) tokenMap.get("REQUEST_POINT"));
     }
 
     private boolean authToken(HashMap token, Integer memberIdx) {
