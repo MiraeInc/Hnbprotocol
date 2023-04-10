@@ -69,10 +69,10 @@ function goPage(page){
 						<c:forEach var="list" items="${tokenList}" varStatus="idx">
 						<table class="token_table_list">
 							<colgroup>
-								<col style="width:25%">
-								<col style="width:25%">
-								<col style="width:15%">
-								<col style="width:35%">
+								<col style="width:23%">
+								<col style="width:32%">
+								<col style="width:18%">
+								<col style="width:27%">
 							</colgroup>
 							<tbody>
 								<tr>
