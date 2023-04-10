@@ -77,7 +77,9 @@ function goPage(page){
 										<p class="desc border_top one_st"><span class="tit">지 갑 주 소</span><span class="blit">:</span><span class="txt">${list.walletAddress}</span></p>
 									</div>
 
-									<button class="btn" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
+                                    <c:if test="${list.statusCode eq 'REQUEST' }" >
+									    <button class="btn" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
+									</c:if>
 								</div>
 							</li>
 							</c:forEach>
