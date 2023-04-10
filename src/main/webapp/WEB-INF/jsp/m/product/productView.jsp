@@ -201,6 +201,7 @@
         });
 
         $('#tabDetail').on('click', '.btn-more', function(e){
+        alert('asdf');
             $this = $(this);
             $container = $this.prev('.image-container');
             $container.css({
@@ -210,6 +211,20 @@
         })
     })
 </script>
+
+<script>
+// 페이지 로딩후 바로 펼쳐지도록 처리
+window.onload = function(){
+    $this = $('.btn-more');
+
+    $container = $this.prev('.image-container');
+    $container.css({
+        height: 'auto'
+    })
+    $this.hide();
+};
+</script>
+
 <script>
 
 	$(document).ready(function(){

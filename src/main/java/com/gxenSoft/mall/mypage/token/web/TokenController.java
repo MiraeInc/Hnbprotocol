@@ -149,14 +149,9 @@ public class TokenController extends CommonMethod {
         Page page = new Page();
         page.pagingInfo(schVO, totalCount);
 
-        model.addAttribute("totalCount", totalCount);
-        model.addAttribute("pointList", pointList);
-        model.addAttribute("sumPoint", sumPoint);
         model.addAttribute("totalPoint", totalPoint);
         model.addAttribute("spPointDeduct", spPointDeduct);
         model.addAttribute("nextMonthTxt", nextMonthTxt);
-        model.addAttribute("page", page);
-        model.addAttribute("schVO", schVO);
 
         return PathUtil.getCtx() + "/mypage/token/tokenWrite";
     }
