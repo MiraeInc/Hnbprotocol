@@ -64,26 +64,43 @@ function goPage(page){
             <c:choose>
 				<c:when test="${fn:length(tokenList) > 0}">
 					<div class="point-list token_cont">
-
-						<ul>
-							<c:forEach var="list" items="${tokenList}" varStatus="idx">
-							<li>
-								<div class="item-point">
-									<div class="point-summary">
-										<p class="desc"><span class="tit">날 짜</span><span class="blit">:</span><span class="txt">${list.viewDate}</span></p>
-										<p class="desc"><span class="tit">포 인 트</span><span class="blit">:</span><span class="txt">${list.requestPoint}</span></p>
-										<p class="desc"><span class="tit">토 큰</span><span class="blit">:</span><span class="txt">${list.changeToken}</span></p>
-										<p class="desc"><span class="tit">상 태</span><span class="blit">:</span><span class="txt">${list.statusValue}</span></p>
-										<p class="desc border_top one_st"><span class="tit">지 갑 주 소</span><span class="blit">:</span><span class="txt">${list.walletAddress}</span></p>
-									</div>
-
-                                    <c:if test="${list.statusCode eq 'REQUEST' }" >
-									    <button class="btn" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
-									</c:if>
-								</div>
-							</li>
-							</c:forEach>
-						</ul>
+						<c:forEach var="list" items="${tokenList}" varStatus="idx">
+						<table class="token_table_list">
+							<colgroup>
+								<col style="width:25%">
+								<col style="width:25%">
+								<col style="width:15%">
+								<col style="width:35%">
+							</colgroup>
+							<tbody>
+								<tr>
+								<th>날 짜</th>
+								<td colspan="3">${list.regDt}</td>
+								</tr>
+								<tr>
+									<th>포 인 트</th>
+									<td>${list.requestPoint}</td>
+									<th>토 큰</th>
+									<td>${list.changeToken}</td>
+								</tr>
+								<tr>
+									<th>상 태</th>
+									<td>${list.statusValue}</td>
+								</tr>
+							</tbody>
+							<tfoot>
+								<tr>
+									<th>지갑주소</th>
+									<td colspan="3">${list.walletAddress}</td>
+								</tr>
+								<tr class="btn_cont">
+									<td>
+										<button class="btn btn_02" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
+									</td>
+								</tr>
+							</tfoot>
+						</table>
+						</c:forEach>
 					</div>
 					<div class="pagin-nav nav_s01">
                         <c:out value="${page.pageStr}" escapeXml="false"/>
