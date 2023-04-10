@@ -9,22 +9,24 @@
 
 <script>
 function cancel(idx) {
-    $.ajax({
-        type: "GET",
-        url: "/m/mypage/token/tokenCancel/" + idx
-    })
-    .done(function(data) {
-        if (data.result == false) {
-            alert(data.msg);
-        }
-        else {
-            alert('취소 요청이 정상적으로 처리되었습니다.');
-            location.href = 'tokenList';
-        }
-    })
-    .fail(function(error) {
-        alert(error);
-    });
+    if (confirm("요청내역을 취소 하시겠습니까?")) {
+        $.ajax({
+            type: "GET",
+            url: "/m/mypage/token/tokenCancel/" + idx
+        })
+        .done(function(data) {
+            if (data.result == false) {
+                alert(data.msg);
+            }
+            else {
+                alert('취소 요청이 정상적으로 처리되었습니다.');
+                location.href = 'tokenList';
+            }
+        })
+        .fail(function(error) {
+            alert(error);
+        });
+    }
 }
 
 // 페이지 이동
