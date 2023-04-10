@@ -243,7 +243,7 @@ function changeEvent(){
 						.renew-qz-list .item-select .select-block label > .num span {position: absolute; left: 0; top: 50%; width: 100%; line-height: 1; text-align: center; transform: translateY(-50%)}
 						.renew-qz-list .item-select .select-block label > .txt > span {position: absolute; left: 0; top: 50%; width: 100%; text-align: center; transform: translateY(-50%); font-size: 10px; line-height: 1.2; font-weight: bold;}
 						.renew-qz-list .item-select .select-block input[type="radio"] {position: absolute; z-index: -1; left: 0; top: 0; opacity: 0;}
-						.renew-qz-list .item-select .select-block input[type="radio"]:checked + label > .txt {border-color: #00aaad; background-color: #00aaad;}
+						.renew-qz-list .item-select .select-block input[type="radio"]:checked + label > .txt {border-color: #107dff; background-color: #107dff;}
 						.renew-qz-list .item-select .select-block input[type="radio"]:checked + label > .txt > span {color: #fff;}
 
 						.renew-qz-list .item-quiz {margin-top: 15px; margin-bottom: 25px; text-align: center; font-size: 0;}

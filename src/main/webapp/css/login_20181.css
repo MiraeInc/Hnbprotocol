@@ -53,7 +53,7 @@ strong.password_comment{margin: 0;padding-bottom: .15rem;display: block;font-siz
    Join page styles (SINGLE)
    ========================================================================== */
 .join_benefit{ position: relative; text-align: center; border-bottom: 1px solid #e5e5e5;}
-.join_benefit > strong{display: inline-block; vertical-align: top; width: 77px; height:24px; text-align: center; padding: 0; line-height: 24px; font-size: 15px; color: #fff; border-radius:24px; background-color: #00aaad;}
+.join_benefit > strong{display: inline-block; vertical-align: top; width: 77px; height:24px; text-align: center; padding: 0; line-height: 24px; font-size: 15px; color: #fff; border-radius:24px; background-color: #107dff;}
 .join_benefit p {margin: 0; padding: 0; }
 .join_benefit ul{margin: 25px 0; padding: 0;list-style: none;overflow: hidden;}
 .join_benefit li{float: left;position: relative; width: 25%; padding-top: 55px;}
@@ -91,7 +91,7 @@ strong.password_comment{margin: 0;padding-bottom: .15rem;display: block;font-siz
 .highlight{color: #ff2a00;}
 .join_terms .check_all{text-align: center;}
 .requirement{margin-bottom:.35rem;padding:.35rem 0 .35rem 1.15rem;display: block;font-size: .65rem;font-weight: normal;color: #444;background: url(../images/ico_requirement.png) no-repeat left center;background-size: .9rem;}
-.requirement.requied{color: #00aaad;background-image: url(../images/ico_requirement_yes.png);background-size: .9rem;}
+.requirement.requied{color: #107dff;background-image: url(../images/ico_requirement_yes.png);background-size: .9rem;}
 .user_information{padding-top: .275rem;}
 .user_information .form-indent{margin-left: .5rem;}
 .user_information .inner_bg{margin: 1rem -500% 0; padding: .75rem 500%;background-color: #f7f7f7;}
@@ -117,7 +117,7 @@ strong.password_comment{margin: 0;padding-bottom: .15rem;display: block;font-siz
 .thanks .thanks_info:before{content: "";width: 4.2rem;height: .075rem;margin-left: -2.1rem;position: absolute;left: 50%;top: 0;background-color: #000;}
 .thanks .thanks_info:after{content: "";width: 4.2rem;height: .075rem;margin-left: -2.1rem;position: absolute;left: 50%;bottom: 0;background-color: #000;}
 .thanks .thanks_info .thanks_id{margin: 0;font-size: .6rem;color: #444;}
-.thanks .thanks_info .thanks_id span{color: #00aaad;}
+.thanks .thanks_info .thanks_id span{color: #107dff;}
 .thanks .thanks_info .thanks_grade{margin: 0;font-size: .6rem;color: #444;}
 .thanks .thanks_gift{margin-top: 1.25rem;text-align: center;}
 .thanks .thanks_gift ul{margin: 0;padding: 0;list-style: none;}
@@ -127,7 +127,7 @@ strong.password_comment{margin: 0;padding-bottom: .15rem;display: block;font-siz
 .thanks .thanks_gift li:last-child > p span{margin-left: .375rem;}
 .thanks .thanks_gift li:first-child > p img{width: .35rem;}
 .thanks .thanks_gift li:last-child > p img{width: .675rem;}
-.thanks .thanks_check{margin:.35rem 0 1.625rem;font-size: .6rem;color: #00aaad;}
+.thanks .thanks_check{margin:.35rem 0 1.625rem;font-size: .6rem;color: #107dff;}
 .best_product{}
 .best_product .best_title{padding: 4rem 0 2rem;position: relative;font-size: 0;text-align: center;border-top: 1px solid #606060;}
 .best_product .best_title img{width: 6.45rem;}

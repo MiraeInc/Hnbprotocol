@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?> 
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="tokenDAO">
+
+	<select id="getTokenListCnt" parameterType="java.util.HashMap" resultType="int">
+		/** tokenDAO.getTokenListCnt **/
+		SELECT 
+			COUNT(*)
+		FROM
+			token_request
+		WHERE
+			MEMBER_IDX = #{MEMBERIDX}
+	</select>
+	
+	<select id="getTokenList" parameterType="java.util.HashMap" resultType="sqlMap">
+		/** tokenDAO.getTokenList **/
+		SELECT
+			TOKEN_REQUEST_IDX,
+			MEMBER_IDX,
+			REQUEST_POINT,
+			CHANGE_TOKEN,
+			WALLET_ADDRESS,
+			STATUS_CODE,
+			REG_IDX,
+			DATE_FORMAT(REG_DT, '%Y.%m.%d %H:%i') AS REG_DT,
+			EDIT_IDX,
+			DATE_FORMAT(EDIT_DT, '%Y.%m.%d %H:%i') AS EDIT_DT
+		FROM
+			hnb.token_request
+		WHERE
+			MEMBER_IDX = #{MEMBERIDX}
+		ORDER BY
+			TOKEN_REQUEST_IDX DESC
+		LIMIT #{PAGESTART}, #{PAGEBLOCK}
+	</select>
+
+	<insert id="tokenWriteOk" parameterType="hashmap">
+		/** tokenDAO.tokenWriteOk **/
+		INSERT INTO hnb.token_request
+			(MEMBER_IDX, REQUEST_POINT, CHANGE_TOKEN, WALLET_ADDRESS, STATUS_CODE, REG_IDX, REG_DT)
+		values
+			(#{memberIdx}, #{requestPoint}, #{changeToken}, #{walletAddress}, #{statusCode}, #{memberIdx}, now());
+	</insert>
+
+</mapper>

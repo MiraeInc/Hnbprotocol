@@ -100,7 +100,7 @@
 			NOW()
 		)
 	</insert>
-	
+
 	<!-- 회원정보 저장 -->
 	 <insert id="memberInfoSave" parameterType="hashmap">
 		INSERT INTO TM_MEMBER_INFO (

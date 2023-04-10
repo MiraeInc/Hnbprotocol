@@ -3205,6 +3205,8 @@
 	                            --> 
 	                            <ul>
 	                                <li><a href="#methodCard" <c:if test="${orderInfo.selectPayType eq 'SC0010' or orderInfo.selectPayType eq 'BILLKEY' or orderInfo.selectPayType eq null or orderInfo.selectPayType eq ''}">class="active"</c:if> data-method="SC0010" onclick="btnEvent(1);">신용카드</a></li>
+
+	                                <!--
 	                                <li><a href="#methodAccount" <c:if test="${orderInfo.selectPayType eq 'SC0030'}">class="active"</c:if> data-method="SC0030" onclick="btnEvent(2);">실시간<br/>계좌 이체</a></li>
 	                                <li><a href="#methodVirtual" <c:if test="${orderInfo.selectPayType eq 'SC0040'}">class="active"</c:if> data-method="SC0040" onclick="btnEvent(3);">가상계좌<br/>입금</a></li>
 	                                <li><a href="#methodMobile" <c:if test="${orderInfo.selectPayType eq 'SC0060'}">class="active"</c:if> data-method="SC0060" onclick="btnEvent(4);">휴대폰<br/>결제</a></li>
@@ -3218,8 +3220,9 @@
 	                                		<span class="type_payco"><span class="hide">페이코</span></span>
 	                                	</a>
 	                                </li>
+	                                -->
 	                                
-	                                 <%-- 
+	                                <%--
 	                                <li><a href="#methodWonderpay" data-method="8"><span class="type_wonder"><span class="hide">원더페이</span></span></a></li>
 	                                --%>
 	                                
@@ -3570,11 +3573,12 @@
 	                            <!-- //탭 : 가상계좌 -->
 	
 	                            <!-- 탭 : 휴대폰 결제 -->
-
+                                <!--
 	                            <div id="methodMobile" class="method-item method-mobile paytype" <c:if test="${orderInfo.selectPayType eq 'SC0060'}">style="display:block;"</c:if>>
 	                                <h4 class="hide">휴대폰 결제</h4> 
 	                                * 휴대폰 결제취소는 결제한 해당월 말일까지 가능합니다.
 	                            </div>
+	                            -->
 	                            <!-- //탭 : 휴대폰 결제 -->
 								
 								<!-- 탭 : SmilePay 결제 -->

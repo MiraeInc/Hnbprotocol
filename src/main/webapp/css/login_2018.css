@@ -50,7 +50,7 @@
   * Join page styles (SINGLE)
   * ========================================================================== */
  .join_benefit{margin-bottom: 1.375rem;position: relative;text-align: center;}
- .join_benefit > strong{padding: .1rem .6rem;display: inline-block;font-size: .7em;color: #fff;border-radius: .7rem;background-color: #00aaad;}
+ .join_benefit > strong{padding: .1rem .6rem;display: inline-block;font-size: .7em;color: #fff;border-radius: .7rem;background-color: #107dff;}
  .join_benefit ul{margin: 0;padding: 0;list-style: none;overflow: hidden;}
  .join_benefit li{width: 25%;float: left;position: relative;}
  .join_benefit li:after{content: "";width: 100%;height: 2.75rem;position: absolute;top: 0;left: 0;}
@@ -85,7 +85,7 @@
  .highlight{color: #ff2a00;}
  .join_terms .check_all{text-align: center;}
  .requirement{margin-bottom:.35rem;padding:.35rem 0 .35rem 1.15rem;display: block;font-size: .65rem;font-weight: normal;color: #444;background: url(../images/ico_requirement.png) no-repeat left center;background-size: .9rem;}
- .requirement.requied{color: #00aaad;background-image: url(../images/ico_requirement_yes.png);background-size: .9rem;}
+ .requirement.requied{color: #107dff;background-image: url(../images/ico_requirement_yes.png);background-size: .9rem;}
  .user_information{padding-top: .275rem;}
  .user_information .form-indent{margin-left: .5rem;}
  .user_information .inner_bg{margin: 1rem -500% 0; padding: .75rem 500%;background-color: #f7f7f7;}
@@ -111,7 +111,7 @@
  .thanks .thanks_info:before{content: "";width: 4.2rem;height: .075rem;margin-left: -2.1rem;position: absolute;left: 50%;top: 0;background-color: #000;}
  .thanks .thanks_info:after{content: "";width: 4.2rem;height: .075rem;margin-left: -2.1rem;position: absolute;left: 50%;bottom: 0;background-color: #000;}
  .thanks .thanks_info .thanks_id{margin: 0;font-size: .6rem;color: #444;}
- .thanks .thanks_info .thanks_id span{color: #00aaad;}
+ .thanks .thanks_info .thanks_id span{color: #107dff;}
  .thanks .thanks_info .thanks_grade{margin: 0;font-size: .6rem;color: #444;}
  .thanks .thanks_gift{margin-top: 1.25rem;text-align: center;}
  .thanks .thanks_gift ul{margin: 0;padding: 0;list-style: none;}
@@ -121,7 +121,7 @@
  .thanks .thanks_gift li:last-child > p span{margin-left: .375rem;}
  .thanks .thanks_gift li:first-child > p img{width: .35rem;}
  .thanks .thanks_gift li:last-child > p img{width: .675rem;}
- .thanks .thanks_check{margin:.35rem 0 1.625rem;font-size: .6rem;color: #00aaad;}
+ .thanks .thanks_check{margin:.35rem 0 1.625rem;font-size: .6rem;color: #107dff;}
  
  .best_product{}
  .best_product .best_title{padding: 2.5rem 0 0;position: relative;font-size: 0;text-align: center;border-top: 1px solid #606060;}
@@ -133,7 +133,7 @@
  .badge-box .badge > i{font-style: normal;color: #222;}
  .badge-box .badge + .badge{margin-left: -1px;}
  
- .badge-box .type1{border-color: #00aaad;background-color: #00aaad;}
+ .badge-box .type1{border-color: #107dff;background-color: #107dff;}
  .badge-box .type2{border-color: #fd3476;background-color: #fd3476;}
  .badge-box .type3{border-color: #8ad8de;background-color: #8ad8de;}
  
@@ -161,10 +161,10 @@
 .product-items .item-info{padding: .5rem .5rem;text-align: left;}
 .product-items .item-origin{display: block;font-size: .65rem;color: #ccc;}
 .product-items .item-price{margin: -4px 0 0;display: block;font-size: 24px;color: #222;}
-.product-items .item-price > span{display: inline-block; color: #00aaad;}
+.product-items .item-price > span{display: inline-block; color: #107dff;}
 .product-items .item-price [data-format]:after{content: attr(data-format);margin: 0 2px;display: inline-block;font-size: 14px;font-weight: normal;}
 .product-items .item-desc{margin: 0;font-size: 0;}
-.product-items .item-desc .item-detail{max-height: 2.4rem;margin: 0;font-size: 14px; color: #00aaad;}
+.product-items .item-desc .item-detail{max-height: 2.4rem;margin: 0;font-size: 14px; color: #107dff;}
 .product-items .item-desc > strong{display: block;font-size: 14px;font-weight: normal;color: #373737;}
 .product-items .item-coupon {padding: 17px 0 0 0;}
 .product-items .item-coupon img {margin-right: 5px;}

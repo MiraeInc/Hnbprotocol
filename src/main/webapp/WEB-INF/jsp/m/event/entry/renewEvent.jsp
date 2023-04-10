@@ -232,8 +232,8 @@ function urlShare(){
 					.renew-comment-list li .comment-wrap.type1 {border: 1px solid #ffc500;}
 					.renew-comment-list li .comment-wrap.type1:before {content:'다양해진 브랜드와 상품들'; position: absolute; color: #ffc500; border-bottom: 1px solid #ffc500;}
 					.renew-comment-list li .comment-wrap.type1:after {background-image: url('${CTX}/images/${DEVICE}/promotion/renew/img_cm_cw_bg.png')}
-					.renew-comment-list li .comment-wrap.type2 {border: 1px solid #00aaad;}
-					.renew-comment-list li .comment-wrap.type2:before {content:'스타일링 컨텐츠 강화'; position: absolute;color: #00aaad; border-bottom: 1px solid #00aaad;}
+					.renew-comment-list li .comment-wrap.type2 {border: 1px solid #107dff;}
+					.renew-comment-list li .comment-wrap.type2:before {content:'스타일링 컨텐츠 강화'; position: absolute;color: #107dff; border-bottom: 1px solid #107dff;}
 					.renew-comment-list li .comment-wrap.type2:after {background-image: url('${CTX}/images/${DEVICE}/promotion/renew/img_cm_cw_bg2.png')}
 					.renew-comment-list li .comment-wrap.type3 {border: 1px solid #ff3477;}
 					.renew-comment-list li .comment-wrap.type3:before {content:'더 편해진 모바일웹';  color: #ff3477; border-bottom: 1px solid #ff3477;}
