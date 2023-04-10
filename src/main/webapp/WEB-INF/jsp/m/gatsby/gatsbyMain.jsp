@@ -102,7 +102,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 </head>
 
 <body>
-	<div class="content">
+	<div class="content hnb_main">
 
 		<%-- 메인배너 --%>
 		<div class="main-banner">

@@ -2512,22 +2512,27 @@ body[data-main="gpcreate"] .main-banner:before { background-color: #58c4c7; }
 /* 2023.04.07 token_cont */
 .token_cont+.pagin-nav{margin-top:20px;}
 .pagin-nav+.guidebox,
-.token_cont+.guidebox{margin:10px 15px 20px 15px;}
+.token_cont+.guidebox{margin: 10px 15px 0 15px;}
 .token_cont .point-summary .desc{font-weight:400 !important;}
 .token_cont .border_top{border-top:1px solid #ddd;margin-top:10px;padding-top:10px;}
-
 .token_cont .token_input{padding-bottom:15px;}
 .token_cont .token_input input{border:1px solid #ddd;width: calc(100% - 90px);padding:5px;}
 .token_cont .token_input p+p{margin-top:10px;}
 .token_cont .token_input .tit{width:80px;display:inline-block;}
+
 .btn.btn_02{width:100px;}
 .btn.btn_b01{background-color:#107dff;border-color:#107dff;color:#fff;}
 .btn_center{text-align:center;}
 .btn_right{text-align:right;}
+
 .mt10{margin-top:10px;}
 .mt20{margin-top:20px;}
 .mb10{margin-bottom:10px;}
 .mb20{margin-bottom:20px;}
+
 .pagin-nav.nav_s01 li.active{top:0;}
 .pagin-nav.nav_s01 li.active a{font-size:18px;}
 .pagin-nav.nav_s01 ul{padding:30px 0 0;}
+
+.content.hnb_main{margin-bottom:-20px;}
+.container{padding-bottom:20px;}
