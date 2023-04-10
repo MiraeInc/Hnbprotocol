@@ -2519,6 +2519,14 @@ body[data-main="gpcreate"] .main-banner:before { background-color: #58c4c7; }
 .token_cont .token_input input{border:1px solid #ddd;width: calc(100% - 90px);padding:5px;}
 .token_cont .token_input p+p{margin-top:10px;}
 .token_cont .token_input .tit{width:80px;display:inline-block;}
+/* 
+.token_cont .point-summary .date{}
+.token_cont .point-summary .tit{text-align: justify;width: 50px;display: inline-block;float: left;}
+.token_cont .point-summary .tit:after{content:"";display:inline-block;width:100%;clear:both;}
+.token_cont .item-point{}
+ */
+
+
 
 .btn.btn_02{width:100px;}
 .btn.btn_b01{background-color:#107dff;border-color:#107dff;color:#fff;}

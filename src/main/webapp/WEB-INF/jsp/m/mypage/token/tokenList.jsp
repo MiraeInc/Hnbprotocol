@@ -67,10 +67,10 @@ function goPage(page){
 							<li>
 								<div class="item-point">
 									<div class="point-summary">
-										<p class="date">날짜 : ${list.regDt}</p>
-										<p class="desc">포인트 : ${list.requestPoint}</p>
-										<p class="desc">토큰 : ${list.changeToken}</p>
-										<p class="desc">상태 : ${list.statusValue}</p>
+										<p class="date"><span class="tit">날 짜</span> ${list.regDt}</p>
+										<p class="desc"><span class="tit">포 인 트</span> ${list.requestPoint}</p>
+										<p class="desc"><span class="tit">토 큰</span> ${list.changeToken}</p>
+										<p class="desc"><span class="tit">상 태</span> ${list.statusValue}</p>
 										<p class="desc border_top">지갑주소 : ${list.walletAddress}</p>
 									</div>
 

@@ -16,7 +16,7 @@ $(window).on('load', function(){
 $(function(){
 	var mainBannerSwiper = new Swiper('#mainBanner', {
 		autoplay: {
-			delay: 3500	
+			delay: 4500	
 		},
 		autoplayDisableOnInteraction: false,
 		// centeredSlides: true,
