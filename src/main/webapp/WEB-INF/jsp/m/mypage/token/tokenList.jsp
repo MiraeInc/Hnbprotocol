@@ -9,22 +9,24 @@
 
 <script>
 function cancel(idx) {
-    $.ajax({
-        type: "GET",
-        url: "/m/mypage/token/tokenCancel/" + idx
-    })
-    .done(function(data) {
-        if (data.result == false) {
-            alert(data.msg);
-        }
-        else {
-            alert('취소 요청이 정상적으로 처리되었습니다.');
-            location.href = 'tokenList';
-        }
-    })
-    .fail(function(error) {
-        alert(error);
-    });
+    if (confirm("요청내역을 취소 하시겠습니까?")) {
+        $.ajax({
+            type: "GET",
+            url: "/m/mypage/token/tokenCancel/" + idx
+        })
+        .done(function(data) {
+            if (data.result == false) {
+                alert(data.msg);
+            }
+            else {
+                alert('취소 요청이 정상적으로 처리되었습니다.');
+                location.href = 'tokenList';
+            }
+        })
+        .fail(function(error) {
+            alert(error);
+        });
+    }
 }
 
 // 페이지 이동
@@ -58,32 +60,48 @@ function goPage(page){
             <br>
 
             <div class="btn_box btn_right mb10 mr15">
-                <button class="btn btn_b01 btn_02" onclick="location.href='tokenWrite'">교환신청</button>
+                <button class="btn btn_b01 btn_02" onclick="location.href='tokenWrite'">토큰 교환신청</button>
             </div>
 
             <c:choose>
 				<c:when test="${fn:length(tokenList) > 0}">
 					<div class="point-list token_cont">
-
-						<ul>
-							<c:forEach var="list" items="${tokenList}" varStatus="idx">
-							<li>
-								<div class="item-point">
-									<div class="point-summary">
-										<p class="desc"><span class="tit">날 짜</span><span class="blit">:</span><span class="txt">${list.viewDate}</span></p>
-										<p class="desc"><span class="tit">포 인 트</span><span class="blit">:</span><span class="txt">${list.requestPoint}</span></p>
-										<p class="desc"><span class="tit">토 큰</span><span class="blit">:</span><span class="txt">${list.changeToken}</span></p>
-										<p class="desc"><span class="tit">상 태</span><span class="blit">:</span><span class="txt">${list.statusValue}</span></p>
-										<p class="desc border_top one_st"><span class="tit">지 갑 주 소</span><span class="blit">:</span><span class="txt">${list.walletAddress}</span></p>
-									</div>
-
-                                    <c:if test="${list.statusCode eq 'REQUEST' }" >
-									    <button class="btn" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
-									</c:if>
-								</div>
-							</li>
-							</c:forEach>
-						</ul>
+						<c:forEach var="list" items="${tokenList}" varStatus="idx">
+						<table class="token_table_list">
+							<colgroup>
+								<col style="width:23%">
+								<col style="width:32%">
+								<col style="width:18%">
+								<col style="width:27%">
+							</colgroup>
+							<tbody>
+								<tr>
+                                    <th>날 짜</th>
+                                    <td>${list.regDt}</td>
+									<th>상 태</th>
+									<!-- 상태 종류: 요청, 전송중, 완료, 취소 요청일때만 class "color_red" 넣기 -->
+									<td class="color_red"> ${list.statusValue}</td>
+								</tr>
+								<tr>
+									<th>포인트</th>
+									<td><fmt:formatNumber value="${list.requestPoint}" pattern="#,###" /></td>
+									<th>토 큰</th>
+									<td><fmt:formatNumber value="${list.changeToken}" pattern="#,###" /></td>
+								</tr>
+							</tbody>
+							<tfoot>
+								<tr>
+									<th>지갑주소</th>
+									<td colspan="3">${list.walletAddress}</td>
+								</tr>
+								<tr class="btn_cont">
+									<td>
+										<button class="btn btn_02" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
+									</td>
+								</tr>
+							</tfoot>
+						</table>
+						</c:forEach>
 					</div>
 					<div class="pagin-nav nav_s01">
                         <c:out value="${page.pageStr}" escapeXml="false"/>
