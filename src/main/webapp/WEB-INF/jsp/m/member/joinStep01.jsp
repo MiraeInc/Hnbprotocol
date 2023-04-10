@@ -39,7 +39,11 @@
 				<div class="join_benefit">
 					<strong>회원혜택</strong>
 					<ul class="clearfix" align="center">
-						<li class="item_1">
+						<li class="item_1 full_st">
+							<p>회원가입 포인트<br>2,000P 즉시 지급</p>
+						</li>
+						<!-- 2023.04.10 주석처리 -->
+						<!-- <li class="item_1">
 							<p>회원가입 포인트<br>2,000P 즉시 지급</p>
 						</li>
 						<li class="item_2">
@@ -50,7 +54,7 @@
 						</li>
 						<li class="item_4">
 							<p>회원등급에 따라<br>구매포인트 적립</p>
-						</li>
+						</li> -->
 					</ul>
 				</div>
 
