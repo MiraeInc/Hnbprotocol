@@ -6,51 +6,16 @@
 <meta name="decorator" content="mobile.mypage.main" />
 <meta name="menu_2depth" content="mypage_shopping" />
 <meta name="menu_no" content="mypage_030" />
+
 <script>
-
-$(function(){
-	//datepicker
-	$(".form-datepicker").datepicker();
-});
-
 function cancel() {
     alert('오픈 준비중입니다.');
 }
-
-// 페이지 이동
-function goPage(page){
-	$("#pageNo").val(page);
-	
-	var frm = document.pointForm;
-	frm.action = "${CTX}/mypage/point/pointList.do";
-	frm.submit();
-}
-
-// 검색
-function goSearch(){
-	$("#pageNo").val(1);
-	
-	var frm = document.pointForm;
-	frm.action = "${CTX}/mypage/point/pointList.do";
-	frm.submit();
-}
-
-// 날짜 검색 변경
-function dateClick(){
-	var dt = $("#schType").val();
-	if(dt!=0){
-		setDate(dt);
-	}else if(dt==0){
-		$("#schStartDt").val("");
-		$("#schEndDt").val("");
-	}
-}
-
 </script>
+
 </head>
 <body>
 <form name="pointForm" id="pointForm" method="post" onsubmit="return false;">
-	<input type="hidden" name="pageNo" id="pageNo" value="${schVO.pageNo}"/>
 	<div class="content comm-order comm-mypage mypage-point">
 
 		<div class="page-body">
@@ -79,7 +44,7 @@ function dateClick(){
 										<p class="date">날짜 : ${list.regDt}</p>
 										<p class="desc">포인트 : ${list.requestPoint}</p>
 										<p class="desc">토큰 : ${list.changeToken}</p>
-										<p class="desc">상태 : ${list.statueCode}</p>
+										<p class="desc">상태 : ${list.statusValue}</p>
 										<p class="desc border_top">지갑주소 : ${list.walletAddress}</p>
 									</div>
 
@@ -89,10 +54,7 @@ function dateClick(){
 							</c:forEach>
 						</ul>
 					</div>
-					
-					<div class="pagin-nav nav_s01">
-						<c:out value="${page.pageStr}" escapeXml="false"/>
-					</div>
+
 				</c:when>
 				<c:otherwise>
 					<div class="form-group">

@@ -3,7 +3,7 @@
 <!DOCTYPE>
 <html>
 <head>
-<script src="https://code.jquery.com/jquery-3.6.3.js"></script>
+
 <meta name="decorator" content="mobile.mypage.main" />
 <meta name="menu_2depth" content="mypage_shopping" />
 <meta name="menu_no" content="mypage_030" />
