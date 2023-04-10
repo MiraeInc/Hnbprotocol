@@ -76,20 +76,17 @@ function goPage(page){
 							</colgroup>
 							<tbody>
 								<tr>
-								<th>날 짜</th>
-								<td colspan="3">${list.regDt}</td>
+                                    <th>날 짜</th>
+                                    <td>${list.regDt}</td>
+									<th>상 태</th>
+									<!-- 상태 종류: 요청, 전송중, 완료, 취소 요청일때만 class "color_red" 넣기 -->
+									<td class="color_red"> ${list.statusValue}</td>
 								</tr>
 								<tr>
 									<th>포인트</th>
-									<td>${list.requestPoint}</td>
+									<td><fmt:formatNumber value="${list.requestPoint}" pattern="#,###" /></td>
 									<th>토 큰</th>
-									<td>${list.changeToken}</td>
-								</tr>
-								<tr>
-									<th>상 태</th>
-									<!-- 상태 종류: 요청, 전송중, 완료, 취소
-										요청일때만 class "color_red" 넣기 -->
-									<td class="color_red"> ${list.statusValue}</td>
+									<td><fmt:formatNumber value="${list.changeToken}" pattern="#,###" /></td>
 								</tr>
 							</tbody>
 							<tfoot>
