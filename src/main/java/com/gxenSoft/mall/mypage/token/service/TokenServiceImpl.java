@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -128,7 +127,7 @@ public class TokenServiceImpl implements TokenService {
     public void cancel(Integer tokenRequestIdx, Integer memberIdx) throws Exception {
         // 내 요청이 맞는지..
         HashMap tokenMap = (HashMap) tokenDAO.selectByPk("tokenDAO.findByPk", tokenRequestIdx);
-        if (!authToken(tokenMap, memberIdx)) {
+        if (!isTokenAuthorize(tokenMap, memberIdx)) {
             throw new IllegalArgumentException("권한이 없는 요청입니다.");
         }
 
@@ -150,7 +149,7 @@ public class TokenServiceImpl implements TokenService {
         tokenDAO.update("tokenDAO.tokenStatusUpdate", param);
     }
 
-    private boolean authToken(HashMap token, Integer memberIdx) {
+    private boolean isTokenAuthorize(HashMap token, Integer memberIdx) {
         return token.get("MEMBER_IDX").equals(Long.valueOf(memberIdx.toString()));
     }
 
