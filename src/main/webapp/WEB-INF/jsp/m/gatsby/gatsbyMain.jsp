@@ -287,7 +287,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		</script>
 		</c:if>
 		<%-- e: 해더 롤링배너 --%>
-		
+
 		<%-- NEW PRODUCTS --%>
 		<%-- <div class="main-nowsale">
 		<c:if test="${!empty newproductsList}">
@@ -342,7 +342,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		</c:if>
 		</div> --%>
 		<%-- //NEW PRODUCTS --%>
-		
+
 		<%-- NOW SALE --%>
 		<div class="main-nowsale">
 		<c:if test="${!empty saleList}">
@@ -413,7 +413,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		
 		<!-- 2023.02.21 수정 : blank -->
 		<div class="blank"></div>
-		
+
 		<%-- 리뷰 --%>
 		<%-- <div class="main-review">
 		<c:if test="${!empty reviewList}">
@@ -422,7 +422,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 				<c:forEach var="list" items="${reviewList}" varStatus="idx" end="1">
 				<li>
 					<a href="${CTX}/mypage/review/reviewDetail.do?reviewIdx=${list.reviewIdx}&layerType=review" class="item">
-					<a href="${CTX}/product/productView.do?goodsCd=${list.goodsCd}#reviewTab" class="item"> 
+					<a href="${CTX}/product/productView.do?goodsCd=${list.goodsCd}#reviewTab" class="item">
 						<div class="item-title">
 							<c:choose>
 								<c:when test="${list.img1 ne null}">
@@ -456,7 +456,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 
 								</c:choose>
 								<strong>${list.goodsNm}</strong>
-							</div>		
+							</div>
 							<p class="info-summary">
 								${list.reviewDesc}
 							</p>
@@ -472,7 +472,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		</c:if>
 		</div> --%>
 		<%-- //리뷰 --%>
-		
+
 		<%-- GASTBY LOOK --%>
 		<%-- <div class="main-look">
 		<c:if test="${!empty snsList}">
@@ -532,7 +532,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		</c:if>
 		</div> --%>
 		<%-- //GATSBY LOOK --%>
-		
+
 		<%-- SET --%>
 		<%-- <div class="main-set">
 		<c:if test="${!empty setList}">
@@ -587,7 +587,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		</c:if>
 		</div> --%>
 		<%-- //SET --%>
-		
+
 		<%-- STYLING TIPS --%>
 		<%-- <div class="main-tips">
 		<c:if test="${!empty tipList}">
@@ -605,7 +605,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 								<c:set var="link" value="${CTX}/style/tipView.do?tipIdx=${list.tipIdx}"/>
 							</c:otherwise>
 						</c:choose>
-						
+
 						<div class="tips-thumb" onclick="location.href='${link}'">
 							<img src="${IMGPATH}/tip/${list.tipIdx}/${list.tipImg}" alt="${list.tipTitle}"/>
 						</div>
@@ -667,7 +667,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		</c:if>
 		</div> --%>
 		<%-- //STYLING TIPS --%>
-		
+
 		<%-- 베스트 --%>
 		<%-- <div class="main-bestprod">
 		<c:if test="${!empty bestList}">
@@ -704,7 +704,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		</c:if>
 		</div> --%>
 		<%-- //베스트 --%>
-		
+
 	</div>
 	
 <!-- 팝업 -->

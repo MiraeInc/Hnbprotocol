@@ -14,6 +14,17 @@ $(function(){
 	$(".form-datepicker").datepicker();
 });
 
+function up() {
+	var requestPoint = $("#requestPoint").val();
+	if ($("#requestPoint").val() != "" && ($("#requestPoint").val() % 100 == 0)) {
+		$("#hnbToken").html(($("#requestPoint").val() / 100) + ' 토큰');
+	}
+	else {
+		$("#hnbToken").html("");
+	}
+
+}
+
 function checkNumber(event) {
     if (event.key === '.' || event.key === '-' || event.key >= 0 && event.key <= 9) {
         return true;
@@ -86,7 +97,8 @@ function writeOk() {
                 <li>
                     <div class="item-point">
                         <div class="token_input">
-                            <p><span class="tit">신청포인트</span> <input type="number" name="requestPoint" id="requestPoint" onkeypress='return checkNumber(event)' placeholder="포인트입력"></p>
+                            <p><span class="tit">신청포인트</span> <input type="number" name="requestPoint" id="requestPoint" onkeypress='return checkNumber(event)' onkeyup="up()" placeholder="포인트입력"></p>
+			                <p><span class="tit">HNB토큰</span> <span id="hnbToken"></span></p>
                             <p><span class="tit">지 갑 주 소</span> <input type="text" name="walletAddress" id="walletAddress" placeholder="주소입력"></p>
                         </div>
                         <div class="btn_box btn_center">
