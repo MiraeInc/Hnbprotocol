@@ -38,6 +38,6 @@ public enum StatusCode {
     }
 
     public boolean isCancelEnableCode() {
-        return StatusCode.REQUEST.getCode().equals(this.code);
+        return StatusCode.REQUEST.getCode().equals(this.code.toUpperCase());
     }
 }
