@@ -96,7 +96,9 @@ function goPage(page){
 								</tr>
 								<tr class="btn_cont">
 									<td>
-										<button class="btn btn_02" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
+                                        <c:if test="${list.statusCode eq 'REQUEST' }" >
+										    <button class="btn btn_02" onclick="cancel('${list.tokenRequestIdx}')">취소</button>
+										</c:if>
 									</td>
 								</tr>
 							</tfoot>
