@@ -722,7 +722,8 @@
 									<p>
 										<strong>${USERINFO.memberNm}</strong> 님
 									</p>
-									<a href="javascript:void(0);" data-toggle="popup" data-target="#pop_grade_benefit">회원 등급별 혜택</a>
+									<!-- 2023.04.11 수정 -->
+									<!-- <a href="javascript:void(0);" data-toggle="popup" data-target="#pop_grade_benefit">회원 등급별 혜택</a> -->
 								</div>
 								<ul class="pocket-info">
 									<li>
