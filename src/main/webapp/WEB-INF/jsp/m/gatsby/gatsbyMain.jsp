@@ -349,7 +349,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 			<h2 class="nowsale-title">PRODUCT</h2>
 			<div class="product-items nobor">
 				<ul class="type-default">
-					<c:forEach var="list" items="${saleList}" varStatus="idx" end="11">
+					<c:forEach var="list" items="${saleList}" varStatus="idx" end="19">
 					<li <c:if test="${list.soldoutYn eq 'Y'}">class="soldout"</c:if>>
 						<div class="item">
 							<div class="item-wrap">
