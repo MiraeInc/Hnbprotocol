@@ -119,7 +119,8 @@
 					<img src="${CTX }/images/logo_mandom.png" alt="Mandom">
 				</a>
 			</h1>
-			<h2 class="page-title">로그인</h2>
+			<!-- 2023.04.11 수정 -->
+			<!-- <h2 class="page-title">로그인</h2> -->
 		</header>
 		<article id="container" class="clearfix">
 			<form name="writeform" id="writeform"  method="post" onsubmit="return false;">

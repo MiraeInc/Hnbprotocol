@@ -707,7 +707,8 @@
 										<strong class="em">할인 쿠폰,<br/> 포인트</strong> 및 <strong class="em">사은품</strong> 등 다양한 혜택을<br/> 
 										받으실 수 있습니다.
 									</p>
-									<a href="javascript:void(0);" data-toggle="popup" data-target="#pop_grade_benefit">온라인 회원 혜택</a>
+									<!-- 2023.04.11 수정 -->
+									<!-- <a href="javascript:void(0);" data-toggle="popup" data-target="#pop_grade_benefit">온라인 회원 혜택</a> -->
 								</div>
 								<div class="pocket-login">
 									<a href="${CTX}/member/joinStep01.do" class="btn"><span class="txt">회원가입</span></a>
