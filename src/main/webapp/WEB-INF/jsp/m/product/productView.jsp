@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <jsp:directive.include file="/WEB-INF/jsp/common/system/taglib.jsp"/>
 <c:set var="layout_type" value="${gnbBrand}" scope="request" />
+
 <!DOCTYPE>
 <html>
 <head>
