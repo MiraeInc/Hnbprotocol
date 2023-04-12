@@ -1113,7 +1113,7 @@ body[data-main="lucidol"] .header-main .btn-cart:after {color: #ffffff; backgrou
 .product-items .type-default .item-price .discount em {font-size: 16px;}
 .product-items .type-default .item-price .price {color:#000; font-size: 16px;}
 .product-items .type-default .item-summary { color: #107dff; font-size: 12px;}
-.product-items .type-default .item-name {font-size: 13px;overflow: hidden;text-overflow: ellipsis;display: -webkit-box;-webkit-line-clamp: 2;-webkit-box-orient: vertical;}
+.product-items .type-default .item-name {font-size: 13px;overflow: hidden;text-overflow: ellipsis;display: -webkit-box;-webkit-line-clamp: 2;-webkit-box-orient: vertical;height:39px;}
 .product-items .type-default .item-etc {margin-top: 5px;}
 .product-items .type-default .item-etc .coupon {height: 29px;}
 
