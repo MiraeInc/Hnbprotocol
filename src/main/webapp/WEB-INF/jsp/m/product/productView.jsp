@@ -163,7 +163,6 @@
 
 				$root.toggleClass('extra-open');
 				$this.toggleClass('active');
-
 				if($content.is(':visible')){
 					$('body').removeClass('fixed');
 					$content.slideUp();
