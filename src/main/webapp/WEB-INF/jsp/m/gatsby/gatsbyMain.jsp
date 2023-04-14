@@ -346,7 +346,8 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		<%-- NOW SALE --%>
 		<div class="main-nowsale">
 		<c:if test="${!empty saleList}">
-			<h2 class="nowsale-title">PRODUCT</h2>
+		    <!-- 2023.04.14 수정 -->
+			<!-- <h2 class="nowsale-title">PRODUCT</h2> -->
 			<div class="product-items nobor">
 				<ul class="type-default">
 					<c:forEach var="list" items="${saleList}" varStatus="idx" end="19">
