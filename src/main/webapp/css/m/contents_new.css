@@ -409,7 +409,7 @@ button,
 .mypage-index .section-status .order-status li { position: relative; float: left; width: 20%; margin: 20px 0; padding-bottom: 20px; text-align: center; } 
 .mypage-index .section-status .order-status li a { display: block; } 
 .mypage-index .section-status .order-status p { font-size: 30px; } 
-.mypage-index .section-status .order-status strong { position: absolute; bottom: 0; right: 0; left: 0; } 
+.mypage-index .section-status .order-status strong { position: absolute; bottom: 0; right: 0; left: 0; font-size:13px; letter-spacing: -1px;} 
 .mypage-index .section-status .complain-status { overflow: hidden; padding: 15px 0; border-bottom: 1px solid #ddd; } 
 .mypage-index .section-status .complain-status li { float: left; width: 33.33%; padding: 0 15px; border-right: 1px solid #ddd; } 
 .mypage-index .section-status .complain-status li:last-child { width: 33.34%; border-right: 0; } 
