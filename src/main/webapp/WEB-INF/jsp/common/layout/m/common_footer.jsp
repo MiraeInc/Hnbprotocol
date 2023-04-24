@@ -2,6 +2,8 @@
 <jsp:directive.include file="/WEB-INF/jsp/common/system/taglib.jsp" />
 <decorator:body />
 
+<script src="../../../../../js/m/device_check.js"></script>
+
 <!-- s: 하단고정메뉴 -->
 <div class="mandom-menu">
   <a href="javascript:void(0);" id="btnMenu" class="menu-anchor">
