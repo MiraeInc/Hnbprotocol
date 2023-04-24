@@ -2,14 +2,6 @@
 <jsp:directive.include file="/WEB-INF/jsp/common/system/taglib.jsp" />
 <decorator:body />
 
-<!-- <script src="../../../../../js/m/device_check.js"></script> -->
-
-<script type="text/javascript">
-	var broswerInfo = navigator.userAgent;    // broswerInfo 에 user agent 정보를 담습니다.
-	alert(broswerInfo);                       // user agent 정보내용을 화면에 경고창으로 보여줍니다.
-</script>
-
-
 <!-- s: 하단고정메뉴 -->
 <div class="mandom-menu">
   <a href="javascript:void(0);" id="btnMenu" class="menu-anchor">
