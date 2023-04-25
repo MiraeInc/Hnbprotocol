@@ -2,8 +2,8 @@
 <jsp:directive.include file="/WEB-INF/jsp/common/system/taglib.jsp"/>
 
 
-    <!-- <script src="/m/js/m/device_check.js"></script> -->
-	<script type="text/javascript">
+    <script src="/m/js/m/device_check.js"></script>
+	<!-- <script type="text/javascript">
 		if("<spring:message code='server.status'/>" == "LIVE") {
 			// 현재 페이지 주소 가져오기
 			var currentUrl = window.location.href;
@@ -18,7 +18,7 @@
 				}
 			}
 		}
-    </script>
+    </script> -->
 
 	<script type="text/javascript">
 		$(document).ready(function(){
