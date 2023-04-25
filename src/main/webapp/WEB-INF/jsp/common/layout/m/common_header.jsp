@@ -1,8 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <jsp:directive.include file="/WEB-INF/jsp/common/system/taglib.jsp"/>
 
-
     <script src="/m/js/m/device_check.js"></script>
+	check("<spring:message code='server.status'/>");
+
 	<!-- <script type="text/javascript">
 		if("<spring:message code='server.status'/>" == "LIVE") {
 			// 현재 페이지 주소 가져오기
