@@ -2,7 +2,9 @@
 <jsp:directive.include file="/WEB-INF/jsp/common/system/taglib.jsp"/>
 
     <script src="/m/js/m/device_check.js"></script>
-	check("<spring:message code='server.status'/>");
+	<script type="text/javascript">
+		deviceCheck("<spring:message code='server.status'/>");
+	</script>
 
 	<!-- <script type="text/javascript">
 		if("<spring:message code='server.status'/>" == "LIVE") {

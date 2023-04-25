@@ -1,5 +1,5 @@
 
-function check(activeProfilesCode) {
+function deviceCheck(activeProfilesCode) {
     if(activeProfilesCode == "LIVE") {
         var currentUrl = window.location.href;
         
