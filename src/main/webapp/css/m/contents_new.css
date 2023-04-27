@@ -409,7 +409,7 @@ button,
 .mypage-index .section-status .order-status li { position: relative; float: left; width: 20%; margin: 20px 0; padding-bottom: 20px; text-align: center; } 
 .mypage-index .section-status .order-status li a { display: block; } 
 .mypage-index .section-status .order-status p { font-size: 30px; } 
-.mypage-index .section-status .order-status strong { position: absolute; bottom: 0; right: 0; left: 0; } 
+.mypage-index .section-status .order-status strong { position: absolute; bottom: 0; right: 0; left: 0; font-size:13px; letter-spacing: -1px;} 
 .mypage-index .section-status .complain-status { overflow: hidden; padding: 15px 0; border-bottom: 1px solid #ddd; } 
 .mypage-index .section-status .complain-status li { float: left; width: 33.33%; padding: 0 15px; border-right: 1px solid #ddd; } 
 .mypage-index .section-status .complain-status li:last-child { width: 33.34%; border-right: 0; } 
@@ -2510,7 +2510,6 @@ body[data-main="gpcreate"] .main-banner:before { background-color: #58c4c7; }
 .bestreview .swiper-button-next { right: 7px; margin-top: 21px; background: url("../../images/m/contents/bestreview/bestreview_arrow.png") no-repeat 100% 0; background-size: auto 21px; } 
 
 /* 2023.04.07 token_cont */
-.token_cont+.pagin-nav{margin-top:20px;}
 .pagin-nav+.guidebox,
 .token_cont+.guidebox{margin: 10px 15px 0 15px;}
 .token_cont .point-summary .desc{font-weight:400 !important;}
@@ -2551,10 +2550,6 @@ body[data-main="gpcreate"] .main-banner:before { background-color: #58c4c7; }
 
 /* color */
 .color_red{color:red;}
-
-.pagin-nav.nav_s01 li.active{top:0;}
-.pagin-nav.nav_s01 li.active a{font-size:18px;}
-.pagin-nav.nav_s01 ul{padding:30px 0 0;}
 
 .content.hnb_main{margin-bottom:-20px;}
 .container{padding-bottom:20px;}

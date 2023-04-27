@@ -45,12 +45,14 @@ button.clear-form{width: 12px !important;height: 12px !important;padding: 0;disp
 
 /* Page Navitator style */
 .pagin-nav{position: relative; display: block; text-align: center;}
-.pagin-nav ul{margin: 0; padding: 70px 0 0; font-size: 0;  list-style: none;}
+/* .pagin-nav ul{margin: 0; padding: 70px 0 0; font-size: 0;  list-style: none;} */
+.pagin-nav ul{margin: 0; padding: 50px 0 0; font-size: 0;  list-style: none;}
 .pagin-nav li{display: inline-block;}
 .pagin-nav li a{display: inline-block; margin: 0 5px; padding:0 5px; font-size: 1.071rem; color: #999; border-bottom: 1px solid #ddd;}
 .pagin-nav li a span{display: inline-block;}
 .pagin-nav li.active{position: absolute; left: 50%; top: 14px; transform: translateX(-50%);}
-.pagin-nav li.active a{margin:0; padding:0; font-size: 2.786rem; color: #444; border-bottom:0;}
+/* .pagin-nav li.active a{margin:0; padding:0; font-size: 2.786rem; color: #444; border-bottom:0;} */
+.pagin-nav li.active a{margin:0; padding:0; font-size: 1rem; color: #444; border-bottom:0;}
 
 .pagin-nav .pagin-left {width: 22px; height: 22px;}
 .pagin-nav .pagin-left a {width: 22px; height: 22px;padding: 0; text-indent: -99999px; border-bottom:0; background: url("../../images/m/common/ico_pagin_left.png") no-repeat center center; background-size: 11px 11px;}
@@ -1111,7 +1113,7 @@ body[data-main="lucidol"] .header-main .btn-cart:after {color: #ffffff; backgrou
 .product-items .type-default .item-price .discount em {font-size: 16px;}
 .product-items .type-default .item-price .price {color:#000; font-size: 16px;}
 .product-items .type-default .item-summary { color: #107dff; font-size: 12px;}
-.product-items .type-default .item-name {font-size: 13px;overflow: hidden;text-overflow: ellipsis;display: -webkit-box;-webkit-line-clamp: 2;-webkit-box-orient: vertical;}
+.product-items .type-default .item-name {font-size: 13px;overflow: hidden;text-overflow: ellipsis;display: -webkit-box;-webkit-line-clamp: 2;-webkit-box-orient: vertical;height:39px;}
 .product-items .type-default .item-etc {margin-top: 5px;}
 .product-items .type-default .item-etc .coupon {height: 29px;}
 

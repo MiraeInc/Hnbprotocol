@@ -8,6 +8,9 @@ target
 [Tt]arget/
 .idea
 
+message-*.properties
+db.properties
+
 # Compiled class file
 *.class
 */*.class
