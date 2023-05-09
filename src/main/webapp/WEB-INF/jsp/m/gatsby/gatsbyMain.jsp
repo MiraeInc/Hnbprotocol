@@ -371,14 +371,16 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
                 $(document).ready(function() {
                     $("#btn_Health").click(function() {
                         $(this).addClass("on");
-                        $(".type-default li").css("display", "none");
+						$(".type-default li .item_health").css("display", "block");
+                        $(".type-default li .item_beauty").css("display", "none");
                         $("#btn_Beauty").removeClass("on");
 
                     });
 
                     $("#btn_Beauty").click(function() {
                         $(this).addClass("on");
-                        $(".type-default li").css("display", "block");
+                        $(".type-default li .item_beauty").css("display", "block");
+                        $(".type-default li .item_health").css("display", "none");
                         $("#btn_Health").removeClass("on");
                     });
                 });

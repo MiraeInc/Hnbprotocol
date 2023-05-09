@@ -1098,8 +1098,8 @@ body[data-main="lucidol"] .header-main .btn-cart:after {color: #ffffff; backgrou
 .product-items .type-default {margin: 0 -12px;}
 .product-items .type-default:after {content: ''; display: block; clear:both; content: '';}
 .product-items .type-default a {display: block; position: relative;}
-.product-items .type-default li {margin: 10px 0;}
-.product-items .type-default .item {min-height: 280px; padding: 0 12px;}
+/* .product-items .type-default li {margin: 20px 0;} */
+.product-items .type-default .item {margin: 20px 0; padding: 0 12px; height:auto !important;}
 .product-items .type-default .item-wrap {position: relative;}
 .product-items .type-default .btn-cart {position: absolute; right: 0; bottom: 4px; width: 33px; height: 33px; background: url('../../images/m/common/ico_cart2.png') 0 0 no-repeat; background-size: cover;}
 .product-items .type-default .item-num {margin-bottom: 14px; font-size: 0; text-align: center;}
