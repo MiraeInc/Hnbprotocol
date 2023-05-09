@@ -354,37 +354,34 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 			<style>
 			.fixed { position: fixed; top:0; left:0; }
 			</style>
-			<script src="http://code.jquery.com/jquery-2.2.4.min.js"></script>
 			<script>
-			$(function() {
-				$.fn.Scrolling = function(obj, tar) {
-					var _this = this;
-					$(window).scroll(function(e) {
-						var end = obj + tar;
-						$(window).scrollTop() >= obj ? _this.addClass("fixed") : _this.removeClass("fixed");
-						if($(window).scrollTop() >= end) _this.removeClass("fixed");
-					});
-				};
-			
-				$("#category_btn_box").Scrolling($("#category_btn_box").offset().top, ($(".category_wrap").height() - $("#category_btn_box").height()));
-			});
+                $(function() {
+                    $.fn.Scrolling = function(obj, tar) {
+                        var _this = this;
+                        $(window).scroll(function(e) {
+                            var end = obj + tar;
+                            $(window).scrollTop() >= obj ? _this.addClass("fixed") : _this.removeClass("fixed");
+                            if($(window).scrollTop() >= end) _this.removeClass("fixed");
+                        });
+                    };
 
-			// 2023.05.08 추가 작업
-			$(document).ready(function() {
-				$("#btn_Health").click(function() {
-					$(this).addClass("on");
-					$(".type-default li").css("display", "none");
-					$("#btn_Beauty").removeClass("on");
-					
-				});
+                    $("#category_btn_box").Scrolling($("#category_btn_box").offset().top, ($(".category_wrap").height() - $("#category_btn_box").height()));
+                });
 
-				$("#btn_Beauty").click(function() {
-					$(this).addClass("on");
-					$(".type-default li").css("display", "block");
-					$("#btn_Health").removeClass("on");
-				});
-			});
-			// --2023.05.08 추가 작업
+                $(document).ready(function() {
+                    $("#btn_Health").click(function() {
+                        $(this).addClass("on");
+                        $(".type-default li").css("display", "none");
+                        $("#btn_Beauty").removeClass("on");
+
+                    });
+
+                    $("#btn_Beauty").click(function() {
+                        $(this).addClass("on");
+                        $(".type-default li").css("display", "block");
+                        $("#btn_Health").removeClass("on");
+                    });
+                });
 			</script>
 
 			<div class="product-items nobor category_wrap" style="width: 100%; height: 100%;">
