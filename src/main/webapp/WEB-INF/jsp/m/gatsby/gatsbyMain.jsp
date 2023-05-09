@@ -395,7 +395,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 				<ul class="type-default">
 					<c:forEach var="list" items="${saleList}" varStatus="idx" end="19">
 					<li <c:if test="${list.soldoutYn eq 'Y'}">class="soldout"</c:if>>
-						<div class="item">
+						<div class="item item_${list.goodsFlag}">
 							<div class="item-wrap">
 								<a href="${CTX}/product/productView.do?goodsCd=${list.goodsCd}&choiceCateIdx=${list.choiceCateIdx}" class="item-anchor">
 									<span class="badge-box">
