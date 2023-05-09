@@ -346,9 +346,53 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		<%-- NOW SALE --%>
 		<div class="main-nowsale">
 		<c:if test="${!empty saleList}">
-		    <!-- 2023.04.14 수정 -->
+		    
+			<!-- 2023.04.14 수정 -->
 			<!-- <h2 class="nowsale-title">PRODUCT</h2> -->
-			<div class="product-items nobor">
+
+			<!-- 2023.04.04 수정 -->
+			<style>
+			.fixed { position: fixed; top:0; left:0; }
+			</style>
+			<script src="http://code.jquery.com/jquery-2.2.4.min.js"></script>
+			<script>
+			$(function() {
+				$.fn.Scrolling = function(obj, tar) {
+					var _this = this;
+					$(window).scroll(function(e) {
+						var end = obj + tar;
+						$(window).scrollTop() >= obj ? _this.addClass("fixed") : _this.removeClass("fixed");
+						if($(window).scrollTop() >= end) _this.removeClass("fixed");
+					});
+				};
+			
+				$("#category_btn_box").Scrolling($("#category_btn_box").offset().top, ($(".category_wrap").height() - $("#category_btn_box").height()));
+			});
+
+			// 2023.05.08 추가 작업
+			$(document).ready(function() {
+				$("#btn_Health").click(function() {
+					$(this).addClass("on");
+					$(".type-default li").css("display", "none");
+					$("#btn_Beauty").removeClass("on");
+					
+				});
+
+				$("#btn_Beauty").click(function() {
+					$(this).addClass("on");
+					$(".type-default li").css("display", "block");
+					$("#btn_Health").removeClass("on");
+				});
+			});
+			// --2023.05.08 추가 작업
+			</script>
+
+			<div class="product-items nobor category_wrap" style="width: 100%; height: 100%;">
+				<div id="category_btn_box" class="btn_cont_menu">
+					<button id="btn_Health">Health</button>
+					<button id="btn_Beauty">Beauty</button>
+				</div>
+
 				<ul class="type-default">
 					<c:forEach var="list" items="${saleList}" varStatus="idx" end="19">
 					<li <c:if test="${list.soldoutYn eq 'Y'}">class="soldout"</c:if>>

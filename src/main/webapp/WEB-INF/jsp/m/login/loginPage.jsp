@@ -169,23 +169,28 @@
 							
 							<div class="sns_simple_link">
 								<strong><b>SNS 간편 로그인</b></strong>
-								<a href="javascript:" onclick="snsLoginPopup('N');">
-									<img src="${CTX}/images/ico_simplelink_naver.png" alt="네이버 SNS 간편 로그인">
-								</a>
-								<a href="javascript:" onclick="snsLoginPopup('K');">
-									<img src="${CTX}/images/ico_simplelink_kakaotalk.png" alt="카카오톡 SNS 간편 로그인">
-								</a>
-								<%--
-								<a href="javascript:" onclick="snsLoginPopup('P');">
-									<img src="${CTX}/images/ico_simplelink_payco.png" alt="페이코 SNS 간편 로그인">
-								</a>
-								<a href="javascript:" onclick="snsLoginPopup('W');">
-									<img src="${CTX}/images/ico_simplelink_wonder.png" alt="원더쇼핑 간편 로그인">
-								</a>
-								<a href="javascript:" onclick="snsLoginPopup()">
-									<img src="${CTX}/images/ico_simplelink_wonder.png" alt="원더 간편 로그인">
-								</a>
-								--%>
+								<!-- 2023.05.04 수정 -->
+								<div class="sns_btn_cont">
+									<a href="javascript:" onclick="snsLoginPopup('N');" class="sns_naver">
+										<img src="${CTX}/images/ico_simplelink_naver.png" alt="네이버 SNS 간편 로그인">
+										<span class="txt"><em>NAVER</em>로 로그인</span>
+									</a>
+									<a href="javascript:" onclick="snsLoginPopup('K');" class="sns_kakao">
+										<img src="${CTX}/images/ico_simplelink_kakaotalk.png" alt="카카오톡 SNS 간편 로그인">
+										<span class="txt"><em>카카오톡</em>으로 로그인</span>
+									</a>
+									<%--
+									<a href="javascript:" onclick="snsLoginPopup('P');">
+										<img src="${CTX}/images/ico_simplelink_payco.png" alt="페이코 SNS 간편 로그인">
+									</a>
+									<a href="javascript:" onclick="snsLoginPopup('W');">
+										<img src="${CTX}/images/ico_simplelink_wonder.png" alt="원더쇼핑 간편 로그인">
+									</a>
+									<a href="javascript:" onclick="snsLoginPopup()">
+										<img src="${CTX}/images/ico_simplelink_wonder.png" alt="원더 간편 로그인">
+									</a>
+									--%>
+								</div>
 							</div>
 							<small>* 팝업이 차단되어 있을 경우 SNS 간편 로그인을 이용할 수 없으므로 팝업 차단 해제 후 이용 바랍니다.</small>
 						</div>
