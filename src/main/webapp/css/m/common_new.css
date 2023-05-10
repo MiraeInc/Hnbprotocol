@@ -1125,6 +1125,7 @@ body[data-main="lucidol"] .header-main .btn-cart:after {color: #ffffff; backgrou
 
 .product-items .type-default li:nth-child(n+3) .item-num img {height: 18px;}
 
+.fixed { position: fixed; top:0; left:0; }
 
 @media only screen and (max-device-width : 320px) {
     .product-items .type-default .item-num img {height: 25px;}

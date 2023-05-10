@@ -351,9 +351,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 			<!-- <h2 class="nowsale-title">PRODUCT</h2> -->
 
 			<!-- 2023.04.04 수정 -->
-			<style>
-			.fixed { position: fixed; top:0; left:0; }
-			</style>
+			<style>.fixed { position: fixed; top:0; left:0; }</style>
 			<script>
                 $(function() {
                     $.fn.Scrolling = function(obj, tar) {
@@ -384,6 +382,26 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
                         $("#btn_Health").removeClass("on");
                     });
                 });
+
+				document.addEventListener("DOMContentLoaded", function() {
+					// 이전에 저장된 버튼 상태를 확인하여 "on" 클래스 추가
+					var savedButton = localStorage.getItem("selectedButton");
+					if (savedButton) {
+					document.getElementById(savedButton).classList.add("on");
+					}
+				});
+
+				document.getElementById("btn_Health").addEventListener("click", function() {
+					// 버튼 클릭 시 "on" 클래스 추가하고 상태 저장
+					this.classList.add("on");
+					localStorage.setItem("selectedButton", "btn_Health");
+				});
+
+				document.getElementById("btn_Beauty").addEventListener("click", function() {
+					// 버튼 클릭 시 "on" 클래스 추가하고 상태 저장
+					this.classList.add("on");
+					localStorage.setItem("selectedButton", "btn_Beauty");
+				});
 			</script>
 
 			<div class="product-items nobor category_wrap" style="width: 100%; height: 100%;">
