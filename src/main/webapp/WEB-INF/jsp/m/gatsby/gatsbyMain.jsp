@@ -402,6 +402,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 					this.classList.add("on");
 					localStorage.setItem("selectedButton", "btn_Beauty");
 				});
+
 			</script>
 
 			<div class="product-items nobor category_wrap" style="width: 100%; height: 100%;">
