@@ -351,8 +351,8 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 			<!-- <h2 class="nowsale-title">PRODUCT</h2> -->
 			<div class="product-items nobor category_wrap" style="width: 100%; height: 100%;">
 				<div id="category_btn_box" class="btn_cont_menu">
-					<button id="btn_Health">Health</button>
-					<button id="btn_Beauty">Beauty</button>
+					<button id="btn_Health" <c:if test="${goodsFlag eq 'HEALTH'}">class="on"</c:if>>Health</button>
+					<button id="btn_Beauty" <c:if test="${goodsFlag eq 'BEAUTY'}">class="on"</c:if>>Beauty</button>
 				</div>
 
 				<ul class="type-default">
@@ -714,166 +714,69 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 
 	</div>
 	
-<!-- 팝업 -->
-<c:forEach var="list" items="${popupList}" varStatus="idx" end="0">
-	<c:if test="${list.gatsbyYn eq '1'}">
-		<c:set var="popWidth" value="${list.popWidth}"/> <%-- 모바일은 테두리 +px 하지 않음 --%>
-		<c:choose>
-			<c:when test="${list.popupIdx eq '75'}"> <%-- DEV:46 , REAL:75 --%>
-				<div class="popup type-notice" data-remodal-mode="multiple" data-remodal-id="popNotice">
-			</c:when>
-			<c:otherwise>
-				<div class="popup type-notice" data-remodal-mode="multiple" data-remodal-id="popNotice" style="max-width: ${popWidth}px !important; height: ${list.popHeight}px !important;">
-			</c:otherwise>
-		</c:choose>
-			<div class="pop-mid">
-				<c:if test="${list.textFlag eq 'L'}">
-					<a href="<c:if test='${!empty list.moLinkUrl}'>${list.moLinkUrl}</c:if><c:if test='${empty list.moLinkUrl}'>javascript:</c:if>" <c:if test="${list.moLinkFlag eq '_BLANK'}">target="_BLANK"</c:if>>
-						<img src="${IMGPATH}/popup/${list.popupIdx}/${list.moPopImg}" alt="${list.popTitle}"/>
-					</a>
-				</c:if>
-				<c:if test="${list.textFlag eq 'H'}">
-					${list.moPopDesc}
-				</c:if>
-			</div>
-			<div class="pop-close">
-				<div class="form-custom">
-					<span class="checkbox">
-				        <input type="checkbox" name="mainPop" id="mainPop${list.popupIdx}" class="check" data-idx="${list.popupIdx}" data-device="${list.deviceGubun}" onclick="mainClosePop('${list.popupIdx}');">
-				        <label for="mainPop${list.popupIdx}" class="lbl">오늘 하루 안보기</label>
-				    </span>
-				</div>
-				<a href="javascript:void(0);" class="btn-close" data-remodal-action="close">닫기</a>
-			</div>
-		</div>
-	</c:if>
-</c:forEach>
-<!-- //팝업 -->
+    <!-- 팝업 -->
+    <c:forEach var="list" items="${popupList}" varStatus="idx" end="0">
+        <c:if test="${list.gatsbyYn eq '1'}">
+            <c:set var="popWidth" value="${list.popWidth}"/> <%-- 모바일은 테두리 +px 하지 않음 --%>
+            <c:choose>
+                <c:when test="${list.popupIdx eq '75'}"> <%-- DEV:46 , REAL:75 --%>
+                    <div class="popup type-notice" data-remodal-mode="multiple" data-remodal-id="popNotice">
+                </c:when>
+                <c:otherwise>
+                    <div class="popup type-notice" data-remodal-mode="multiple" data-remodal-id="popNotice" style="max-width: ${popWidth}px !important; height: ${list.popHeight}px !important;">
+                </c:otherwise>
+            </c:choose>
+                <div class="pop-mid">
+                    <c:if test="${list.textFlag eq 'L'}">
+                        <a href="<c:if test='${!empty list.moLinkUrl}'>${list.moLinkUrl}</c:if><c:if test='${empty list.moLinkUrl}'>javascript:</c:if>" <c:if test="${list.moLinkFlag eq '_BLANK'}">target="_BLANK"</c:if>>
+                            <img src="${IMGPATH}/popup/${list.popupIdx}/${list.moPopImg}" alt="${list.popTitle}"/>
+                        </a>
+                    </c:if>
+                    <c:if test="${list.textFlag eq 'H'}">
+                        ${list.moPopDesc}
+                    </c:if>
+                </div>
+                <div class="pop-close">
+                    <div class="form-custom">
+                        <span class="checkbox">
+                            <input type="checkbox" name="mainPop" id="mainPop${list.popupIdx}" class="check" data-idx="${list.popupIdx}" data-device="${list.deviceGubun}" onclick="mainClosePop('${list.popupIdx}');">
+                            <label for="mainPop${list.popupIdx}" class="lbl">오늘 하루 안보기</label>
+                        </span>
+                    </div>
+                    <a href="javascript:void(0);" class="btn-close" data-remodal-action="close">닫기</a>
+                </div>
+            </div>
+        </c:if>
+    </c:forEach>
+    <!-- //팝업 -->
 
-<!-- 2023.04.04 수정 -->
-<style>.fixed { position: fixed; top:0; left:0; }</style>
-<script>
-	// $(document).ready(function() {
-	// // 페이지 로드 시 저장된 버튼 상태를 복원합니다.
-	// // restoreButtonState();
+    <!-- 2023.04.04 수정 -->
+    <style>.fixed { position: fixed; top:0; left:0; }</style>
 
-	// // 버튼 클릭 이벤트 처리
-	// $('button').click(function() {
-	// 	// 선택된 버튼에 on 클래스를 추가하고 다른 버튼의 on 클래스를 제거합니다.
-	// 	// $(this).addClass('on').siblings().removeClass('on');
+    <script>
+        $(function() {
+            $.fn.Scrolling = function(obj, tar) {
+                var _this = this;
+                $(window).scroll(function(e) {
+                    var end = obj + tar;
+                    $(window).scrollTop() >= obj ? _this.addClass("fixed") : _this.removeClass("fixed");
+                    if($(window).scrollTop() >= end) _this.removeClass("fixed");
+                });
+            };
 
-	// 	// 선택된 버튼의 id 값을 쿠키에 저장합니다.
-	// 	var selectedButtonId = $(this).attr('id');
-	// 	document.cookie = 'selectedButtonId=' + selectedButtonId;
-	// });
+            $("#category_btn_box").Scrolling($("#category_btn_box").offset().top, ($(".category_wrap").height() - $("#category_btn_box").height()));
+        });
 
-	// // 뒤로가기 이벤트 처리
-	// $(window).on('popstate', function() {
-	// 	// 저장된 버튼 상태를 복원합니다.
-	// 	restoreButtonState();
-	// });
+        $(document).ready(function() {
+            $("#btn_Health").click(function() {
+                location.href = "/m/main.do?goodsFlag=HEALTH";
+            });
 
-	// // 저장된 버튼 상태를 복원하는 함수
-	// function restoreButtonState() {
-	// 	var selectedButtonId = getCookieValue('selectedButtonId');
-	// 	if (selectedButtonId) {
-	// 	$('#' + selectedButtonId).addClass('on').siblings().removeClass('on');
-	// 	}
-	// }
-
-	// // 쿠키에서 특정 이름의 값을 가져오는 함수
-	// function getCookieValue(name) {
-	// 	var value = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-	// 	return value ? value.pop() : '';
-	// }
-	// });
-
-	// 
-
-	
-	
-	$(window).on('beforeunload', function() {
-		// 취소 버튼을 눌렀을 때 실행할 코드 작성
-		
-		$(document).ready(function() {
-		// 페이지 로드 시 저장된 버튼 상태를 복원합니다.
-		// restoreButtonState();
-
-			// // 버튼 클릭 이벤트 처리
-			// $('button').click(function() {
-			// 	// 선택된 버튼에 on 클래스를 추가하고 다른 버튼의 on 클래스를 제거합니다.
-			// 	// $(this).addClass('on').siblings().removeClass('on');
-
-			// 	// 선택된 버튼의 id 값을 쿠키에 저장합니다.
-			// 	var selectedButtonId = $(this).attr('id');
-			// 	document.cookie = 'selectedButtonId=' + selectedButtonId;
-			// });
-
-			// // 뒤로가기 이벤트 처리
-			// $(window).on('popstate', function() {
-			// 	// 저장된 버튼 상태를 복원합니다.
-			// 	restoreButtonState();
-			// });
-
-			// // 저장된 버튼 상태를 복원하는 함수
-			// function restoreButtonState() {
-			// 	var selectedButtonId = getCookieValue('selectedButtonId');
-			// 	if (selectedButtonId) {
-			// 	$('#' + selectedButtonId).addClass('on').siblings().removeClass('on');
-			// 	}
-			// }
-
-			// // 쿠키에서 특정 이름의 값을 가져오는 함수
-			// function getCookieValue(name) {
-			// 	var value = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-			// 	return value ? value.pop() : '';
-			// }
-
-		});
-	});
-	
-	$(document).ready(function() {
-		if ($('#btn_Health').hasClass('on')) {
-			$(".item_HEALTH").css("display", "block");
-			$(".item_BEAUTY").css("display", "none");
-		} else {
-			$(".item_HEALTH").css("display", "none");
-			$(".item_BEAUTY").css("display", "block");
-		}
-	})
-	// 
-	$(function() {
-		$.fn.Scrolling = function(obj, tar) {
-			var _this = this;
-			$(window).scroll(function(e) {
-				var end = obj + tar;
-				$(window).scrollTop() >= obj ? _this.addClass("fixed") : _this.removeClass("fixed");
-				if($(window).scrollTop() >= end) _this.removeClass("fixed");
-			});
-		};
-
-		$("#category_btn_box").Scrolling($("#category_btn_box").offset().top, ($(".category_wrap").height() - $("#category_btn_box").height()));
-	});
-
-	$(document).ready(function() {
-		$("#btn_Health").click(function() {
-			$(this).addClass("on");
-			$(".type-default li .item_HEALTH").css("display", "block");
-			$(".type-default li .item_BEAUTY").css("display", "none");
-			$("#btn_Beauty").removeClass("on");
-
-		});
-
-		$("#btn_Beauty").click(function() {
-			$(this).addClass("on");
-			$(".type-default li .item_BEAUTY").css("display", "block");
-			$(".type-default li .item_HEALTH").css("display", "none");
-			$("#btn_Health").removeClass("on");
-		});
-	});
-	
-
-</script>
+            $("#btn_Beauty").click(function() {
+                location.href = "/m/main.do?goodsFlag=BEAUTY";
+            });
+        });
+    </script>
 
 </body>
 </html>

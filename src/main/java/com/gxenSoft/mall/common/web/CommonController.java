@@ -8,6 +8,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -22,6 +23,7 @@ import org.springframework.ui.Model;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -67,7 +69,11 @@ public class CommonController extends CommonMethod{
 	private ProductService productService;
 
 	@RequestMapping(value = { "/main", "/gatsby/main", "/gatsby" })
-	public String gatsbyMain(CommonVO vo, SearchVO schVO, Model model) throws Exception{
+	public String gatsbyMain(CommonVO vo,
+							 SearchVO schVO,
+							 Model model,
+							 @RequestParam(value = "goodsFlag", required = false) String goodsFlag
+	) throws Exception{
 		List<SqlMap> mainBannerList = commonService.getMainBannerList("GB_BANNER");	// 갸스비 메인배너 리스트
 		List<SqlMap> saleList = commonService.getMainProductList("GB", "sale");					// 메인 상품 리스트 (SALE)
 		List<SqlMap> newproductsList = commonService.getMainProductList("GB", "newproducts"); // 메인 상품 리스트 (NEW PRODUCTS)
@@ -81,7 +87,13 @@ public class CommonController extends CommonMethod{
 		List<SqlMap> eventList = commonService.getMainEventList("GB"); 								// 메인 이벤트 리스트
 		List<SqlMap> noticeList = commonService.getNoticeList();											// 공지사항 리스트
 		List<SqlMap> popupList = commonService.getPopupList(); 											// 팝업 리스트
-		
+
+		if (goodsFlag != null) {
+			saleList = saleList.stream()
+					.filter(x -> goodsFlag.equals(x.get("goodsFlag")))
+					.collect(Collectors.toList());
+		}
+
 		model.addAttribute("mainBannerList", mainBannerList);
 		model.addAttribute("saleList", saleList);
 		model.addAttribute("newproductsList", newproductsList);
@@ -96,6 +108,7 @@ public class CommonController extends CommonMethod{
 		model.addAttribute("noticeList", noticeList);
 		model.addAttribute("popupList", popupList);
 		model.addAttribute("schVO", schVO);
+		model.addAttribute("goodsFlag", goodsFlag);
 		
 		return PathUtil.getCtx()+"/gatsby/gatsbyMain";
 	}
