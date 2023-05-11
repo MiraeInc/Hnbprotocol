@@ -405,7 +405,6 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		</div>
 		<%-- //NOW SALE --%>
 		
-		<!-- 2023.02.21 수정 : blank -->
 		<div class="blank"></div>
 		
 		<%-- HTML 컨텐츠 --%>
@@ -417,8 +416,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 			</c:if>
 		</c:if>
 		<%-- //HTML 컨텐츠 --%>
-		
-		<!-- 2023.02.21 수정 : blank -->
+
 		<div class="blank"></div>
 
 		<%-- 리뷰 --%>
@@ -711,7 +709,6 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 		</c:if>
 		</div> --%>
 		<%-- //베스트 --%>
-
 	</div>
 	
     <!-- 팝업 -->
@@ -750,9 +747,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
     </c:forEach>
     <!-- //팝업 -->
 
-    <!-- 2023.04.04 수정 -->
     <style>.fixed { position: fixed; top:0; left:0; }</style>
-
     <script>
         $(function() {
             $.fn.Scrolling = function(obj, tar) {
@@ -763,7 +758,6 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
                     if($(window).scrollTop() >= end) _this.removeClass("fixed");
                 });
             };
-
             $("#category_btn_box").Scrolling($("#category_btn_box").offset().top, ($(".category_wrap").height() - $("#category_btn_box").height()));
         });
 
@@ -777,6 +771,5 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
             });
         });
     </script>
-
 </body>
 </html>

@@ -3,22 +3,22 @@
 <!DOCTYPE">
 <html>
 <head>
-<meta name="decorator" content="mobile.main" />	
+<meta name="decorator" content="mobile.main" />
 <script>
 
 $(window).on('load', function(){
 
 	var mpbTemp = 0;
-	
+
 	$('.product-bestpicks').find('.item').each(function(idx){
 		var $this = $(this);
 		if(mpbTemp < $this.outerHeight()) {
 			mpbTemp = $this.outerHeight()
 		}
 	});
-	
+
 	$('.product-bestpicks').find('.item').css('height', mpbTemp);
-	
+
 })
 
 $(document).ready(function(){
@@ -27,7 +27,7 @@ $(document).ready(function(){
 	var idx = "${list.popupIdx}";
 	var gubun = "${list.deviceGubun}";
 	var cookie = getCookie("mainPop"+gubun+idx);
-	
+
 	if(cookie=="" || cookie==null){
 		noticePopup("popNotice");
 	}
@@ -39,7 +39,7 @@ function mainClosePop(idx){
 	if($("#mainPop"+idx).prop("checked")){
 		var idx = $("#mainPop"+idx).attr("data-idx");
 		var gubun = $("#mainPop"+idx).attr("data-device");
-		
+
 		setCookie("mainPop"+gubun+idx, "mainPop"+gubun+idx, 1);
 		$("[data-remodal-id=popNotice]").remodal().close();
 	}
@@ -62,27 +62,27 @@ function listMore(){
 	pageNo = pageNo+1;
 	$.ajax({
 		 url: "${CTX}/ajax/main/bestListMoreAjax.do",
-		 data : {	
+		 data : {
 			 			"pageNo"	:	pageNo,
 			 			"schType"	:	"0"
-		 		   },  
+		 		   },
 		 type: "GET",
 		 dataType: "html",
 		 async: false,
-		 contentType: "application/x-www-form-urlencoded; charset=UTF-8",  
-		 error: function(request, status, error){ 
-		 	alert("code:"+request.status+"\n"+"message:"+request.responseText+"\n"+"error:"+error); 
+		 contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+		 error: function(request, status, error){
+		 	alert("code:"+request.status+"\n"+"message:"+request.responseText+"\n"+"error:"+error);
 		 },
-		 success: function(responseData){ 
-			 $("#bestList").append(responseData);  
-			 
+		 success: function(responseData){
+			 $("#bestList").append(responseData);
+
 			 var lastPageNo = Number("${page.finalPageNo}");
 
 			 if(pageNo >= lastPageNo){
 				 $("#MOREBTN").remove();
 			 }
 		 }
-	});  
+	});
 }
 
 </script>
@@ -105,7 +105,7 @@ function listMore(){
 				bannerPager(el.getCurrentSlideCount, el.getTotalSlideCount)
 			}
 		});
-		
+
 	})
 
 	function bannerPager(current, total){
@@ -113,13 +113,13 @@ function listMore(){
 		$pager.find('.current').text(current);
 		$pager.find('.total').text(total);
 	}
-	
+
 </script>
 </head>
 
 <body>
 	<div class="content comm-main">
-	
+
 		<%-- 메인배너 --%>
 		<c:if test="${!empty mainBannerList}">
 			<div id="mainBanner" class="main-banners">
@@ -133,7 +133,7 @@ function listMore(){
 							</c:when>
 							<c:when test="${list.moLinkYn eq 'Y'}">
 							<a href="${list.moLinkUrl}" <c:if test="${list.moLinkFlag eq '_BLANK'}">target="_BLANK"</c:if>>
-							</c:when>				
+							</c:when>
 						</c:choose>
 								<img src="${IMGPATH}/banner/${list.bannerIdx}/${list.moBannerImg}" alt="배너이미지"/>
 							</a>
@@ -148,7 +148,7 @@ function listMore(){
 			</div>
 		</c:if>
 		<%-- 메인배너 --%>
-		
+
 		<%-- BEST PICK --%>
 		<c:if test="${!empty bestList}">
 		<div class="main-bestpick">
@@ -199,9 +199,9 @@ function listMore(){
 			</div>
 		</div>
 		</c:if>
-			
+
 		<%-- 타임세일 --%>
-		<c:if test="${!empty timeSale}">		
+		<c:if test="${!empty timeSale}">
 		<div class="main-timesale">
 			<div class="timesale-title">
 				<p>TIME SALE</p>
@@ -245,18 +245,18 @@ function listMore(){
 				</c:when>
 			</c:choose>
 				<img src="${IMGPATH}/banner/${moMidBanner.bannerIdx}/${moMidBanner.moBannerImg}"/>
-			</a>	
+			</a>
 		</div>
 		</c:if>
 		<%-- 중간배너 --%>
-		
+
 		<%-- 제품소개 --%>
 		<c:if test="${!empty sourceBanner}">
 			<c:out value="${sourceBanner.mGoodsDesc}" escapeXml="false"/>
 		</c:if>
 		<%-- 제품소개 --%>
 	</div>
-	
+
 <script type="text/javascript">
 (function(window, document, $){
 
@@ -275,7 +275,7 @@ function listMore(){
 
 })(window, document, jQuery);
 </script>
-	
+
 <!-- 팝업 -->
 <c:forEach var="list" items="${popupList}" varStatus="idx" end="0">
 	<c:if test="${list.gatsbyYn eq '1'}">
