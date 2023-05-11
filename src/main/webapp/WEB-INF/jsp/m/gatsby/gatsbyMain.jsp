@@ -353,7 +353,42 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 			<!-- 2023.04.04 수정 -->
 			<style>.fixed { position: fixed; top:0; left:0; }</style>
 			<script>
-                $(function() {
+				$(document).ready(function() {
+				// 페이지 로드 시 저장된 버튼 상태를 복원합니다.
+				// restoreButtonState();
+
+				// 버튼 클릭 이벤트 처리
+				$('button').click(function() {
+					// 선택된 버튼에 on 클래스를 추가하고 다른 버튼의 on 클래스를 제거합니다.
+					// $(this).addClass('on').siblings().removeClass('on');
+
+					// 선택된 버튼의 id 값을 쿠키에 저장합니다.
+					var selectedButtonId = $(this).attr('id');
+					document.cookie = 'selectedButtonId=' + selectedButtonId;
+				});
+
+				// 뒤로가기 이벤트 처리
+				$(window).on('popstate', function() {
+					// 저장된 버튼 상태를 복원합니다.
+					restoreButtonState();
+				});
+
+				// 저장된 버튼 상태를 복원하는 함수
+				function restoreButtonState() {
+					var selectedButtonId = getCookieValue('selectedButtonId');
+					if (selectedButtonId) {
+					$('#' + selectedButtonId).addClass('on').siblings().removeClass('on');
+					}
+				}
+
+				// 쿠키에서 특정 이름의 값을 가져오는 함수
+				function getCookieValue(name) {
+					var value = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+					return value ? value.pop() : '';
+				}
+				});
+
+				$(function() {
                     $.fn.Scrolling = function(obj, tar) {
                         var _this = this;
                         $(window).scroll(function(e) {
@@ -383,26 +418,15 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
                     });
                 });
 
-				document.addEventListener("DOMContentLoaded", function() {
-					// 이전에 저장된 버튼 상태를 확인하여 "on" 클래스 추가
-					var savedButton = localStorage.getItem("selectedButton");
-					if (savedButton) {
-					document.getElementById(savedButton).classList.add("on");
+				$(document).ready(function() {
+					if ($('#btn_Health').hasClass('on')) {
+						$(".item_HEALTH").css("display", "block");
+						$(".item_BEAUTY").css("display", "none");
+					} else {
+						$(".item_HEALTH").css("display", "none");
+						$(".item_BEAUTY").css("display", "block");
 					}
-				});
-
-				document.getElementById("btn_Health").addEventListener("click", function() {
-					// 버튼 클릭 시 "on" 클래스 추가하고 상태 저장
-					this.classList.add("on");
-					localStorage.setItem("selectedButton", "btn_Health");
-				});
-
-				document.getElementById("btn_Beauty").addEventListener("click", function() {
-					// 버튼 클릭 시 "on" 클래스 추가하고 상태 저장
-					this.classList.add("on");
-					localStorage.setItem("selectedButton", "btn_Beauty");
-				});
-
+				})
 			</script>
 
 			<div class="product-items nobor category_wrap" style="width: 100%; height: 100%;">
