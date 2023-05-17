@@ -332,7 +332,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 						<c:when test="${list.snsType eq '유튜브'}">
 							<c:choose>
 								<c:when test="${!empty list.mUrl}">
-								<a href="https://youtu.be/${list.mUrl}" target="_BLANK">
+								<a href="https://youtu.be/${list.mUrl}">
 								</c:when>
 								<c:otherwise>
 								<a href="javascript:" class="look-item">
@@ -342,7 +342,7 @@ function goCart(goodsIdx, goodsCd, goodsNm, goodsPrice){
 						<c:otherwise>
 							<c:choose>
 								<c:when test="${!empty list.mUrl}">
-								<a href="${list.mUrl}" class="look-item" target="_BLANK">
+								<a href="${list.mUrl}" class="look-item">
 								</c:when>
 								<c:otherwise>
 								<a href="javascript:" class="look-item">

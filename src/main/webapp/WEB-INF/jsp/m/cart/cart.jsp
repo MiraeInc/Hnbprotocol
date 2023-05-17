@@ -808,7 +808,7 @@
 															<c:when test="${list.brandIdx eq 7}"><p class="text-dental">${list.brandNm}</p></c:when>
 															<c:when test="${list.brandIdx eq 8}"><p class="text-charley">${list.brandNm}</p></c:when>
 														</c:choose>															
-														<a href="${CTX}/product/productView.do?goodsCd=${list.goodsCd}" target="_blank"><p class="name"><c:out value="${list.goodsNm}"/></p></a>
+														<a href="${CTX}/product/productView.do?goodsCd=${list.goodsCd}"><p class="name"><c:out value="${list.goodsNm}"/></p></a>
 														<div class="mod_qty">
 															<span class="spinner">
 	                                                            <input type="tel" name="goodsCnt" id="goodsCnt_${list.cartIdx}" class="goodsCnt" value="${list.goodsCnt}" maxlength="4" onblur="exitGoodsCnt(this);" data-buymincnt="${list.buyMinCnt}" data-buymaxcnt="${list.buyMaxCnt}" data-stockcnt="<c:choose><c:when test="${list.stockFlag eq 'Y'}">${list.stockCnt}</c:when><c:otherwise>0</c:otherwise></c:choose>" data-oldcnt="${list.goodsCnt}"/>
@@ -1093,7 +1093,7 @@
 											<li>
 												<div class="item">
 													<div class="item-wrap">
-														<a href="${CTX}/product/productView.do?goodsCd=${list.goodsCd}" class="item-anchor" target="_blank">
+														<a href="${CTX}/product/productView.do?goodsCd=${list.goodsCd}" class="item-anchor">
 															<span class="badge-box">
 																<c:if test="${list.opoYn eq 'Y' }" ><span class="badge type1">1+1</span></c:if>
 																<c:if test="${list.tpoYn eq 'Y' }" ><span class="badge type2">2+1</span></c:if>

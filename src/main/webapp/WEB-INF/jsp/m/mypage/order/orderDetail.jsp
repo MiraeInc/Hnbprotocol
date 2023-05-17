@@ -191,7 +191,7 @@
 </script>
 </head>
 <body>
-<form name="lguForm" id = "lguForm" method="post" target="_BLANK" action="https://pgweb.uplus.co.kr:7086/ms/interface/retrieveReceiptInfoCard.do">
+<form name="lguForm" id = "lguForm" method="post" action="https://pgweb.uplus.co.kr:7086/ms/interface/retrieveReceiptInfoCard.do">
 	<input type="hidden" name="transactionid" id="lgd_tid" value="">
 </form>
 

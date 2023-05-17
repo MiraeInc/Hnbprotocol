@@ -102,7 +102,7 @@ function reviewSave(flag, reviewIdx, cateIdx1) {
 						</div>
 						
 						<ul class="confirm-product">
-							<li><a href="${CTX}/product/productView.do?goodsCd=${goodsDetail.goodsCd}" target="_blank"><span>${goodsDetail.goodsNm}</span></a></li>
+							<li><a href="${CTX}/product/productView.do?goodsCd=${goodsDetail.goodsCd}"><span>${goodsDetail.goodsNm}</span></a></li>
 						</ul>
 						
 						<div class="confirm-benefit">

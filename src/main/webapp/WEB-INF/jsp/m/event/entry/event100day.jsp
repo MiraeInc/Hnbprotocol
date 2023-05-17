@@ -172,7 +172,7 @@ function goPage(page){
 						· 당첨자 1분에게는 7월 4일(수) , 개별 연락 드리므로 회원정보가 정확한지 확인하여 주세요.<br/>
 						· 커플링은 당사 사정에 따라 동일한 가격대의 상품으로 교체될 수 있습니다.
 					</p>
-					<a href="http://www.goldendew.com/goods/detail.asp?gno=1516" target="_blank" style="position: absolute; left: 11.6%; top: 28.2%; width: 26.1%; height: 6.6%;"><span class="hide">커플링 상세보기</span></a>
+					<a href="http://www.goldendew.com/goods/detail.asp?gno=1516" style="position: absolute; left: 11.6%; top: 28.2%; width: 26.1%; height: 6.6%;"><span class="hide">커플링 상세보기</span></a>
 					<a href="javascript:" style="position: absolute;left: 11.6%; top: 45.7%; width: 76.8%; height: 3.3%;" onclick="goRing();"><span class="hide">커플링 &amp; 커플사진 신청</span></a>
 					<a href="#reply-box" style="position: absolute; left: 64.5%; top: 50.2%; width: 24%; height: 2.0%;"><span class="hide">100일 축하 댓글 남겨주시면 당첨 확률이 높아져요~ 댓글남기러가기</span></a>
 					<p class="hide">

@@ -93,7 +93,7 @@
   </div>
   
   <%-- <div class="footer-award">
-    <a href="https://award.gatsby.jp/kr/" target="_blank"><img src="${CTX}/images/${DEVICE}/common/logo_award.png" alt="갸스비 크리에이티브 어워즈" /></a>
+    <a href="https://award.gatsby.jp/kr/"><img src="${CTX}/images/${DEVICE}/common/logo_award.png" alt="갸스비 크리에이티브 어워즈" /></a>
   </div> --%>
   <div class="footer-address">
   	<address class="address">
@@ -103,7 +103,7 @@
 		사업장 주소 : 서울특별시 강남구 학동로 165, 206호<br>(논현동, 마일스디오빌)<br />
         사업자등록번호 : 509-88-02366<br />
         통신판매업신고 : 제 2022-서울서초-0451 호<br />
-        <a href="http://www.ftc.go.kr/info/bizinfo/communicationViewPopup.jsp?wrkr_no=5098802366" target="_blank" class="link-info">사업자정보확인 ▶</a><br />
+        <a href="http://www.ftc.go.kr/info/bizinfo/communicationViewPopup.jsp?wrkr_no=5098802366" class="link-info">사업자정보확인 ▶</a><br />
         -->
 
   		상호 : (주)미래아이앤티<br />
