@@ -179,6 +179,10 @@
 										<img src="${CTX}/images/ico_simplelink_kakaotalk.png" alt="카카오톡 SNS 간편 로그인">
 										<span class="txt"><em>카카오톡</em>으로 로그인</span>
 									</a>
+									<a href="javascript:" onclick="snsLoginPopup('A');" class="sns_apple">
+										<img src="${CTX}/images/ico_simplelink_apple.png" alt="Apple SNS 간편 로그인">
+										<span class="txt"><em>Apple</em>로 로그인</span>
+									</a>
 									<%--
 									<a href="javascript:" onclick="snsLoginPopup('P');">
 										<img src="${CTX}/images/ico_simplelink_payco.png" alt="페이코 SNS 간편 로그인">

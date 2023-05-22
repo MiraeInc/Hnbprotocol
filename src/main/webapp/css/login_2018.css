@@ -5,7 +5,7 @@
  .placeholder { margin: -.2rem 0 .4rem .2rem; font-size: .4rem; color: #666; display: block; } 
  .placeholder:before { content: "*"; margin-right: .2rem; font-size: .7rem; vertical-align: -.3rem; } 
  #single { max-width: 750px; margin: 0 auto; padding-bottom: 1rem; overflow: hidden; } 
- #single #header { padding-bottom: 1.15rem; } 
+ #single #header { padding-bottom: 0.7rem; } 
  #single #logo { margin: 0 auto; padding: 1.125rem 2rem 0.625rem; font-size: 0; text-align: center; } 
  #single #logo a { margin: 0 auto; padding: 0.25rem; display: inline-block; font-size: 0; } 
  #single #logo a img { width: 100%; } 
@@ -33,7 +33,7 @@
  .join_info p { margin: 0; font-size: .6rem; } 
 
  .sns_btn_cont a { display:block; width:100%; position:relative; color:#454545; line-height:2.313rem; padding-left:2.313rem; } 
- .sns_btn_cont a img { width:2.313rem; position:absolute; top:0; left:4px; } 
+ .sns_btn_cont a img { width:2.313rem; position:absolute; top:0; left:9px; } 
  .sns_btn_cont a + a { margin-top:8px; } 
  .sns_btn_cont a em { font-weight:bold; } 
  .sns_btn_cont a .txt { display:block; font-size:.7rem; } 
@@ -42,7 +42,7 @@
  .sns_btn_cont .sns_naver { border:1px solid #A6A6A6; } 
  .sns_btn_cont .sns_kakao { background:#F9E000; } 
  .sns_btn_cont .sns_kakao:after { background:#A6A6A6; } 
- 
+ .sns_btn_cont .sns_apple { border:1px solid #A6A6A6; } 
  
  /* ==========================================================================
  * ID/PASSWORD find page styles (SINGLE)
