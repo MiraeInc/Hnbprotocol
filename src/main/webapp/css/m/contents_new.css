@@ -423,7 +423,8 @@ button,
 /* .mypage-index .section-activicy .activity .btn-review { width: 33%; }  */
 .mypage-index .section-activicy .activity .btn-review { width: 50%; } 
 .mypage-index .section-activicy .activity .btn-review i { background-position: -34px top; } 
-.mypage-index .section-activicy .activity .btn-qna { width: 33%; } 
+/* .mypage-index .section-activicy .activity .btn-qna { width: 33%; }  */
+.mypage-index .section-activicy .activity .btn-qna { width: 50%; } 
 .mypage-index .section-activicy .activity .btn-qna i { background-position: right top; } 
 .mypage-index .section-myaccount .section-title { margin-top: 35px; background: none; color: #444; border-bottom: 1px solid #606060; } 
 .mypage-index .section-myaccount .section-title h3 { color: #444; } 
