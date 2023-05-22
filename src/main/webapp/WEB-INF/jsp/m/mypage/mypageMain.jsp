@@ -269,7 +269,7 @@ function linkESCROW(oid){
                         </div>
                         <div class="activity">
                          <c:if test="${not empty USERINFO.memberId and USERINFO.memberFlag eq 'Y'}">	<%-- 회원 로그인--%>
-                            <a href="${CTX}/mypage/sample/sampleList.do"  class="btn-sample"><i></i><span>이달의 정품 신청</span></a>
+                            <!-- <a href="${CTX}/mypage/sample/sampleList.do"  class="btn-sample"><i></i><span>이달의 정품 신청</span></a> -->
                             <a href="${CTX}/mypage/review/noWriteReviewList.do"  class="btn-review"><i></i><span>상품 후기</span></a>
                         </c:if>
                             <a href="${CTX}/mypage/inquiry/inquiryList.do"  class="btn-qna"><i></i><span>1:1 문의</span></a>

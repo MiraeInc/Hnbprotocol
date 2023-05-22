@@ -420,7 +420,8 @@ button,
 .mypage-index .section-activicy .activity a i { display: inline-block; width: 34px; height: 28px; margin-top: 20px; background: url("../../images/m/common/sp_ico_activity.png") 0 0 no-repeat; background-size: 102px 28px; } 
 .mypage-index .section-activicy .activity .btn-sample { width: 34%; } 
 .mypage-index .section-activicy .activity .btn-sample i { background-position: left top; } 
-.mypage-index .section-activicy .activity .btn-review { width: 33%; } 
+/* .mypage-index .section-activicy .activity .btn-review { width: 33%; }  */
+.mypage-index .section-activicy .activity .btn-review { width: 50%; } 
 .mypage-index .section-activicy .activity .btn-review i { background-position: -34px top; } 
 .mypage-index .section-activicy .activity .btn-qna { width: 33%; } 
 .mypage-index .section-activicy .activity .btn-qna i { background-position: right top; } 
