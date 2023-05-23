@@ -13,11 +13,3 @@
 //         }
 //     }
 // }
-
-// 아이폰일 경우 sns 간편로그인 숨김처리
-// function hideSnsSimpleLinkOniOS() {
-//     if (window.navigator.userAgent.indexOf("app_ios") !== -1) {
-//         $(".sns_simple_link").css("display", "none");
-//     }
-// }
-
