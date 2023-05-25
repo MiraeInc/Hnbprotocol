@@ -35,10 +35,10 @@
 		}
 		
 		// 성별
-		if($("input[name=gender]:checked").length <1){
-			alert("성별을 선택해 주세요."); 
-			return false;
-		}
+		// if($("input[name=gender]:checked").length <1){
+		//	alert("성별을 선택해 주세요.");
+		//	return false;
+		// }
 
 		// 아이디
 		if($.trim($("#memberId").val()) == ""){

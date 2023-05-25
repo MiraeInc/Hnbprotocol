@@ -36,10 +36,10 @@
 					location.href="${CTX}/login/loginPage.do?refererYn=Y"; 
 				}
 			}else{
-				if($("input[name=pgender]:checked").length <1){
-					alert("성별을 선택해 주세요."); 
-					return false;
-				}
+				// if($("input[name=pgender]:checked").length <1){
+				//	alert("성별을 선택해 주세요.");
+				//	return false;
+				// }
 				
 				if($("input[name=pleap]:checked").length <1){
 					alert("양력/음력을 선택해 주세요."); 
