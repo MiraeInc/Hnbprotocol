@@ -22,6 +22,15 @@
 		}
 	}
 
+	$(document).ready(function(){
+		// 아이폰일 경우 sns 간편로그인 숨김처리
+		if (window.navigator.userAgent.indexOf("app_ios") !== -1) {
+			$(".easy_join").css("width", "100%");
+			$(".sns_join").css("display", "none");
+		}
+	})
+
+
 </script>
 </head>
 <body>
