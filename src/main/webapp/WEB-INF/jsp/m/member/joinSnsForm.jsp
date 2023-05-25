@@ -27,9 +27,9 @@
 		
 		// 성별
 		// if($("input[name=gender]:checked").length <1){
-        //		alert("성별을 선택해 주세요.");
-        //		return false;
-        //	}
+        //	alert("성별을 선택해 주세요.");
+        //	return false;
+        // }
 	
 		// 이메일
 		if($.trim($("#email1").val()) == ""){

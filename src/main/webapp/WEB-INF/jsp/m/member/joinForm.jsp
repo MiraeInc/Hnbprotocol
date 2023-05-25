@@ -381,6 +381,7 @@
 							<div class="form-holder hasClear" style="width: 48%;">
 								<input type="text" class="form-control" name="memberNm" id="memberNm" placeholder="이름" maxlength="8">
 							</div>
+
 							<!--
 							<div class="form-holder" style="font-size: 0;">
 								<div class="form-radiobox">

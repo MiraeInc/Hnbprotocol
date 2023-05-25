@@ -71,6 +71,8 @@ public class MemberDAO extends CommonDefaultDAO{
 	 * @Description	:	회원가입 저장 (DETAIL)
 	 */
 	public int memberDetailSave(HashMap<String, Object> param)throws Exception{
+		param.put("GENDER", "M");
+
 		return insert("memberDAO.memberDetailSave", param);
 	}
 	
